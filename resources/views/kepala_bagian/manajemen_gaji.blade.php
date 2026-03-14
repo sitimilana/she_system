@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manajemen Gaji - Pimpinan</title>
+    <title>Manajemen Gaji - Kepala Bagian</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        body { background: #eaeaea; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { background: #f4f7f6; font-family: 'Inter', sans-serif; color: #333; }
         
         /* SIDEBAR */
         .sidebar {
             width: 250px; min-height: 100vh; background-color: #8f9fc4;
-            position: fixed; left: 0; top: 0;
+            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
         }
         .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
         .sidebar .logo img { width: 100px; }
-        .sidebar .nav-link { color: black; font-size: 18px; padding: 12px 25px; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.3); border-radius: 10px; }
-        .sidebar .nav-link i { margin-right: 10px; }
+        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
+        .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
         
         /* CONTENT */
-        .content { margin-left: 260px; padding: 30px; background: white; min-height: 100vh;}
+        .content { margin-left: 260px; padding: 30px; background: white; min-height: 100vh; }
         .table-custom th { background-color: #f8f9fa; font-weight: 600; }
     </style>
 </head>
@@ -31,29 +32,16 @@
     <div class="logo">
         <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
     </div>
-    <ul class="nav flex-column mt-4">
-        <li class="nav-item">
-            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door-fill"></i> Home</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('pimpinan.gaji') }}" class="nav-link active"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar-check-fill"></i> Manajemen Cuti</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift-fill"></i> Reward & Recognition</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a>
-        </li>
-        <li class="nav-item mt-3">
-            <a href="{{ route('logout') }}" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+    <ul class="nav flex-column mt-5">
+        <li class="nav-item"><a href="{{ route('kabag.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.gaji') }}" class="nav-link active"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
+        <li class="nav-item mt-4">
+            <a href="{{ route('logout') }}" class="nav-link text-white-50" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
         </li>
     </ul>
 </div>
@@ -64,7 +52,7 @@
             <h2 class="fw-bold m-0">Manajemen Gaji</h2>
             <p class="text-muted">Rekapitulasi penggajian karyawan.</p>
         </div>
-        <a href="{{ route('pimpinan.gaji.create') }}" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
+        <a href="{{ route('kabag.gaji.create') }}" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
             <i class="bi bi-plus-circle me-2"></i> Buat Slip Gaji
         </a>
     </div>
@@ -77,7 +65,7 @@
     @endif
 
     <div class="card shadow-sm border-0 mb-4 p-3 bg-light">
-        <form method="GET" action="{{ route('pimpinan.gaji') }}" class="row g-3 align-items-center">
+        <form method="GET" action="{{ route('kabag.gaji') }}" class="row g-3 align-items-center">
             <div class="col-auto">
                 <label class="col-form-label fw-bold">Periode Penggajian:</label>
             </div>
@@ -137,19 +125,10 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        <a href="{{ route('pimpinan.gaji.edit', $gaji->id_gaji) }}" class="btn btn-warning btn-sm text-dark me-1" title="Edit Data">
+                        <a href="{{ route('kabag.gaji.edit', $gaji->id_gaji) }}" class="btn btn-warning btn-sm text-dark me-1" title="Edit Data">
                             <i class="bi bi-pencil-square"></i>
                         </a>
-                        @if($gaji->status_slip == 'draft')
-                        <form action="{{ route('pimpinan.gaji.finalize', $gaji->id_gaji) }}" method="POST" class="d-inline" title="Finalisasi & Kirim">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Finalisasi slip gaji ini dan kirim ke karyawan?')">
-                                <i class="bi bi-check2-circle"></i>
-                            </button>
-                        </form>
-                        @endif
-                        <form action="{{ route('pimpinan.gaji.destroy', $gaji->id_gaji) }}" method="POST" class="d-inline" title="Hapus">
+                        <form action="{{ route('kabag.gaji.destroy', $gaji->id_gaji) }}" method="POST" class="d-inline" title="Hapus">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Hapus slip gaji ini?')">
