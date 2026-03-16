@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
+use App\Models\Cuti;
 use App\Models\Penilaian;
 use App\Models\Penggajian;
 
@@ -235,5 +236,45 @@ class KepalaBagianController extends Controller
 
         return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
+    }
+
+    public function cuti()
+    {
+        $dataCuti = Cuti::with('karyawan')
+            ->where('status', 'pending_kabag')
+            ->orderByDesc('tanggal_pengajuan')
+            ->get();
+
+        return view('kepala_bagian.verifikasi_cuti', compact('dataCuti'));
+    }
+
+    public function approveCuti($id)
+    {
+        $cuti = Cuti::where('id_cuti', $id)
+            ->where('status', 'pending_kabag')
+            ->firstOrFail();
+
+        $cuti->update([
+            'status'        => 'pending_pimpinan',
+            'disetujui_oleh'=> auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.cuti')
+            ->with('success', 'Pengajuan cuti disetujui dan diteruskan ke Pimpinan.');
+    }
+
+    public function rejectCuti($id)
+    {
+        $cuti = Cuti::where('id_cuti', $id)
+            ->where('status', 'pending_kabag')
+            ->firstOrFail();
+
+        $cuti->update([
+            'status'        => 'rejected',
+            'disetujui_oleh'=> auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.cuti')
+            ->with('success', 'Pengajuan cuti telah ditolak.');
     }
 }
