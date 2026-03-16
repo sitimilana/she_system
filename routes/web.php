@@ -46,6 +46,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian/gaji/{id}/edit', [KepalaBagianController::class, 'editGaji'])->name('kabag.gaji.edit');
     Route::put('/kepala-bagian/gaji/{id}', [KepalaBagianController::class, 'updateGaji'])->name('kabag.gaji.update');
     Route::delete('/kepala-bagian/gaji/{id}', [KepalaBagianController::class, 'destroyGaji'])->name('kabag.gaji.destroy');
+    #Kelola Karyawan
+    Route::get('/kepala-bagian/karyawan/{id}', [KepalaBagianController::class, 'detailKaryawan'])->name('kabag.karyawan.detail');
+    Route::post('/kepala-bagian/karyawan/{id}', [KepalaBagianController::class, 'storeKaryawan'])->name('kabag.karyawan.store');
 });
 
 # AKADEMIK DASHBOARD

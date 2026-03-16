@@ -79,7 +79,7 @@
                     <tr>
                         <th width="5%" class="text-center">No</th>
                         <th width="20%">Nama</th>
-                        <th width="15%">Jabatan</th>
+                        <th width="15%">Divisi</th>
                         <th width="15%">Kontak</th>
                         <th width="20%">Alamat</th>
                         <th width="15%" class="text-center">Status Kerja</th>
@@ -87,24 +87,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($dataKaryawan as $index => $karyawan)
+                    @forelse($dataKaryawan as $index => $user)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="fw-bold">{{ $karyawan->nama }}</td>
-                        <td>{{ $karyawan->jabatan }}</td>
-                        <td>{{ $karyawan->kontak }}</td>
-                        <td class="text-truncate" style="max-width: 150px;" title="{{ $karyawan->alamat }}">
-                            {{ $karyawan->alamat }}
+                        <td class="fw-bold">{{ $user->nama_lengkap }}</td>
+                        <td>{{ $user->role->nama_role ?? '-' }}</td>
+                        <td>{{ $user->karyawan->no_hp ?? '-' }}</td>
+                        <td class="text-truncate" style="max-width: 150px;" title="{{ $user->karyawan->alamat ?? '-' }}">
+                            {{ $user->karyawan->alamat ?? '-' }}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-{{ $karyawan->status_kerja == 'Aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
-                                {{ $karyawan->status_kerja }}
-                            </span>
+                            @if($user->karyawan && $user->karyawan->status_karyawan)
+                                <span class="badge bg-{{ Illuminate\Support\Str::lower($user->karyawan->status_karyawan) == 'aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
+                                    {{ $user->karyawan->status_karyawan }}
+                                </span>
+                            @else
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill">
+                                    Belum Dilengkapi
+                                </span>
+                            @endif
                         </td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-light border text-primary" title="Lihat Profil Lengkap">
-                                <i class="bi bi-person-lines-fill"></i>
-                            </button>
+                            <a href="{{ route('kabag.karyawan.detail', $user->id_user) }}" class="btn btn-sm btn-light border text-primary" title="Lengkapi Profil">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
                         </td>
                     </tr>
                     @empty

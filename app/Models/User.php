@@ -26,6 +26,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 
+    public function karyawan()
+    {
+        return $this->hasOne(Karyawan::class, 'id_user', 'id_user');
+    }
+
     // supaya login pakai username
     public function getAuthIdentifierName()
     {

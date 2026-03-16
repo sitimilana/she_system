@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Karyawan;
 use App\Models\Penilaian;
 use App\Models\Penggajian;
+use App\Models\User;
 
 class KepalaBagianController extends Controller
 {
@@ -24,24 +25,12 @@ class KepalaBagianController extends Controller
 
     public function karyawan()
     {
-        $dataKaryawan = [
-            (object)[
-                'id' => 1,
-                'nama' => 'Budi Santoso',
-                'jabatan' => 'Staff Operasional',
-                'kontak' => '08123456789',
-                'alamat' => 'Jl. Merdeka No. 10',
-                'status_kerja' => 'Aktif'
-            ],
-            (object)[
-                'id' => 2,
-                'nama' => 'Siti Aminah',
-                'jabatan' => 'Staff Admin',
-                'kontak' => '08987654321',
-                'alamat' => 'Jl. Sudirman No. 5',
-                'status_kerja' => 'Cuti'
-            ],
-        ];
+        // Mengambil user dengan role 'karyawan'
+        // Jika belum ada data karyawan, otomatis kita tampung (bisa null relation-nya)
+        $dataKaryawan = User::with('karyawan')
+            ->whereHas('role', function ($query) {
+                $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+            })->get();
 
         return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan'));
     }
@@ -235,5 +224,41 @@ class KepalaBagianController extends Controller
 
         return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
+    }
+
+    public function detailKaryawan($id)
+    {
+        // Cari user berdasarkan id_user, sekalian bawa relasi karyawannya (jika sudah ada)
+        $user = User::with('karyawan')->findOrFail($id);
+        
+        return view('kepala_bagian.detail_karyawan', compact('user'));
+    }
+
+    public function storeKaryawan(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        // 1. Validasi inputan form
+        $request->validate([
+            'nama'            => 'required|string|max:255',
+            'no_hp'           => 'nullable|string|max:20',
+            'email'           => 'nullable|email|max:255',
+            'alamat'          => 'nullable|string',
+            'status_karyawan' => 'required|string',
+        ]);
+
+        Karyawan::updateOrCreate(
+            ['id_user' => $user->id_user], 
+            [
+                'nama'            => $request->nama,
+                'no_hp'           => $request->no_hp,
+                'email'           => $request->email,
+                'alamat'          => $request->alamat,
+                'status_karyawan' => $request->status_karyawan,
+                // Kolom foto bisa ditambahkan nanti jika Anda sudah siap dengan logika file upload
+            ]
+        );
+
+        return redirect()->route('kabag.karyawan')->with('success', 'Biodata karyawan berhasil disimpan.');
     }
 }
