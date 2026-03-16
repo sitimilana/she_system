@@ -98,12 +98,6 @@ box-shadow:0px 5px 10px rgba(0,0,0,0.2);
 </a>
 </li>
 
-<li class="nav-item">
-<a href="{{ route('kabag.gaji') }}" class="nav-link">
-<i class="bi bi-cash-stack"></i> Manajemen Gaji
-</a>
-</li>
-
 <li class="nav-item mt-4">
 <a href="{{ route('logout') }}" class="nav-link" onclick="confirmLogout(event)">
 <i class="bi bi-box-arrow-right"></i> Logout
