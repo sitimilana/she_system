@@ -6,6 +6,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\KepalaBagianController;
 use App\Http\Controllers\AkademikController;
+use App\Http\Controllers\KaryawanController;
 
 /* LOGIN */
 Route::get('/login', [LoginController::class, 'index'])->name('login');
@@ -54,6 +55,13 @@ Route::middleware(['auth', 'role:akademik'])->group(function () {
     Route::get('/akademik/cuti', [AkademikController::class, 'cuti'])->name('akademik.cuti');
     Route::get('/akademik/karyawan', [AkademikController::class, 'karyawan'])->name('akademik.karyawan');
     
+});
+
+# KARYAWAN DASHBOARD
+Route::middleware(['auth', 'role:karyawan'])->group(function () {
+    Route::get('/karyawan', [KaryawanController::class, 'index'])->name('karyawan.dashboard');
+    Route::get('/karyawan/slip-gaji', [KaryawanController::class, 'slipGaji'])->name('karyawan.slip-gaji');
+    Route::get('/karyawan/slip-gaji/{id}', [KaryawanController::class, 'slipGajiDetail'])->name('karyawan.slip-gaji.show');
 });
 
 
