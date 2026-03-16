@@ -3,23 +3,28 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Karyawan;
+use App\Models\Penggajian;
 
 class PimpinanController extends Controller
 {
     public function index()
     {
         // 1. Metrik Utama
-        $totalKaryawan = 40; 
-        $karyawanCutiHariIni = 3; 
+        $totalKaryawan = Karyawan::where('status_karyawan', 'aktif')->count();
+        $karyawanCutiHariIni = 3;
 
-        // 2. Metrik Finansial (Contoh: Rp 150.000.000 diubah formatnya)
-        $totalBebanGaji = number_format(150000000, 0, ',', '.'); 
+        // 2. Metrik Finansial
+        $totalBebanGaji = Penggajian::whereMonth('tanggal_dibuat', now()->month)
+            ->whereYear('tanggal_dibuat', now()->year)
+            ->sum('total_gaji');
+        $totalBebanGaji = number_format($totalBebanGaji ?: 150000000, 0, ',', '.');
 
-        // 3. Operasional (Data kosong dulu agar masuk ke blok @empty)
-        $cutiTerbaru = []; 
+        // 3. Operasional
+        $cutiTerbaru = [];
 
-        // 4. Kinerja/Reward (Data kosong dulu agar masuk ke blok @empty)
-        $topKaryawan = []; 
+        // 4. Kinerja/Reward
+        $topKaryawan = [];
 
         return view('pimpinan.dashboard', compact(
             'totalKaryawan',
@@ -29,9 +34,9 @@ class PimpinanController extends Controller
             'topKaryawan'
         ));
     }
+
     public function cuti()
     {
-        // Dummy data sementara sebelum menggunakan Database
         $dataCuti = [
             [
                 'id' => 1,
@@ -55,51 +60,205 @@ class PimpinanController extends Controller
 
         return view('pimpinan.manajemen_cuti', compact('dataCuti'));
     }
-    public function gaji()
+
+    public function gaji(Request $request)
     {
-        // Dummy data untuk tabel gaji
-        $dataGaji = [
-            [
-                'nama' => 'Ahmad Rida',
-                'periode' => 'Maret 2026',
-                'penerimaan' => 5500000,
-                'potongan' => 150000,
-                'gaji_bersih' => 5350000,
-                'status' => 'Final'
-            ],
-            [
-                'nama' => 'Siti Aminah',
-                'periode' => 'Maret 2026',
-                'penerimaan' => 4800000,
-                'potongan' => 0,
-                'gaji_bersih' => 4800000,
-                'status' => 'Draft'
-            ]
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+
+        $dataGaji = Penggajian::with('karyawan')
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->get();
+
+        $bulanList = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
 
-        return view('pimpinan.manajemen_gaji', compact('dataGaji'));
+        $tahunList = range(now()->year, now()->year - 4);
+
+        return view('pimpinan.manajemen_gaji', compact('dataGaji', 'bulan', 'tahun', 'bulanList', 'tahunList'));
     }
+
     public function createGaji()
     {
-        // Dummy daftar karyawan untuk dropdown
-        $karyawan = [
-            (object)['id' => 1, 'nama' => 'Ahmad Rida'],
-            (object)['id' => 2, 'nama' => 'Siti Aminah'],
-            (object)['id' => 3, 'nama' => 'Budi Santoso'],
-        ];
-
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')->get();
         return view('pimpinan.form_gaji', compact('karyawan'));
     }
+
+    private function parsePeriode(string $periode): array
+    {
+        if (!preg_match('/^\d{4}-\d{2}$/', $periode)) {
+            abort(422, 'Format periode tidak valid. Gunakan format YYYY-MM.');
+        }
+        [$tahun, $bulan] = explode('-', $periode);
+        return [(int)$tahun, (int)$bulan];
+    }
+
+    public function storeGaji(Request $request)
+    {
+        $request->validate([
+            'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
+            'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'gaji_pokok'        => 'required|numeric|min:0',
+            'uang_makan'        => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'insentif_kinerja'  => 'nullable|numeric|min:0',
+            'tunjangan_program' => 'nullable|numeric|min:0',
+            'tunjangan_bpjs'    => 'nullable|numeric|min:0',
+            'bonus'             => 'nullable|numeric|min:0',
+            'lain_lain'         => 'nullable|numeric|min:0',
+            'potongan_absen'    => 'nullable|numeric|min:0',
+            'cash_bon'          => 'nullable|numeric|min:0',
+            'potongan_bpjs'     => 'nullable|numeric|min:0',
+            'potongan_lain'     => 'nullable|numeric|min:0',
+        ]);
+
+        [$tahun, $bulan] = $this->parsePeriode($request->periode);
+
+        $totalPenerimaan = (float)($request->gaji_pokok ?? 0)
+            + (float)($request->uang_makan ?? 0)
+            + (float)($request->tunjangan_jabatan ?? 0)
+            + (float)($request->insentif_kinerja ?? 0)
+            + (float)($request->tunjangan_program ?? 0)
+            + (float)($request->tunjangan_bpjs ?? 0)
+            + (float)($request->bonus ?? 0)
+            + (float)($request->lain_lain ?? 0);
+
+        $totalPotongan = (float)($request->potongan_absen ?? 0)
+            + (float)($request->cash_bon ?? 0)
+            + (float)($request->potongan_bpjs ?? 0)
+            + (float)($request->potongan_lain ?? 0);
+
+        $totalGaji = $totalPenerimaan - $totalPotongan;
+
+        Penggajian::create([
+            'id_karyawan'       => $request->id_karyawan,
+            'bulan'             => $bulan,
+            'tahun'             => $tahun,
+            'gaji_pokok'        => $request->gaji_pokok ?? 0,
+            'uang_makan'        => $request->uang_makan ?? 0,
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
+            'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
+            'tunjangan_program' => $request->tunjangan_program ?? 0,
+            'tunjangan_bpjs'    => $request->tunjangan_bpjs ?? 0,
+            'bonus'             => $request->bonus ?? 0,
+            'lain_lain'         => $request->lain_lain ?? 0,
+            'total_penerimaan'  => $totalPenerimaan,
+            'potongan_absen'    => $request->potongan_absen ?? 0,
+            'cash_bon'          => $request->cash_bon ?? 0,
+            'potongan_bpjs'     => $request->potongan_bpjs ?? 0,
+            'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_gaji'        => $totalGaji,
+            'tanggal_dibuat'    => now()->toDateString(),
+            'status_slip'       => $request->input('status_slip', 'draft'),
+        ]);
+
+        return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil disimpan.');
+    }
+
+    public function editGaji($id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')->get();
+        return view('pimpinan.edit_gaji', compact('gaji', 'karyawan'));
+    }
+
+    public function updateGaji(Request $request, $id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+
+        $request->validate([
+            'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
+            'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'gaji_pokok'        => 'required|numeric|min:0',
+            'uang_makan'        => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'insentif_kinerja'  => 'nullable|numeric|min:0',
+            'tunjangan_program' => 'nullable|numeric|min:0',
+            'tunjangan_bpjs'    => 'nullable|numeric|min:0',
+            'bonus'             => 'nullable|numeric|min:0',
+            'lain_lain'         => 'nullable|numeric|min:0',
+            'potongan_absen'    => 'nullable|numeric|min:0',
+            'cash_bon'          => 'nullable|numeric|min:0',
+            'potongan_bpjs'     => 'nullable|numeric|min:0',
+            'potongan_lain'     => 'nullable|numeric|min:0',
+        ]);
+
+        [$tahun, $bulan] = $this->parsePeriode($request->periode);
+
+        $totalPenerimaan = (float)($request->gaji_pokok ?? 0)
+            + (float)($request->uang_makan ?? 0)
+            + (float)($request->tunjangan_jabatan ?? 0)
+            + (float)($request->insentif_kinerja ?? 0)
+            + (float)($request->tunjangan_program ?? 0)
+            + (float)($request->tunjangan_bpjs ?? 0)
+            + (float)($request->bonus ?? 0)
+            + (float)($request->lain_lain ?? 0);
+
+        $totalPotongan = (float)($request->potongan_absen ?? 0)
+            + (float)($request->cash_bon ?? 0)
+            + (float)($request->potongan_bpjs ?? 0)
+            + (float)($request->potongan_lain ?? 0);
+
+        $totalGaji = $totalPenerimaan - $totalPotongan;
+
+        $gaji->update([
+            'id_karyawan'       => $request->id_karyawan,
+            'bulan'             => $bulan,
+            'tahun'             => $tahun,
+            'gaji_pokok'        => $request->gaji_pokok ?? 0,
+            'uang_makan'        => $request->uang_makan ?? 0,
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
+            'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
+            'tunjangan_program' => $request->tunjangan_program ?? 0,
+            'tunjangan_bpjs'    => $request->tunjangan_bpjs ?? 0,
+            'bonus'             => $request->bonus ?? 0,
+            'lain_lain'         => $request->lain_lain ?? 0,
+            'total_penerimaan'  => $totalPenerimaan,
+            'potongan_absen'    => $request->potongan_absen ?? 0,
+            'cash_bon'          => $request->cash_bon ?? 0,
+            'potongan_bpjs'     => $request->potongan_bpjs ?? 0,
+            'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_gaji'        => $totalGaji,
+            'status_slip'       => $request->input('status_slip', $gaji->status_slip),
+        ]);
+
+        return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil diperbarui.');
+    }
+
+    public function finalizeGaji($id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+        $gaji->update(['status_slip' => 'final']);
+
+        return redirect()->route('pimpinan.gaji', ['bulan' => $gaji->bulan, 'tahun' => $gaji->tahun])
+            ->with('success', 'Slip gaji berhasil difinalisasi dan dikirim ke karyawan.');
+    }
+
+    public function destroyGaji($id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+        $bulan = $gaji->bulan;
+        $tahun = $gaji->tahun;
+        $gaji->delete();
+
+        return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil dihapus.');
+    }
+
     public function reward()
     {
-        // Data untuk 3 Kartu Top Performer di atas tabel
         $topKandidat = [
             (object)['nama' => 'Ahmad Rida', 'jabatan' => 'Staff Keuangan', 'skor' => 96],
             (object)['nama' => 'Siti Aminah', 'jabatan' => 'Staff IT', 'skor' => 92],
             (object)['nama' => 'Budi Santoso', 'jabatan' => 'Marketing', 'skor' => 89],
         ];
 
-        // Data untuk isi tabel evaluasi
         $daftarReward = [
             (object)['id' => 1, 'nama' => 'Ahmad Rida', 'jabatan' => 'Staff Keuangan', 'skor' => 96, 'jenis_reward' => 'Bonus Rp 1.000.000', 'status' => 'Menunggu'],
             (object)['id' => 2, 'nama' => 'Siti Aminah', 'jabatan' => 'Staff IT', 'skor' => 92, 'jenis_reward' => 'Voucher Belanja', 'status' => 'Menunggu'],

@@ -29,9 +29,11 @@ class LoginController extends Controller
                 return redirect()->route('pimpinan.dashboard');
             } elseif ($roleName === 'kepala bagian') {
                 return redirect()->route('kabag.dashboard');    
-            }elseif ($roleName === 'akademik'){
+            } elseif ($roleName === 'akademik'){
                 return redirect()->route('akademik.beranda');
-            }else{
+            } elseif ($roleName === 'karyawan') {
+                return redirect()->route('karyawan.dashboard');
+            } else {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

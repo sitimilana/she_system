@@ -5,18 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
 use App\Models\Penilaian;
+use App\Models\Penggajian;
 
 class KepalaBagianController extends Controller
 {
     public function index()
     {
-        // jumlah karyawan
         $jumlahKaryawan = Karyawan::count();
-
-        // data penilaian terbaru
         $penilaian = Penilaian::latest()->take(2)->get();
-
-        // data karyawan
         $karyawan = Karyawan::latest()->take(5)->get();
 
         return view('kepala_bagian.home', compact(
@@ -25,24 +21,24 @@ class KepalaBagianController extends Controller
             'karyawan'
         ));
     }
+
     public function karyawan()
     {
-        // Dummy data karyawan di divisi Kepala Bagian tersebut
         $dataKaryawan = [
             (object)[
-                'id' => 1, 
-                'nama' => 'Budi Santoso', 
-                'jabatan' => 'Staff Operasional', 
-                'kontak' => '08123456789', 
-                'alamat' => 'Jl. Merdeka No. 10', 
+                'id' => 1,
+                'nama' => 'Budi Santoso',
+                'jabatan' => 'Staff Operasional',
+                'kontak' => '08123456789',
+                'alamat' => 'Jl. Merdeka No. 10',
                 'status_kerja' => 'Aktif'
             ],
             (object)[
-                'id' => 2, 
-                'nama' => 'Siti Aminah', 
-                'jabatan' => 'Staff Admin', 
-                'kontak' => '08987654321', 
-                'alamat' => 'Jl. Sudirman No. 5', 
+                'id' => 2,
+                'nama' => 'Siti Aminah',
+                'jabatan' => 'Staff Admin',
+                'kontak' => '08987654321',
+                'alamat' => 'Jl. Sudirman No. 5',
                 'status_kerja' => 'Cuti'
             ],
         ];
@@ -52,12 +48,192 @@ class KepalaBagianController extends Controller
 
     public function penilaian()
     {
-        // Dummy data karyawan di divisi Kepala Bagian (untuk dropdown)
         $karyawan = [
             (object)['id' => 1, 'nama' => 'Budi Santoso'],
             (object)['id' => 2, 'nama' => 'Siti Aminah'],
         ];
 
         return view('kepala_bagian.penilaian_kinerja', compact('karyawan'));
+    }
+
+    public function gaji(Request $request)
+    {
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+
+        $dataGaji = Penggajian::with('karyawan')
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->get();
+
+        $bulanList = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+        ];
+
+        $tahunList = range(now()->year, now()->year - 4);
+
+        return view('kepala_bagian.manajemen_gaji', compact('dataGaji', 'bulan', 'tahun', 'bulanList', 'tahunList'));
+    }
+
+    public function createGaji()
+    {
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')->get();
+        return view('kepala_bagian.form_gaji', compact('karyawan'));
+    }
+
+    private function parsePeriode(string $periode): array
+    {
+        if (!preg_match('/^\d{4}-\d{2}$/', $periode)) {
+            abort(422, 'Format periode tidak valid. Gunakan format YYYY-MM.');
+        }
+        [$tahun, $bulan] = explode('-', $periode);
+        return [(int)$tahun, (int)$bulan];
+    }
+
+    public function storeGaji(Request $request)
+    {
+        $request->validate([
+            'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
+            'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'gaji_pokok'        => 'required|numeric|min:0',
+            'uang_makan'        => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'insentif_kinerja'  => 'nullable|numeric|min:0',
+            'tunjangan_program' => 'nullable|numeric|min:0',
+            'tunjangan_bpjs'    => 'nullable|numeric|min:0',
+            'bonus'             => 'nullable|numeric|min:0',
+            'lain_lain'         => 'nullable|numeric|min:0',
+            'potongan_absen'    => 'nullable|numeric|min:0',
+            'cash_bon'          => 'nullable|numeric|min:0',
+            'potongan_bpjs'     => 'nullable|numeric|min:0',
+            'potongan_lain'     => 'nullable|numeric|min:0',
+        ]);
+
+        [$tahun, $bulan] = $this->parsePeriode($request->periode);
+
+        $totalPenerimaan = (float)($request->gaji_pokok ?? 0)
+            + (float)($request->uang_makan ?? 0)
+            + (float)($request->tunjangan_jabatan ?? 0)
+            + (float)($request->insentif_kinerja ?? 0)
+            + (float)($request->tunjangan_program ?? 0)
+            + (float)($request->tunjangan_bpjs ?? 0)
+            + (float)($request->bonus ?? 0)
+            + (float)($request->lain_lain ?? 0);
+
+        $totalPotongan = (float)($request->potongan_absen ?? 0)
+            + (float)($request->cash_bon ?? 0)
+            + (float)($request->potongan_bpjs ?? 0)
+            + (float)($request->potongan_lain ?? 0);
+
+        $totalGaji = $totalPenerimaan - $totalPotongan;
+
+        Penggajian::create([
+            'id_karyawan'       => $request->id_karyawan,
+            'bulan'             => $bulan,
+            'tahun'             => $tahun,
+            'gaji_pokok'        => $request->gaji_pokok ?? 0,
+            'uang_makan'        => $request->uang_makan ?? 0,
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
+            'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
+            'tunjangan_program' => $request->tunjangan_program ?? 0,
+            'tunjangan_bpjs'    => $request->tunjangan_bpjs ?? 0,
+            'bonus'             => $request->bonus ?? 0,
+            'lain_lain'         => $request->lain_lain ?? 0,
+            'total_penerimaan'  => $totalPenerimaan,
+            'potongan_absen'    => $request->potongan_absen ?? 0,
+            'cash_bon'          => $request->cash_bon ?? 0,
+            'potongan_bpjs'     => $request->potongan_bpjs ?? 0,
+            'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_gaji'        => $totalGaji,
+            'tanggal_dibuat'    => now()->toDateString(),
+            'status_slip'       => 'draft',
+        ]);
+
+        return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil disimpan.');
+    }
+
+    public function editGaji($id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')->get();
+        return view('kepala_bagian.edit_gaji', compact('gaji', 'karyawan'));
+    }
+
+    public function updateGaji(Request $request, $id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+
+        $request->validate([
+            'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
+            'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'gaji_pokok'        => 'required|numeric|min:0',
+            'uang_makan'        => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'insentif_kinerja'  => 'nullable|numeric|min:0',
+            'tunjangan_program' => 'nullable|numeric|min:0',
+            'tunjangan_bpjs'    => 'nullable|numeric|min:0',
+            'bonus'             => 'nullable|numeric|min:0',
+            'lain_lain'         => 'nullable|numeric|min:0',
+            'potongan_absen'    => 'nullable|numeric|min:0',
+            'cash_bon'          => 'nullable|numeric|min:0',
+            'potongan_bpjs'     => 'nullable|numeric|min:0',
+            'potongan_lain'     => 'nullable|numeric|min:0',
+        ]);
+
+        [$tahun, $bulan] = $this->parsePeriode($request->periode);
+
+        $totalPenerimaan = (float)($request->gaji_pokok ?? 0)
+            + (float)($request->uang_makan ?? 0)
+            + (float)($request->tunjangan_jabatan ?? 0)
+            + (float)($request->insentif_kinerja ?? 0)
+            + (float)($request->tunjangan_program ?? 0)
+            + (float)($request->tunjangan_bpjs ?? 0)
+            + (float)($request->bonus ?? 0)
+            + (float)($request->lain_lain ?? 0);
+
+        $totalPotongan = (float)($request->potongan_absen ?? 0)
+            + (float)($request->cash_bon ?? 0)
+            + (float)($request->potongan_bpjs ?? 0)
+            + (float)($request->potongan_lain ?? 0);
+
+        $totalGaji = $totalPenerimaan - $totalPotongan;
+
+        $gaji->update([
+            'id_karyawan'       => $request->id_karyawan,
+            'bulan'             => $bulan,
+            'tahun'             => $tahun,
+            'gaji_pokok'        => $request->gaji_pokok ?? 0,
+            'uang_makan'        => $request->uang_makan ?? 0,
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
+            'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
+            'tunjangan_program' => $request->tunjangan_program ?? 0,
+            'tunjangan_bpjs'    => $request->tunjangan_bpjs ?? 0,
+            'bonus'             => $request->bonus ?? 0,
+            'lain_lain'         => $request->lain_lain ?? 0,
+            'total_penerimaan'  => $totalPenerimaan,
+            'potongan_absen'    => $request->potongan_absen ?? 0,
+            'cash_bon'          => $request->cash_bon ?? 0,
+            'potongan_bpjs'     => $request->potongan_bpjs ?? 0,
+            'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_gaji'        => $totalGaji,
+            'status_slip'       => $request->input('status_slip', $gaji->status_slip),
+        ]);
+
+        return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil diperbarui.');
+    }
+
+    public function destroyGaji($id)
+    {
+        $gaji = Penggajian::findOrFail($id);
+        $bulan = $gaji->bulan;
+        $tahun = $gaji->tahun;
+        $gaji->delete();
+
+        return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+            ->with('success', 'Slip gaji berhasil dihapus.');
     }
 }

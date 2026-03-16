@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\SlipGajiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+/* MOBILE - Slip Gaji Karyawan */
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
+    Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
+});
+

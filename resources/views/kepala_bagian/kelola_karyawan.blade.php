@@ -39,7 +39,8 @@
     <ul class="nav flex-column mt-5">
         <li class="nav-item"><a href="{{ route('kabag.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.gaji') }}" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
         <li class="nav-item mt-4">
             <a href="{{ route('logout') }}" class="nav-link text-white-50" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="bi bi-box-arrow-right"></i> Logout
