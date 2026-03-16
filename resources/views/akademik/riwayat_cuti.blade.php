@@ -44,8 +44,8 @@
     <ul class="nav flex-column mt-4">
         <li class="nav-item"><a href="{{ route('akademik.beranda') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="{{ route('akademik.absensi') }}" class="nav-link"><i class="bi bi-journal-check"></i> Riwayat Absensi</a></li>
-        <li class="nav-item"><a href="#" class="nav-link active"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('akademik.cuti') }}" class="nav-link active"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
+        <li class="nav-item"><a href="{{ route('akademik.manajemen_karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
         
         <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
             <a href="{{ route('logout') }}" class="nav-link text-white-50 px-3" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

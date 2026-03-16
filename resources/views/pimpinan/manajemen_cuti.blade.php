@@ -40,13 +40,13 @@
             <a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door-fill"></i> Home</a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a>
+            <a href="{{ route('pimpinan.gaji') }}" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link active"><i class="bi bi-calendar-check-fill"></i> Manajemen Cuti</a>
+            <a href="{{ route('pimpinan.cuti') }}" class="nav-link active"><i class="bi bi-calendar-check-fill"></i> Manajemen Cuti</a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link"><i class="bi bi-gift-fill"></i> Reward & Recognition</a>
+            <a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift-fill"></i> Reward & Recognition</a>
         </li>
         <li class="nav-item">
             <a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a>

@@ -105,7 +105,7 @@ box-shadow:0px 5px 10px rgba(0,0,0,0.2);
 </li>
 
 <li class="nav-item mt-4">
-<a href="#" class="nav-link" onclick="confirmLogout(event)">
+<a href="{{ route('logout') }}" class="nav-link" onclick="confirmLogout(event)">
 <i class="bi bi-box-arrow-right"></i> Logout
 </a>
 </li>

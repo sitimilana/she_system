@@ -40,9 +40,9 @@
 
     <ul class="nav flex-column">
         <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house"></i> Home</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-cash"></i> Manajemen Gaji</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-calendar-check"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
+        <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link"><i class="bi bi-cash"></i> Manajemen Gaji</a></li>
+        <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar-check"></i> Manajemen Cuti</a></li>
+        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
         <li class="nav-item"><a href="{{ route('role.index') }}" class="nav-link fw-bold"><i class="bi bi-person-gear"></i> Manajemen Role</a></li>
     </ul>
 </div>

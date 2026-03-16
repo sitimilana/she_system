@@ -104,7 +104,7 @@
         <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link active"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
         <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar2-check"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="#" class="nav-link"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
+        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
         <li class="nav-item"><a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a></li>
         <li class="nav-item mt-4"><a href="{{ route('login') }}" class="nav-link text-white-50"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
     </ul>
