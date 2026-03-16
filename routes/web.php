@@ -22,6 +22,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/role/{id}', [RoleController::class, 'destroy'])->name('role.destroy');
     #Cuti
     Route::get('/pimpinan/cuti', [PimpinanController::class, 'cuti'])->name('pimpinan.cuti');
+    Route::patch('/pimpinan/cuti/{id}/approve', [PimpinanController::class, 'approveCuti'])->name('pimpinan.cuti.approve');
+    Route::patch('/pimpinan/cuti/{id}/reject', [PimpinanController::class, 'rejectCuti'])->name('pimpinan.cuti.reject');
     #Gaji
     Route::get('/pimpinan/gaji', [PimpinanController::class, 'gaji'])->name('pimpinan.gaji');
     Route::get('/pimpinan/gaji/create', [PimpinanController::class, 'createGaji'])->name('pimpinan.gaji.create');
@@ -39,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian', [KepalaBagianController::class, 'index'])->name('kabag.dashboard');
     Route::get('/kepala-bagian/karyawan', [KepalaBagianController::class, 'karyawan'])->name('kabag.karyawan');
     Route::get('/kepala-bagian/penilaian', [KepalaBagianController::class, 'penilaian'])->name('kabag.penilaian');
+    #Cuti
+    Route::get('/kepala-bagian/cuti', [KepalaBagianController::class, 'cuti'])->name('kabag.cuti');
+    Route::patch('/kepala-bagian/cuti/{id}/approve', [KepalaBagianController::class, 'approveCuti'])->name('kabag.cuti.approve');
+    Route::patch('/kepala-bagian/cuti/{id}/reject', [KepalaBagianController::class, 'rejectCuti'])->name('kabag.cuti.reject');
     #Gaji
     Route::get('/kepala-bagian/gaji', [KepalaBagianController::class, 'gaji'])->name('kabag.gaji');
     Route::get('/kepala-bagian/gaji/create', [KepalaBagianController::class, 'createGaji'])->name('kabag.gaji.create');

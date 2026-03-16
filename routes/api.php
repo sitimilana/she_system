@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SlipGajiController;
+use App\Http\Controllers\Api\CutiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,5 +24,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
     Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
+});
+
+/* MOBILE - Manajemen Cuti Karyawan */
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/cuti/sisa-cuti', [CutiController::class, 'sisaCuti'])->name('api.cuti.sisa-cuti');
+    Route::get('/cuti', [CutiController::class, 'index'])->name('api.cuti.index');
+    Route::post('/cuti', [CutiController::class, 'store'])->name('api.cuti.store');
 });
 

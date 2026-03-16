@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
+use App\Models\Cuti;
 use App\Models\Penggajian;
+use Illuminate\Support\Facades\DB;
 
 class PimpinanController extends Controller
 {
@@ -35,30 +37,85 @@ class PimpinanController extends Controller
         ));
     }
 
-    public function cuti()
+    public function cuti(Request $request)
     {
-        $dataCuti = [
-            [
-                'id' => 1,
-                'nama' => 'Ahmad Rida',
-                'jabatan' => 'Staff Keuangan',
-                'tgl_mulai' => '2026-03-10',
-                'tgl_selesai' => '2026-03-12',
-                'jenis' => 'Cuti Tahunan',
-                'status' => 'Pending'
-            ],
-            [
-                'id' => 2,
-                'nama' => 'Siti Aminah',
-                'jabatan' => 'Staff IT',
-                'tgl_mulai' => '2026-03-05',
-                'tgl_selesai' => '2026-03-06',
-                'jenis' => 'Cuti Sakit',
-                'status' => 'Disetujui'
-            ],
-        ];
+        $query = Cuti::with('karyawan')
+            ->where('status', 'pending_pimpinan');
 
-        return view('pimpinan.manajemen_cuti', compact('dataCuti'));
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('jabatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('jenis_cuti')) {
+            $query->where('jenis_cuti', $request->jenis_cuti);
+        }
+
+        $dataCuti = $query->orderByDesc('tanggal_pengajuan')->paginate(10)->withQueryString();
+
+        $riwayatCuti = Cuti::with('karyawan')
+            ->whereIn('status', ['approved', 'rejected'])
+            ->orderByDesc('updated_at')
+            ->paginate(10, ['*'], 'riwayat_page')
+            ->withQueryString();
+
+        return view('pimpinan.manajemen_cuti', compact('dataCuti', 'riwayatCuti'));
+    }
+
+    public function approveCuti($id)
+    {
+        $cuti = Cuti::with('karyawan')
+            ->where('id_cuti', $id)
+            ->where('status', 'pending_pimpinan')
+            ->firstOrFail();
+
+        $mulai      = \Carbon\Carbon::parse($cuti->tanggal_mulai);
+        $selesai    = \Carbon\Carbon::parse($cuti->tanggal_selesai);
+        $jumlahHari = $mulai->diffInDays($selesai) + 1;
+
+        try {
+            DB::transaction(function () use ($cuti, $jumlahHari) {
+                $karyawan = Karyawan::lockForUpdate()->findOrFail($cuti->id_karyawan);
+
+                if ($karyawan->sisa_cuti < $jumlahHari) {
+                    throw new \RuntimeException('insufficient_quota');
+                }
+
+                $karyawan->update(['sisa_cuti' => $karyawan->sisa_cuti - $jumlahHari]);
+
+                $cuti->update([
+                    'status'        => 'approved',
+                    'disetujui_oleh'=> auth()->id(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'insufficient_quota') {
+                return redirect()->route('pimpinan.cuti')
+                    ->with('error', 'Saldo cuti karyawan tidak mencukupi untuk pengajuan ini.');
+            }
+            throw $e;
+        }
+
+        return redirect()->route('pimpinan.cuti')
+            ->with('success', 'Pengajuan cuti disetujui dan saldo cuti karyawan telah dipotong.');
+    }
+
+    public function rejectCuti($id)
+    {
+        $cuti = Cuti::where('id_cuti', $id)
+            ->where('status', 'pending_pimpinan')
+            ->firstOrFail();
+
+        $cuti->update([
+            'status'        => 'rejected',
+            'disetujui_oleh'=> auth()->id(),
+        ]);
+
+        return redirect()->route('pimpinan.cuti')
+            ->with('success', 'Pengajuan cuti telah ditolak.');
     }
 
     public function gaji(Request $request)
