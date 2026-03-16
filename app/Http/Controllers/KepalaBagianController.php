@@ -37,12 +37,41 @@ class KepalaBagianController extends Controller
 
     public function penilaian()
     {
-        $karyawan = [
-            (object)['id' => 1, 'nama' => 'Budi Santoso'],
-            (object)['id' => 2, 'nama' => 'Siti Aminah'],
-        ];
+        $karyawan = Karyawan::where('status_karyawan', 'Aktif')->get();
+        $riwayatPenilaian = Penilaian::with('karyawan')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
 
-        return view('kepala_bagian.penilaian_kinerja', compact('karyawan'));
+        return view('kepala_bagian.penilaian_kinerja', compact('karyawan', 'riwayatPenilaian'));
+    }
+
+    public function storePenilaian(Request $request)
+    {
+        $request->validate([
+            'id_karyawan'    => 'required|exists:karyawan,id_karyawan',
+            'periode'        => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'disiplin'       => 'required|numeric|min:0|max:100',
+            'produktivitas'  => 'required|numeric|min:0|max:100',
+            'tanggung_jawab' => 'required|numeric|min:0|max:100',
+            'sikap_kerja'    => 'required|numeric|min:0|max:100',
+            'loyalitas'      => 'required|numeric|min:0|max:100',
+            'total_skor'     => 'required|numeric|min:0|max:100',
+        ]);
+
+        [$tahun, $bulan] = explode('-', $request->periode);
+
+        Penilaian::create([
+            'id_karyawan'    => $request->id_karyawan,
+            'bulan'          => $bulan,
+            'tahun'          => $tahun,
+            'disiplin'       => $request->disiplin,
+            'produktivitas'  => $request->produktivitas,
+            'tanggung_jawab' => $request->tanggung_jawab,
+            'sikap_kerja'    => $request->sikap_kerja,
+            'loyalitas'      => $request->loyalitas,
+            'total_skor'     => $request->total_skor,
+            'dinilai_oleh'   => auth()->user()->id_user
+        ]);
+
+        return redirect()->route('kabag.penilaian')->with('success', 'Penilaian Kinerja berhasil disimpan!');
     }
 
     public function gaji(Request $request)

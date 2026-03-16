@@ -39,6 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian', [KepalaBagianController::class, 'index'])->name('kabag.dashboard');
     Route::get('/kepala-bagian/karyawan', [KepalaBagianController::class, 'karyawan'])->name('kabag.karyawan');
     Route::get('/kepala-bagian/penilaian', [KepalaBagianController::class, 'penilaian'])->name('kabag.penilaian');
+    Route::post('/kepala-bagian/penilaian', [KepalaBagianController::class, 'storePenilaian'])->name('kabag.penilaian.store');
     #Gaji
     Route::get('/kepala-bagian/gaji', [KepalaBagianController::class, 'gaji'])->name('kabag.gaji');
     Route::get('/kepala-bagian/gaji/create', [KepalaBagianController::class, 'createGaji'])->name('kabag.gaji.create');
