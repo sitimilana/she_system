@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SlipGajiController;
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,3 +26,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
 });
 
+/* MOBILE - Bebas Akses (Belum punya token) */
+Route::post('/login', [AuthController::class, 'login']);
+
+/* MOBILE - Harus Pakai Token Sanctum */
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
+    Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
+});
