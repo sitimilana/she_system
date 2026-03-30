@@ -45,7 +45,7 @@
         <li class="nav-item"><a href="{{ route('akademik.beranda') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="{{ route('akademik.absensi') }}" class="nav-link"><i class="bi bi-journal-check"></i> Riwayat Absensi</a></li>
         <li class="nav-item"><a href="{{ route('akademik.cuti') }}" class="nav-link active"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('akademik.manajemen_karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('akademik.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
         
         <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
             <a href="{{ route('logout') }}" class="nav-link text-white-50 px-3" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -89,7 +89,7 @@
                     @forelse($dataCuti as $index => $cuti)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="fw-bold text-dark">{{ $cuti->nama_karyawan }}</td>
+                        <td class="fw-bold text-dark">{{ $cuti->karyawan->nama ?? ($cuti->karyawan->user->nama_lengkap ?? 'Unknown') }}</td>
                         <td>{{ \Carbon\Carbon::parse($cuti->tanggal_pengajuan)->format('d M Y') }}</td>
                         
                         <td class="text-center">
@@ -106,8 +106,8 @@
 
                         <td class="text-center">
                             @if($cuti->berkas_bukti)
-                                <a href="{{ $cuti->berkas_bukti }}" target="_blank" class="text-decoration-none">
-                                    <img src="{{ $cuti->berkas_bukti }}" alt="Bukti" class="photo-thumb" title="Klik untuk lihat berkas">
+                                <a href="{{ asset('storage/' . $cuti->berkas_bukti) }}" target="_blank" class="text-decoration-none">
+                                    <img src="{{ asset('storage/' . $cuti->berkas_bukti) }}" alt="Bukti" class="photo-thumb" title="Klik untuk lihat berkas">
                                 </a>
                             @else
                                 <span class="badge bg-light text-muted border">Tidak Ada Berkas</span>

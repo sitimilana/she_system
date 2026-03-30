@@ -1,247 +1,210 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<title>Dashboard Kepala Bagian</title>
+    <title>Dashboard Kepala Bagian</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            background: #f4f7f6; 
+            font-family: 'Inter', sans-serif; 
+            color: #333;
+        }
 
-<style>
+        /* SIDEBAR (Konsisten dengan halaman lain) */
+        .sidebar {
+            width: 250px; min-height: 100vh; background-color: #8f9fc4;
+            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
+        }
+        .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
+        .sidebar .logo img { width: 100px; }
+        .sidebar .nav-link { color: #fff; font-size: 15px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s; border-radius: 8px;}
+        .sidebar .nav-link:hover { background-color: rgba(255,255,255,0.1); }
+        .sidebar .nav-link.active { background-color: rgba(255,255,255,0.3); font-weight: 600;}
+        .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
 
-body{
-background:#e5e5e5;
-}
-
-.sidebar{
-width:250px;
-min-height:100vh;
-background:#8fa1c7;
-position:fixed;
-padding:20px;
-}
-
-.sidebar img{
-width:120px;
-display:block;
-margin:auto;
-margin-bottom:30px;
-}
-
-.sidebar .nav-link{
-color:black;
-font-size:18px;
-margin-bottom:10px;
-}
-
-.sidebar .nav-link:hover{
-background:rgba(255,255,255,0.3);
-border-radius:10px;
-}
-
-.content{
-margin-left:260px;
-padding:40px;
-}
-
-.card-dashboard{
-background:#8fa1c7;
-border-radius:20px;
-padding:25px;
-box-shadow:0px 5px 10px rgba(0,0,0,0.2);
-}
-
-.card-penilaian{
-background:white;
-border-radius:15px;
-padding:15px;
-margin-bottom:15px;
-box-shadow:0px 5px 10px rgba(0,0,0,0.2);
-}
-
-.card-small{
-background:#8fa1c7;
-border-radius:20px;
-padding:30px;
-text-align:center;
-box-shadow:0px 5px 10px rgba(0,0,0,0.2);
-}
-
-</style>
-
+        /* CONTENT */
+        .content { margin-left: 250px; padding: 40px; }
+        
+        /* CARDS MODERN */
+        .card-custom { 
+            background-color: #ffffff; border-radius: 16px; 
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); 
+            transition: 0.3s;
+        }
+        .card-custom:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.05); transform: translateY(-2px); }
+        
+        /* WIDGET STATISTIK */
+        .stat-widget { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; overflow: hidden; position: relative;}
+        .stat-widget::after {
+            content: "\F4E1"; font-family: "bootstrap-icons"; position: absolute;
+            right: -10px; bottom: -20px; font-size: 8rem; color: rgba(255,255,255,0.05);
+        }
+        .stat-value { font-size: 3.5rem; font-weight: 800; line-height: 1; margin-bottom: 5px;}
+        
+        /* LIST STYLES */
+        .list-item-custom {
+            border: 1px solid #f1f5f9; border-radius: 12px; padding: 15px; 
+            margin-bottom: 15px; background: #fafafa; transition: 0.2s;
+        }
+        .list-item-custom:hover { background: #fff; border-color: #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        /* MODAL CUSTOM */
+        .modal-content { border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .modal-header { border-bottom: 1px solid #f1f5f9; }
+        .modal-footer { border-top: 1px solid #f1f5f9; }
+    </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
-
 <div class="sidebar">
-
-<img src="{{ asset('images/logoshe.png') }}">
-
-<ul class="nav flex-column">
-
-<li class="nav-item">
-<a href="{{ route('kabag.dashboard') }}" class="nav-link">
-<i class="bi bi-house"></i> Home
-</a>
-</li>
-
-<li class="nav-item">
-<a href="{{ route('kabag.karyawan') }}" class="nav-link">
-<i class="bi bi-person"></i> Kelola Karyawan
-</a>
-</li>
-
-<li class="nav-item">
-<a href="{{ route('kabag.penilaian') }}" class="nav-link">
-<i class="bi bi-star"></i> Penilaian Kinerja
-</a>
-</li>
-
-<li class="nav-item mt-4">
-<a href="{{ route('logout') }}" class="nav-link" onclick="confirmLogout(event)">
-<i class="bi bi-box-arrow-right"></i> Logout
-</a>
-</li>
-
-</ul>
-
-<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">
-@csrf
-</form>
-
+    <div class="logo">
+        <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
+    </div>
+    <ul class="nav flex-column mt-5">
+        <li class="nav-item">
+            <a href="{{ route('kabag.dashboard') }}" class="nav-link active"><i class="bi bi-house-door"></i> Home</a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a>
+        </li>
+        <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
+            <a href="#" class="nav-link text-white-50 px-3" onclick="confirmLogout(event)">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+        </li>
+    </ul>
 </div>
-
-
-<!-- CONTENT -->
 
 <div class="content">
+    
+    <div class="mb-5">
+        <h2 class="fw-bold m-0" style="color: #1e293b;">Selamat Datang, Kepala Bagian</h2>
+        <p class="text-muted">Berikut adalah ringkasan operasional departemen Anda hari ini.</p>
+    </div>
 
-<h1 class="mb-4"><b>Dashboard Kepala Bagian</b></h1>
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card card-custom stat-widget p-4 h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 fw-medium mb-1">Total Karyawan Divisi</p>
+                        <div class="stat-value">{{ $jumlahKaryawan ?? 0 }}</div>
+                        <span class="badge bg-success bg-opacity-25 text-light mt-2"><i class="bi bi-arrow-up-short"></i> Aktif Beroperasi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card card-custom p-4 h-100 d-flex justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white p-3 rounded-circle shadow-sm me-4 text-primary fs-3">
+                        <i class="bi bi-calendar2-check"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">Waktunya Evaluasi Bulanan</h5>
+                        <p class="text-muted m-0 small">Pastikan Anda telah mengisi penilaian kinerja untuk seluruh staf sebelum akhir bulan.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <div class="row">
+        
+        <div class="col-md-8 mb-4">
+            <div class="card card-custom p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <h5 class="fw-bold m-0"><i class="bi bi-star-half text-warning me-2"></i>Penilaian Kinerja Terkini</h5>
+                    <select class="form-select form-select-sm w-auto shadow-sm cursor-pointer">
+                        <option>Bulan Ini</option>
+                        <option>Bulan Lalu</option>
+                    </select>
+                </div>
 
-<!-- PENILAIAN -->
+                <div>
+                    @forelse($penilaian as $p)
+                    <div class="list-item-custom d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold me-3" style="width: 45px; height: 45px;">
+                                {{ substr($p->nama ?? 'U', 0, 1) }}
+                            </div>
+                            <div>
+                                <h6 class="fw-bold m-0">{{ $p->nama ?? 'Nama Tidak Diketahui' }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i> 
+                                    {{ $p->tanggal_mulai ?? '-' }} s/d {{ $p->tanggal_selesai ?? '-' }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-{{ ($p->status ?? '') == 'Selesai' ? 'success' : 'warning text-dark' }} rounded-pill px-3 py-2">
+                                {{ $p->status ?? 'Menunggu' }}
+                            </span>
+                            <button class="btn btn-sm btn-outline-primary border-0 bg-primary bg-opacity-10" title="Lihat Detail"><i class="bi bi-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
+                        Belum ada data penilaian terkini.
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
 
-<div class="card-dashboard mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card card-custom p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                    <h5 class="fw-bold m-0"><i class="bi bi-people text-primary me-2"></i>Tim Anda</h5>
+                    <a href="{{ route('kabag.karyawan') }}" class="text-decoration-none small fw-semibold">Lihat Semua</a>
+                </div>
 
-<div class="d-flex justify-content-between mb-3">
+                <div class="table-responsive">
+                    <table class="table table-borderless table-hover align-middle">
+                        <tbody>
+                            @forelse($karyawan as $k)
+                            <tr>
+                                <td width="10%" class="text-muted fw-bold">{{ $loop->iteration }}</td>
+                                <td class="fw-medium text-dark">{{ $k->nama }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="2" class="text-center text-muted small py-3">Tidak ada data karyawan.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-<h4><b>Penilaian Kinerja Perbulan</b></h4>
-
-<select class="form-select w-auto">
-<option>Januari</option>
-<option>Februari</option>
-<option>Maret</option>
-<option>April</option>
-<option>Mei</option>
-<option>Juni</option>
-<option>Juli</option>
-<option>Agustus</option>
-<option>September</option>
-<option>Oktober</option>
-<option>November</option>
-<option>Desember</option>
-</select>
-
+    </div>
 </div>
 
-
-@foreach($penilaian as $p)
-
-<div class="card-penilaian d-flex justify-content-between align-items-center">
-
-<div>
-
-<p><b>Nama :</b> {{ $p->nama ?? '-' }}</p>
-
-<p><b>Tanggal Mulai-Selesai :</b>
-{{ $p->tanggal_mulai ?? '-' }} -
-{{ $p->tanggal_selesai ?? '-' }}
-</p>
-
-<p><b>Status :</b> {{ $p->status ?? '-' }}</p>
-
-</div>
-
-<button class="btn btn-danger">Detail</button>
-
-</div>
-
-@endforeach
-
-
-</div>
-
-
-<!-- BOTTOM -->
-
-<div class="row">
-
-<div class="col-md-3">
-
-<div class="card-small">
-
-<h5><b>Jumlah Karyawan</b></h5>
-
-<h1>{{ $jumlahKaryawan }}</h1>
-
-</div>
-
-</div>
-
-
-<div class="col-md-9">
-
-<div class="card-dashboard">
-
-<h5><b>Data Karyawan</b></h5>
-
-<table class="table">
-
-<thead>
-<tr>
-<th>No</th>
-<th>Nama</th>
-</tr>
-</thead>
-
-<tbody>
-
-@foreach($karyawan as $k)
-
-<tr>
-<td>{{ $loop->iteration }}</td>
-<td>{{ $k->nama }}</td>
-</tr>
-
-@endforeach
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- Modal Konfirmasi Logout -->
 <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title"><b>Konfirmasi Logout</b></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        Apakah Anda yakin ingin logout?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-danger" onclick="document.getElementById('logout-form').submit()">Ya, Logout</button>
+      <div class="modal-body text-center p-4">
+        <div class="text-danger mb-3">
+            <i class="bi bi-box-arrow-right" style="font-size: 3rem;"></i>
+        </div>
+        <h5 class="fw-bold mb-3">Konfirmasi Logout</h5>
+        <p class="text-muted mb-4 small">Apakah Anda yakin ingin keluar dari sesi aplikasi saat ini?</p>
+        <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-light fw-bold w-100" data-bs-dismiss="modal">Batal</button>
+            <button type="button" class="btn btn-danger fw-bold w-100 shadow-sm" onclick="document.getElementById('logout-form').submit()">Ya, Keluar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -249,11 +212,11 @@ box-shadow:0px 5px 10px rgba(0,0,0,0.2);
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-function confirmLogout(e) {
-    e.preventDefault();
-    var modal = new bootstrap.Modal(document.getElementById('logoutModal'));
-    modal.show();
-}
+    function confirmLogout(e) {
+        e.preventDefault();
+        var modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+        modal.show();
+    }
 </script>
 
 </body>

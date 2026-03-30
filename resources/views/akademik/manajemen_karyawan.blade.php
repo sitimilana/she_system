@@ -40,7 +40,7 @@
         <li class="nav-item"><a href="{{ route('akademik.beranda') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="{{ route('akademik.absensi') }}" class="nav-link"><i class="bi bi-journal-check"></i> Riwayat Absensi</a></li>
         <li class="nav-item"><a href="{{ route('akademik.cuti') }}" class="nav-link"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('akademik.manajemen_karyawan') }}" class="nav-link active"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('akademik.karyawan') }}" class="nav-link active"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
         
         <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
             <a href="{{ route('logout') }}" class="nav-link text-white-50 px-3" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -78,32 +78,29 @@
                     <tr>
                         <th width="5%" class="text-center">No</th>
                         <th width="20%">Nama</th>
-                        <th width="15%">Jabatan</th>
+                        <th width="15%">Divisi</th>
                         <th width="15%">Kontak</th>
                         <th width="20%">Alamat</th>
                         <th width="15%" class="text-center">Status Kerja</th>
-                        <th width="10%" class="text-center">Detail</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($dataKaryawan as $index => $karyawan)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="fw-bold text-dark">{{ $karyawan->nama }}</td>
-                        <td>{{ $karyawan->jabatan }}</td>
-                        <td>{{ $karyawan->kontak }}</td>
-                        <td class="text-truncate" style="max-width: 150px;" title="{{ $karyawan->alamat }}">
-                            {{ $karyawan->alamat }}
+                        <td class="fw-bold text-dark">{{ $karyawan->karyawan->nama ?? $karyawan->nama_lengkap }}</td>
+                        <td>{{ ucfirst($karyawan->role->nama_role) }}</td>
+                        <td>{{ $karyawan->karyawan->no_hp ?? '-' }}</td>
+                        <td class="text-truncate" style="max-width: 150px;" title="{{ $karyawan->karyawan->alamat ?? '-' }}">
+                            {{ $karyawan->karyawan->alamat ?? '-' }}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-{{ $karyawan->status_kerja == 'Aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
-                                {{ $karyawan->status_kerja }}
+                            @php
+                                $status = $karyawan->karyawan->status_karyawan ?? 'Belum Lengkap';
+                            @endphp
+                            <span class="badge bg-{{ strtolower($status) == 'aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
+                                {{ ucfirst($status) }}
                             </span>
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-light border text-primary" title="Lihat Profil Lengkap (Read-Only)">
-                                <i class="bi bi-person-vcard"></i>
-                            </button>
                         </td>
                     </tr>
                     @empty

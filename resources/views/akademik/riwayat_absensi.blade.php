@@ -47,7 +47,7 @@
         <li class="nav-item"><a href="{{ route('akademik.beranda') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
         <li class="nav-item"><a href="{{ route('akademik.absensi') }}" class="nav-link active"><i class="bi bi-journal-check"></i> Riwayat Absensi</a></li>
         <li class="nav-item"><a href="{{ route('akademik.cuti') }}" class="nav-link"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('akademik.manajemen_karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('akademik.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
         
         <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
             <a href="{{ route('logout') }}" class="nav-link text-white-50 px-3" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -86,7 +86,7 @@
                     @forelse($dataAbsensi as $index => $absen)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
-                        <td class="fw-bold text-dark">{{ $absen->nama_lengkap }}</td>
+                        <td class="fw-bold text-dark">{{ $absen->karyawan->nama ?? ($absen->karyawan->user->nama_lengkap ?? 'Unknown') }}</td>
                         <td>{{ \Carbon\Carbon::parse($absen->tanggal)->format('d M Y') }}</td>
                         
                         <td class="text-center">
@@ -120,9 +120,9 @@
 
                         <td class="text-center">
                             @if($absen->foto_masuk)
-                                <img src="{{ $absen->foto_masuk }}" alt="In" class="photo-thumb me-1" title="Foto Masuk">
+                                <img src="{{ asset('storage/' . $absen->foto_masuk) }}" alt="In" class="photo-thumb me-1" title="Foto Masuk">
                                 @if($absen->foto_pulang)
-                                    <img src="{{ $absen->foto_pulang }}" alt="Out" class="photo-thumb" title="Foto Pulang">
+                                    <img src="{{ asset('storage/' . $absen->foto_pulang) }}" alt="Out" class="photo-thumb" title="Foto Pulang">
                                 @endif
                             @else
                                 <span class="text-muted small">Tidak ada foto</span>
