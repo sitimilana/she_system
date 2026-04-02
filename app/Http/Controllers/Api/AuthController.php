@@ -11,22 +11,29 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // 1. Cari user di database
+        // 1. Validasi request dari Android
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required'
+        ]);
+
+        // 2. Cari user di database
         $user = User::where('username', $request->username)->first();
 
-        if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Username tidak ditemukan!'], 401);
+        // 3. Pengecekan Murni Laravel (Apakah user ada & apakah Hash Password cocok?)
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Login Gagal: Username atau Password salah!'
+            ], 401);
         }
 
-        // 2. PENGECEKAN GANDA (Sapu Jagat)
-        // Mengecek apakah password cocok dengan Hash (Bcrypt) ATAU cocok dengan teks biasa
-        $passwordCocok = Hash::check($request->password, $user->password) || $request->password === $user->password;
-
-        if (!$passwordCocok) {
-            return response()->json(['success' => false, 'message' => 'Password salah bosku!'], 401);
+        // 4. Jika cocok, cek status akun
+        if ($user->status_akun !== 'aktif') {
+            return response()->json(['success' => false, 'message' => 'Akun dinonaktifkan!'], 403);
         }
 
-        // 3. Jika cocok, Buat Token
+        // 5. Buat Token
         $token = $user->createToken('MobileAppToken')->plainTextToken;
 
         return response()->json([

@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
 use App\Models\Penggajian;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+
 
 class PimpinanController extends Controller
 {
@@ -267,4 +270,35 @@ class PimpinanController extends Controller
 
         return view('pimpinan.reward', compact('topKandidat', 'daftarReward'));
     }
+
+    public function storeKaryawan(Request $request)
+    {
+        // 1. Validasi Input dari form website
+        $request->validate([
+            'nama_lengkap' => 'required',
+            'username'     => 'required|unique:user,username',
+            'password'     => 'required',
+            // Pastikan ID Role Karyawan sudah benar (misal ID-nya 4 untuk Karyawan)
+            'role_id'      => 'required|exists:roles,role_id' 
+        ]);
+
+        // 2. Buat Akun User (INI YANG MEMBUAT LOGIN BISA BERHASIL NANTINYA)
+        $user = User::create([
+            'nama_lengkap' => $request->nama_lengkap,
+            'username'     => $request->username,
+            'password'     => Hash::make($request->password), // WAJIB DI-HASH!
+            'role_id'      => $request->role_id,
+            'status_akun'  => 'aktif'
+        ]);
+
+        // 3. Buat Profil Karyawan yang terhubung ke User
+        Karyawan::create([
+            'id_user'         => $user->id_user,
+            'nama'            => $request->nama_lengkap,
+            'status_karyawan' => 'aktif'
+        ]);
+
+        return back()->with('success', 'Akun Karyawan berhasil dibuat. Silakan login di Aplikasi Mobile!');
+    }
+
 }
