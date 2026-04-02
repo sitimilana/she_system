@@ -300,5 +300,23 @@ class PimpinanController extends Controller
 
         return back()->with('success', 'Akun Karyawan berhasil dibuat. Silakan login di Aplikasi Mobile!');
     }
+    public function destroyKaryawan($id_user)
+    {
+        // 1. Cari data profil karyawan berdasarkan id_user
+        $karyawan = Karyawan::where('id_user', $id_user)->first();
+        
+        // 2. Hapus profil karyawannya (jika ada)
+        if ($karyawan) {
+            $karyawan->delete();
+        }
+
+        // 3. Cari akun login-nya, lalu hapus!
+        $user = User::find($id_user);
+        if ($user) {
+            $user->delete();
+        }
+
+        return back()->with('success', 'Akun Karyawan berhasil dihapus secara permanen tanpa merusak Role Master!');
+    }
 
 }

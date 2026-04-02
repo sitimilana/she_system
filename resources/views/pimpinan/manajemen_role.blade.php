@@ -34,7 +34,6 @@
 </head>
 <body>
 
-<!-- Sidebar -->
 <div class="sidebar p-3">
     <img src="{{ asset('images/logo-she.png') }}" width="120" class="d-block mx-auto mb-4">
 
@@ -47,21 +46,39 @@
     </ul>
 </div>
 
-<!-- Content -->
 <div class="content">
 
     <h2 class="fw-bold mb-4">Manajemen Role</h2>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
-    <!-- Button Tambah -->
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalTambah">
         <i class="bi bi-plus-circle"></i> Tambah Role
     </button>
 
-    <!-- Table -->
     <div class="card shadow">
         <div class="card-body">
             <table class="table table-bordered">
@@ -71,23 +88,22 @@
                         <th>Nama</th>
                         <th>Role</th>
                         <th>Username</th>
-                        <th>Password</th>
-                        <th></th>Aksi</th>
+                        <th>Password</th> 
+                        <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($roles as $role)
-                    @php $user = $role->users->first(); @endphp
+                    @foreach($users as $user)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $user->nama_lengkap ?? '-' }}</td>
-                        <td>{{ $role->nama_role }}</td>
+                        <td>{{ $user->role->nama_role ?? '-' }}</td>
                         <td>{{ $user->username ?? '-' }}</td>
-                        <td>{{ $user ? '********' : '-' }}</td>
+                        <td>********</td>
                         <td>
                             <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#modalHapus"
-                                data-id="{{ $role->role_id }}">
+                                data-id="{{ $user->id_user }}">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </td>
@@ -100,7 +116,6 @@
 
 </div>
 
-<!-- Modal Tambah -->
 <div class="modal fade" id="modalTambah">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -118,9 +133,8 @@
             </div>
 
             <div class="mb-3">
-                <label>Role</label>
+                <label>Pilih Jabatan (Role)</label>
                 <select name="role" class="form-select" required>
-                    <option value="" disabled selected>-- Pilih Role --</option>
                     <option value="Pimpinan">Pimpinan</option>
                     <option value="Kepala Bagian">Kepala Bagian</option>
                     <option value="Akademik">Akademik</option>
@@ -137,6 +151,7 @@
                 <label>Password</label>
                 <input type="password" name="password" class="form-control" required>
             </div>
+            
         </div>
 
         <div class="modal-footer">
@@ -148,7 +163,6 @@
   </div>
 </div>
 
-<!-- Modal Hapus -->
 <div class="modal fade" id="modalHapus">
   <div class="modal-dialog">
     <div class="modal-content">
