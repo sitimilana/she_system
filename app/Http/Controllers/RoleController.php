@@ -13,10 +13,21 @@ class RoleController extends Controller
     /**
      * Menampilkan daftar semua Role yang ada di sistem.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua user beserta relasi role-nya (satu role bisa banyak user)
-        $users = User::with('role')->get();
+        $search = $request->input('search');
+
+        // Ambil data user, filter berdasarkan pencarian jika param search ada
+        $users = User::with('role')
+            ->when($search, function($query, $search) {
+                return $query->where('nama_lengkap', 'like', '%' . $search . '%')
+                             ->orWhere('username', 'like', '%' . $search . '%')
+                             ->orWhereHas('role', function($q) use ($search) {
+                                 $q->where('nama_role', 'like', '%' . $search . '%');
+                             });
+            })
+            ->get();
+
         // Ambil semua role untuk keperluan form jika dibutuhkan
         $roles = Role::all();
         return view('pimpinan.manajemen_role', compact('users', 'roles'));

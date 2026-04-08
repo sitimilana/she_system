@@ -74,6 +74,8 @@
             margin-left: 250px; 
             padding: 40px; 
         }
+        
+        .search-bar { max-width: 400px; }
     </style>
 </head>
 <body>
@@ -155,6 +157,13 @@
         <i class="bi bi-plus-circle"></i> Tambah Role
     </button>
 
+    <div class="d-flex justify-content-between mb-3">
+        <form action="{{ route('role.index') }}" method="GET" class="input-group search-bar shadow-sm w-100">
+            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+            <input type="text" name="search" id="searchInput" class="form-control border-start-0" placeholder="Search nama atau role..." value="{{ request('search') }}">
+        </form>
+    </div>
+
     <div class="card shadow">
         <div class="card-body">
             <table class="table table-bordered">
@@ -164,18 +173,16 @@
                         <th>Nama</th>
                         <th>Role</th>
                         <th>Username</th>
-                        <th>Password</th> 
                         <th>Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach($users as $user)
+                <tbody id="tableBody">
+                    @forelse($users as $user)
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $user->nama_lengkap ?? '-' }}</td>
                         <td>{{ $user->role->nama_role ?? '-' }}</td>
                         <td>{{ $user->username ?? '-' }}</td>
-                        <td>********</td>
                         <td>
                             <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
                                 data-bs-target="#modalHapus"
@@ -184,7 +191,11 @@
                             </button>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Data tidak ditemukan.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -267,6 +278,24 @@
     modalHapus.addEventListener('show.bs.modal', function (e) {
         const id = e.relatedTarget.getAttribute('data-id');
         document.getElementById('formHapus').action = '/role/' + id;
+    });
+
+    // Real-time search/filter untuk tabel tanpa memuat ulang halaman
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filterValue = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#tableBody tr');
+
+        rows.forEach(function(row) {
+            // Abaikan baris "Data tidak ditemukan"
+            if(row.children.length === 1) return;
+
+            let rowText = row.innerText.toLowerCase();
+            if(rowText.includes(filterValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     });
 </script>
 </body>

@@ -69,21 +69,21 @@
     <h5 class="fw-bold mb-3 text-secondary"><i class="bi bi-star-fill text-warning me-2"></i>Kandidat Top Performer Bulan Ini</h5>
     <div class="row mb-5">
         @foreach($topKandidat as $kandidat)
-        <div class="col-md-4">
+        <div class="col-md-12 col-lg-6">
             <div class="performer-card shadow-sm h-100">
                 <div class="d-flex align-items-center mb-3">
                     <div class="bg-warning text-dark rounded-circle d-flex justify-content-center align-items-center fw-bold fs-4 me-3" style="width: 50px; height: 50px;">
-                        {{ substr($kandidat->nama, 0, 1) }}
+                        {{ substr($kandidat->karyawan->nama ?? 'A', 0, 1) }}
                     </div>
                     <div>
-                        <h5 class="m-0 fw-bold">{{ $kandidat->nama }}</h5>
-                        <small class="text-white-50">{{ $kandidat->jabatan }}</small>
+                        <h5 class="m-0 fw-bold">{{ $kandidat->karyawan->nama ?? '-' }}</h5>
+                        <small class="text-white-50">{{ $kandidat->karyawan->user->role->nama_role ?? '-' }}</small>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-end mt-4">
                     <div>
                         <small class="d-block text-white-50">Skor Kinerja</small>
-                        <h3 class="m-0 text-warning fw-bold">{{ $kandidat->skor }}/100</h3>
+                        <h3 class="m-0 text-warning fw-bold">{{ $kandidat->total_skor }}/100</h3>
                     </div>
                 </div>
             </div>
@@ -100,71 +100,47 @@
             <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel me-2"></i>Filter Data</button>
         </div>
 
-        <form action="#" method="POST">
-            @csrf
-            <div class="table-responsive">
-                <table class="table table-hover table-custom m-0">
-                    <thead>
-                        <tr>
-                            <th width="5%" class="text-center">No</th>
-                            <th width="20%">Nama Karyawan</th>
-                            <th width="15%">Jabatan</th>
-                            <th width="15%" class="text-center">Skor Kinerja</th>
-                            <th width="20%">Rekomendasi Reward</th>
-                            <th width="15%" class="text-center">Status</th>
-                            <th width="10%" class="text-center">
-                                Pilih <br>
-                                <input class="form-check-input mt-1" type="checkbox" id="checkAll" title="Pilih Semua">
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($daftarReward as $index => $reward)
-                        <tr>
-                            <td class="text-center">{{ $index + 1 }}</td>
-                            <td class="fw-bold">{{ $reward->nama }}</td>
-                            <td>{{ $reward->jabatan }}</td>
-                            <td class="text-center fw-bold {{ $reward->skor >= 90 ? 'text-success' : 'text-dark' }}">{{ $reward->skor }}</td>
-                            <td>{{ $reward->jenis_reward }}</td>
-                            <td class="text-center">
-                                <span class="badge bg-{{ $reward->status == 'Menunggu' ? 'warning text-dark' : 'success' }} px-3 py-2 rounded-pill">
-                                    {{ $reward->status }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <div class="d-flex justify-content-center align-items-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-light border text-primary" title="Lihat Detail Penilaian"><i class="bi bi-eye"></i></button>
-                                    @if($reward->status == 'Menunggu')
-                                        <input class="form-check-input check-item m-0" type="checkbox" name="karyawan_id[]" value="{{ $reward->id }}">
-                                    @endif
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">Belum ada data evaluasi reward bulan ini.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-                <p class="text-muted m-0 small">*Centang kotak di sebelah kanan untuk menyetujui reward.</p>
-                <button type="submit" class="btn btn-primary fw-bold shadow-sm px-4">
-                    <i class="bi bi-check2-circle me-2"></i>Setujui Reward Terpilih
-                </button>
-            </div>
-        </form>
+        <div class="table-responsive">
+            <table class="table table-hover table-custom m-0">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">Peringkat</th>
+                        <th width="25%">Nama Karyawan</th>
+                        <th width="20%">Jabatan</th>
+                        <th width="20%" class="text-center">Periode Penilaian</th>
+                        <th width="15%" class="text-center">Skor Kinerja</th>
+                        <th width="15%" class="text-center">Status Reward</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($daftarReward as $index => $reward)
+                    <tr>
+                        <td class="text-center fw-bold">{{ $index + 1 }}</td>
+                        <td class="fw-bold">{{ $reward->karyawan->nama ?? '-' }}</td>
+                        <td>{{ $reward->karyawan->user->role->nama_role ?? '-' }}</td>
+                        <td class="text-center">{{ $reward->bulan }} / {{ $reward->tahun }}</td>
+                        <td class="text-center fw-bold {{ $reward->total_skor >= 90 ? 'text-success' : 'text-dark' }}">{{ $reward->total_skor }}</td>
+                        <td class="text-center">
+                            @if($index == 0)
+                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-trophy-fill me-1"></i> Penerima Reward</span>
+                            @else
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill">-</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Belum ada data evaluasi kinerja bulan ini.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // Script sederhana untuk "Pilih Semua" checkbox
-    document.getElementById('checkAll').addEventListener('change', function() {
-        let checkboxes = document.querySelectorAll('.check-item');
-        checkboxes.forEach(cb => cb.checked = this.checked);
-    });
+    // Script sederhana pencarian
 </script>
 
 </body>

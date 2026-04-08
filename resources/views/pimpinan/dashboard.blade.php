@@ -133,16 +133,6 @@
                 </p>
             </div>
         </div>
-
-        <div class="col-md-8">
-            <div class="card p-4 shadow-sm h-100" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                <p class="text-muted mb-1">Estimasi Beban Gaji (Bulan Ini)</p>
-                <div class="metric-value">Rp {{ $totalBebanGaji ?? '0' }}</div>
-                <p class="mt-2 mb-0 trend-up">
-                    <i class="bi bi-graph-up-arrow"></i> Data berjalan sesuai payroll
-                </p>
-            </div>
-        </div>
     </div>
 
     <div class="row">

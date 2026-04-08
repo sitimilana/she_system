@@ -173,7 +173,6 @@
                     <th>Total Penerimaan</th>
                     <th>Total Potongan</th>
                     <th>Gaji Bersih</th>
-                    <th class="text-center">Status</th>
                     <th class="text-center">Aksi</th>
                 </tr>
             </thead>
@@ -191,13 +190,6 @@
                     <td class="text-success">Rp {{ number_format($totalPenerimaan, 0, ',', '.') }}</td>
                     <td class="text-danger">Rp {{ number_format($totalPotongan, 0, ',', '.') }}</td>
                     <td class="fw-bold">Rp {{ number_format($gaji->total_gaji, 0, ',', '.') }}</td>
-                    <td class="text-center">
-                        @if($gaji->status_slip == 'draft')
-                            <span class="badge bg-secondary">Draft</span>
-                        @else
-                            <span class="badge bg-success">Final</span>
-                        @endif
-                    </td>
                     <td class="text-center">
                         <a href="{{ route('pimpinan.gaji.edit', $gaji->id_gaji) }}" class="btn btn-warning btn-sm text-dark me-1" title="Edit Data">
                             <i class="bi bi-pencil-square"></i>

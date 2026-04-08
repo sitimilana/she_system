@@ -130,6 +130,13 @@
         <button class="btn btn-danger"><i class="bi bi-file-earmark-pdf-fill"></i> Export PDF</button>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="d-flex justify-content-between mb-3">
         <div class="input-group search-bar shadow-sm">
             <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
@@ -154,17 +161,17 @@
                 @forelse($dataCuti as $index => $cuti)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="fw-bold">{{ $cuti['nama'] }}</td>
-                    <td>{{ $cuti['jabatan'] }}</td>
-                    <td>{{ $cuti['tgl_mulai'] }} s/d {{ $cuti['tgl_selesai'] }}</td>
-                    <td>{{ $cuti['jenis'] }}</td>
+                    <td class="fw-bold">{{ $cuti->karyawan->nama ?? 'Tidak Diketahui' }}</td>
+                    <td>{{ $cuti->karyawan->user->role->nama_role ?? '-' }}</td>
+                    <td>{{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}</td>
+                    <td>{{ $cuti->alasan }}</td>
                     <td class="text-center">
-                        @if($cuti['status'] == 'Pending')
-                            <span class="badge bg-warning text-dark">Pending</span>
-                        @elseif($cuti['status'] == 'Disetujui')
-                            <span class="badge bg-success">Disetujui</span>
+                        @if($cuti->status == 'Pending')
+                            <span class="badge bg-warning text-dark">{{ $cuti->status }}</span>
+                        @elseif($cuti->status == 'Disetujui')
+                            <span class="badge bg-success">{{ $cuti->status }}</span>
                         @else
-                            <span class="badge bg-danger">Ditolak</span>
+                            <span class="badge bg-danger">{{ $cuti->status }}</span>
                         @endif
                     </td>
                     <td class="text-center">
@@ -172,12 +179,12 @@
                             <i class="bi bi-eye"></i>
                         </button>
                         
-                        @if($cuti['status'] == 'Pending')
-                            <form action="#" method="POST" class="d-inline">
+                        @if($cuti->status == 'Pending')
+                            <form action="{{ route('pimpinan.cuti.approve', $cuti->id_cuti) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-success action-btn me-1" title="Setujui"><i class="bi bi-check-circle"></i></button>
                             </form>
-                            <form action="#" method="POST" class="d-inline">
+                            <form action="{{ route('pimpinan.cuti.reject', $cuti->id_cuti) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-danger action-btn" title="Tolak"><i class="bi bi-x-circle"></i></button>
                             </form>

@@ -254,23 +254,6 @@ class PimpinanController extends Controller
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
 
-    public function reward()
-    {
-        $topKandidat = [
-            (object)['nama' => 'Ahmad Rida', 'jabatan' => 'Staff Keuangan', 'skor' => 96],
-            (object)['nama' => 'Siti Aminah', 'jabatan' => 'Staff IT', 'skor' => 92],
-            (object)['nama' => 'Budi Santoso', 'jabatan' => 'Marketing', 'skor' => 89],
-        ];
-
-        $daftarReward = [
-            (object)['id' => 1, 'nama' => 'Ahmad Rida', 'jabatan' => 'Staff Keuangan', 'skor' => 96, 'jenis_reward' => 'Bonus Rp 1.000.000', 'status' => 'Menunggu'],
-            (object)['id' => 2, 'nama' => 'Siti Aminah', 'jabatan' => 'Staff IT', 'skor' => 92, 'jenis_reward' => 'Voucher Belanja', 'status' => 'Menunggu'],
-            (object)['id' => 3, 'nama' => 'Budi Santoso', 'jabatan' => 'Marketing', 'skor' => 89, 'jenis_reward' => 'Sertifikat', 'status' => 'Disetujui'],
-        ];
-
-        return view('pimpinan.reward', compact('topKandidat', 'daftarReward'));
-    }
-
     public function storeKaryawan(Request $request)
     {
         // 1. Validasi Input dari form website
