@@ -34,7 +34,7 @@
 
 <div class="sidebar">
     <div class="logo">
-        <img src="{{ asset('images/logoshe.png') }}" alt="Logo" style="width: 100%;">
+        <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo" style="width: 100%;">
     </div>
     <ul class="nav flex-column mt-4">
         <li class="nav-item"><a href="{{ route('akademik.beranda') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>

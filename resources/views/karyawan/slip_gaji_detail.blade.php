@@ -53,7 +53,7 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-    <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
+    <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     <ul class="nav flex-column">
         <li class="nav-item">
             <a href="{{ route('karyawan.dashboard') }}" class="nav-link">

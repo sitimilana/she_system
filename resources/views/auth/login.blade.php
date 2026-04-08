@@ -82,7 +82,7 @@
     <div class="login-card">
         
         <div class="text-center mb-4">
-            <img src="{{ asset('images/logoshe.png') }}" alt="Logo SHE" class="brand-logo">
+            <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo SHE" class="brand-logo">
             <h4 class="fw-bold" style="color: #1e293b;">Selamat Datang</h4>
             <p class="text-muted small">Silakan masuk menggunakan kredensial Anda.</p>
         </div>
