@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SlipGajiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AbsensiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,3 +35,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
     Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
 });
+
+Route::post('/absensi', [AbsensiController::class, 'store']);
