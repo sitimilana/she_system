@@ -302,4 +302,5 @@ class PimpinanController extends Controller
         return back()->with('success', 'Akun Karyawan berhasil dihapus secara permanen tanpa merusak Role Master!');
     }
 
+
 }

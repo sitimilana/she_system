@@ -105,15 +105,21 @@
         </div>
         
         <div class="col-md-8">
-            <div class="card card-custom p-4 h-100 d-flex justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
-                <div class="d-flex align-items-center">
-                    <div class="bg-white p-3 rounded-circle shadow-sm me-4 text-primary fs-3">
-                        <i class="bi bi-calendar2-check"></i>
-                    </div>
+            <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
+                <div class="d-flex justify-content-between align-items-end mb-3">
                     <div>
-                        <h5 class="fw-bold mb-1 text-dark">Waktunya Evaluasi Bulanan</h5>
-                        <p class="text-muted m-0 small">Pastikan Anda telah mengisi penilaian kinerja untuk seluruh staf sebelum akhir bulan.</p>
+                        <h5 class="fw-bold mb-1 text-dark">Progress Evaluasi Kinerja</h5>
+                        <p class="text-muted m-0 small">Progress Evaluasi: <span class="fw-bold text-dark">{{ $evaluasiSelesai ?? 0 }} dari {{ $jumlahKaryawan ?? 0 }}</span> Karyawan Selesai</p>
                     </div>
+                    <a href="{{ route('kabag.penilaian') }}" class="btn btn-primary shadow-sm px-4 py-2 rounded-pill fw-medium" style="font-size: 0.9rem;">
+                        Lanjutkan Evaluasi <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                @php
+                    $persentase = ($jumlahKaryawan > 0) ? round((($evaluasiSelesai ?? 0) / $jumlahKaryawan) * 100) : 0;
+                @endphp
+                <div class="progress bg-secondary bg-opacity-10 mt-1" style="height: 12px; border-radius: 10px;">
+                    <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $persentase }}%" aria-valuenow="{{ $persentase }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
         </div>
@@ -124,39 +130,36 @@
         <div class="col-md-8 mb-4">
             <div class="card card-custom p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-star-half text-warning me-2"></i>Penilaian Kinerja Terkini</h5>
-                    <select class="form-select form-select-sm w-auto shadow-sm cursor-pointer">
-                        <option>Bulan Ini</option>
-                        <option>Bulan Lalu</option>
-                    </select>
+                    <h5 class="fw-bold m-0"><i class="bi bi-activity text-info me-2"></i>Ringkasan Aktivitas SDM & Evaluasi</h5>
                 </div>
 
                 <div>
-                    @forelse($penilaian as $p)
-                    <div class="list-item-custom d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fw-bold me-3" style="width: 45px; height: 45px;">
-                                {{ substr($p->nama ?? 'U', 0, 1) }}
-                            </div>
-                            <div>
-                                <h6 class="fw-bold m-0">{{ $p->nama ?? 'Nama Tidak Diketahui' }}</h6>
-                                <small class="text-muted">
-                                    <i class="bi bi-clock me-1"></i> 
-                                    {{ $p->tanggal_mulai ?? '-' }} s/d {{ $p->tanggal_selesai ?? '-' }}
-                                </small>
-                            </div>
+                    <div class="list-item-custom d-flex align-items-center bg-light border-0 mb-3 shadow-sm">
+                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center fs-5 me-3 flex-shrink-0" style="width: 45px; height: 45px;">
+                            <i class="bi bi-person-plus-fill"></i>
                         </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <span class="badge bg-{{ ($p->status ?? '') == 'Selesai' ? 'success' : 'warning text-dark' }} rounded-pill px-3 py-2">
-                                {{ $p->status ?? 'Menunggu' }}
-                            </span>
-                            <button class="btn btn-sm btn-outline-primary border-0 bg-primary bg-opacity-10" title="Lihat Detail"><i class="bi bi-arrow-right"></i></button>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark">Karyawan Baru Terdaftar</h6>
+                            <p class="text-muted small m-0">Terdapat <strong class="text-dark">{{ $karyawanBaru ?? 0 }}</strong> karyawan baru yang bergabung di divisi Anda bulan ini.</p>
+                        </div>
+                    </div>
+
+                    @forelse($penilaian as $p)
+                    <div class="list-item-custom d-flex align-items-center bg-light border-0 mb-3 shadow-sm hover-effect">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fs-5 me-3 flex-shrink-0" style="width: 45px; height: 45px;">
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark">Penilaian Kinerja Disimpan</h6>
+                            <p class="text-muted m-0" style="font-size: 0.85rem;">
+                                Anda baru saja mengevaluasi <strong>{{ $p->karyawan->nama ?? 'Nama Tidak Diketahui' }}</strong> pada periode {{ $p->bulan ?? '-' }}-{{ $p->tahun ?? '-' }} dengan hasil skor <strong class="text-primary">{{ $p->total_skor ?? '-' }}</strong>.
+                            </p>
                         </div>
                     </div>
                     @empty
                     <div class="text-center py-5 text-muted">
                         <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
-                        Belum ada data penilaian terkini.
+                        Belum ada riwayat aktivitas terbaru.
                     </div>
                     @endforelse
                 </div>
@@ -166,25 +169,46 @@
         <div class="col-md-4 mb-4">
             <div class="card card-custom p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-people text-primary me-2"></i>Tim Anda</h5>
-                    <a href="{{ route('kabag.karyawan') }}" class="text-decoration-none small fw-semibold">Lihat Semua</a>
+                    <h5 class="fw-bold m-0"><i class="bi bi-ui-checks text-primary me-2"></i>Daftar Evaluasi Tim</h5>
+                    <a href="{{ route('kabag.karyawan') }}" class="btn btn-sm btn-light border small py-1 px-2 fw-medium text-muted rounded-pill hover-effect">Lihat Detail <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem;"></i></a>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-borderless table-hover align-middle">
-                        <tbody>
-                            @forelse($karyawan as $k)
-                            <tr>
-                                <td width="10%" class="text-muted fw-bold">{{ $loop->iteration }}</td>
-                                <td class="fw-medium text-dark">{{ $k->nama }}</td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="2" class="text-center text-muted small py-3">Tidak ada data karyawan.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="d-flex flex-column gap-3 overflow-auto" style="max-height: 380px; padding-right: 5px;">
+                    @forelse($karyawan as $k)
+                        @php
+                            // Cek status sementara untuk demo UI. Anda dapat menghubungkan logika aslinya dari Controller.
+                            $sudahSelesai = $k->penilaian->count() > 0 ?? false;
+                            $skorKaryawan = $sudahSelesai ? ($k->penilaian->first()->total_skor ?? 0) : null;
+                        @endphp
+                        
+                        <div class="d-flex justify-content-between align-items-center p-3 rounded-3 transition hover-effect" style="border: 1px solid {{ $sudahSelesai ? '#dcfce7' : '#f1f5f9' }}; background-color: {{ $sudahSelesai ? '#f8fafc' : '#ffffff' }}; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="bg-{{ $sudahSelesai ? 'success opacity-75' : 'secondary opacity-25' }} text-white rounded d-flex justify-content-center align-items-center fw-bold" style="width: 40px; height: 40px; font-size: 1rem;">
+                                    {{ substr($k->nama ?? 'U', 0, 1) }}
+                                </div>
+                                <div class="d-flex flex-column">
+                                    <span class="text-dark fw-bold mb-1" style="font-size: 0.95rem;">{{ $k->nama }}</span>
+                                    <span class="text-muted" style="font-size: 0.75rem;">Divisi Anda</span>
+                                </div>
+                            </div>
+                            <div>
+                                @if($sudahSelesai)
+                                    <div class="bg-success bg-opacity-25 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25 shadow-sm d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                                        <i class="bi bi-check-circle-fill"></i> Skor: {{ $skorKaryawan }}
+                                    </div>
+                                @else
+                                    <div class="bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-medium border border-danger border-opacity-25 d-flex align-items-center gap-1" style="font-size: 0.75rem;">
+                                        <i class="bi bi-x-circle-fill"></i> Belum
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted small py-4 bg-light rounded-3">
+                            <i class="bi bi-emoji-frown fs-4 pb-2 d-block text-black-50"></i>
+                            Tidak ada karyawan ditemukan.
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>

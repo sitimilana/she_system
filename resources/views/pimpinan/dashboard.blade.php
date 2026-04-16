@@ -123,24 +123,36 @@
 <div class="content">
     <h2 class="mb-4 fw-bold">Dashboard Strategis Pimpinan</h2>
 
+    <!-- Transformasi Card Kehadiran (Real-time Insight) -->
     <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card p-4 shadow-sm h-100">
-                <p class="text-muted mb-1">Total Karyawan Aktif</p>
-                <div class="metric-value">{{ $totalKaryawan ?? 0 }}</div>
-                <p class="mt-2 mb-0" style="font-size: 0.9rem;">
-                    <span class="badge bg-primary">{{ $karyawanCutiHariIni ?? 0 }} Cuti Hari Ini</span>
-                </p>
+        <div class="col-md-8">
+            <div class="card p-3 shadow-sm h-100" style="border-radius: 15px;">
+                <div class="row align-items-center h-100">
+                    <div class="col-md-5 border-end text-center text-md-start px-4">
+                        <p class="text-muted mb-1">Total Karyawan Aktif</p>
+                        <div class="metric-value">{{ $totalKaryawan ?? 0 }}</div>
+                        <p class="mt-2 mb-0" style="font-size: 0.9rem;">
+                            <span class="badge bg-primary">{{ $karyawanCutiHariIni ?? 0 }} Cuti Hari Ini</span>
+                        </p>
+                    </div>
+                    <div class="col-md-7">
+                        <p class="text-muted text-center mb-1 small fw-bold">Insight Kehadiran Hari Ini</p>
+                        <div class="d-flex justify-content-center align-items-center" style="height: 120px;">
+                            <canvas id="kehadiranChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="row">
+        <!-- Pengajuan Cuti Terbaru -->
         <div class="col-md-6 mb-4">
             <div class="card card-custom p-4 shadow h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold m-0"><i class="bi bi-calendar2-week"></i> Pengajuan Cuti Terbaru</h5>
-                    <a href="#" class="btn btn-sm btn-light">Lihat Semua</a>
+                    <a href="{{ route('pimpinan.cuti') }}" class="btn btn-sm btn-light">Lihat Semua</a>
                 </div>
                 <hr class="mt-0">
 
@@ -160,6 +172,7 @@
             </div>
         </div>
 
+        <!-- Top Performer -->
         <div class="col-md-6 mb-4">
             <div class="card card-custom p-4 shadow h-100" style="background-color: #2c3e50; color: white;">
                 <h5 class="fw-bold mb-3"><i class="bi bi-trophy text-warning"></i> Top Performer Bulan Ini</h5>
@@ -185,10 +198,84 @@
                     <div class="alert alert-secondary text-center">Belum ada data penilaian bulan ini.</div>
                 @endforelse
 
+                @if(!empty($topKaryawan) && count($topKaryawan) > 0)
+                    <div class="mt-auto pt-3 text-end">
+                        <a href="{{ route('pimpinan.reward') }}" class="btn btn-warning fw-bold shadow-sm">Eksekusi Reward</a>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Widget Status Penggajian -->
+        <div class="col-md-12 mb-4">
+            @php
+                $statusPenggajian = $statusPenggajian ?? 'Finalisasi & Kirim';
+                $bgColor = '#f4f7f6';
+                if($statusPenggajian == 'Belum Dihitung') $bgColor = '#fce4e4'; // merah muda pucat
+                elseif($statusPenggajian == 'Finalisasi & Kirim' || $statusPenggajian == 'Edit') $bgColor = '#fff3cd'; // kuning pastel
+                elseif($statusPenggajian == 'Selesai Dikirim') $bgColor = '#d4edda'; // hijau pastel
+            @endphp
+            <div class="card p-4 shadow h-100 border-0" style="background-color: {{ $bgColor }}; border-radius: 15px;">
+                <h5 class="fw-bold mb-3" style="color: #2c3e50;"><i class="bi bi-wallet2 text-primary"></i> Status Penggajian - {{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</h5>
+                <hr class="mt-0 border-secondary">
+                
+                <div class="d-flex flex-column justify-content-center flex-grow-1">
+                    <p class="mb-3" style="color: #444; font-size: 1.05rem;">
+                        Status saat ini: <strong class="fs-5">{{ $statusPenggajian }}</strong>
+                    </p>
+                    <p class="text-muted small mb-4">
+                        @if($statusPenggajian == 'Belum Dihitung')
+                            Sistem belum melakukan penarikan data kehadiran dan perhitungan gaji untuk periode ini.
+                        @elseif($statusPenggajian == 'Finalisasi & Kirim' || $statusPenggajian == 'Edit')
+                            Draf penggajian telah dibuat. Silakan lakukan proses {{ strtolower($statusPenggajian) }} slip gaji sebelum didistribusikan.
+                        @else
+                            Slip gaji bulan ini telah berhasil didistribusikan ke seluruh karyawan.
+                        @endif
+                    </p>
+                    <a href="{{ route('pimpinan.gaji') }}" class="btn btn-primary shadow-sm fw-bold align-self-start"><i class="bi bi-gear"></i> Kelola Payroll</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Tambahkan script Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var ctx = document.getElementById('kehadiranChart').getContext('2d');
+        var kehadiranChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Hadir', 'Terlambat', 'Alpha', 'Cuti'],
+                datasets: [{
+                    // Anda bisa mengganti data dummy di bawah ini dengan variabel dari controller
+                    data: [{{ $jmlHadir ?? 85 }}, {{ $jmlTerlambat ?? 10 }}, {{ $jmlAlpha ?? 2 }}, {{ $karyawanCutiHariIni ?? 3 }}], 
+                    backgroundColor: [
+                        '#a8e6cf', // pastel green (Hadir)
+                        '#ffd3b6', // pastel orange/yellow (Terlambat)
+                        '#ffaaa5', // pastel red (Alpha)
+                        '#a2d5f2'  // pastel blue (Cuti)
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 10, family: 'Inter' }
+                        }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    });
+</script>
 </body>
 </html>
