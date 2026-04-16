@@ -113,11 +113,7 @@
         </li>
         
         <li class="nav-item mt-4">
-            <form action="{{ route('logout') }}" method="POST" id="logout-form" class="d-none">
-                @csrf
-            </form>
-            <a href="{{ route('logout') }}" class="nav-link text-white-50" 
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </li>
@@ -298,5 +294,8 @@
         });
     });
 </script>
+
+@include('auth.logout')
+
 </body>
 </html>

@@ -84,10 +84,9 @@
         <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
         <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link active"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
         <li class="nav-item mt-4">
-            <a href="{{ route('logout') }}" class="nav-link text-white-50" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
         </li>
     </ul>
 </div>
@@ -261,5 +260,7 @@
     inputs.forEach(input => input.addEventListener('input', hitungRataRata));
 </script>
 
+@include('auth.logout')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

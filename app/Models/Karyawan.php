@@ -16,7 +16,8 @@ class Karyawan extends Model
         'email',
         'alamat',
         'foto',
-        'status_karyawan'
+        'status_karyawan',
+        'divisi'
     ];
 
     public function user()

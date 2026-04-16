@@ -76,10 +76,9 @@
             <a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a>
         </li>
         <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
-            <a href="#" class="nav-link text-white-50 px-3" onclick="confirmLogout(event)">
+            <a href="#" class="nav-link text-white-50 px-3" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
         </li>
     </ul>
 </div>
@@ -216,32 +215,9 @@
     </div>
 </div>
 
-<div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
-      <div class="modal-body text-center p-4">
-        <div class="text-danger mb-3">
-            <i class="bi bi-box-arrow-right" style="font-size: 3rem;"></i>
-        </div>
-        <h5 class="fw-bold mb-3">Konfirmasi Logout</h5>
-        <p class="text-muted mb-4 small">Apakah Anda yakin ingin keluar dari sesi aplikasi saat ini?</p>
-        <div class="d-flex gap-2 justify-content-center">
-            <button type="button" class="btn btn-light fw-bold w-100" data-bs-dismiss="modal">Batal</button>
-            <button type="button" class="btn btn-danger fw-bold w-100 shadow-sm" onclick="document.getElementById('logout-form').submit()">Ya, Keluar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+@include('auth.logout')
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    function confirmLogout(e) {
-        e.preventDefault();
-        var modal = new bootstrap.Modal(document.getElementById('logoutModal'));
-        modal.show();
-    }
-</script>
 
 </body>
 </html>

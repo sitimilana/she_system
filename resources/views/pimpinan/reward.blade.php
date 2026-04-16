@@ -53,7 +53,11 @@
         <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar2-check"></i> Manajemen Cuti</a></li>
         <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link active"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
         <li class="nav-item"><a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a></li>
-        <li class="nav-item mt-4"><a href="{{ route('login') }}" class="nav-link text-white-50"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        <li class="nav-item mt-4">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </li>
     </ul>
 </div>
 
@@ -142,6 +146,8 @@
 <script>
     // Script sederhana pencarian
 </script>
+
+@include('auth.logout')
 
 </body>
 </html>

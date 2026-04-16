@@ -274,6 +274,7 @@ class KepalaBagianController extends Controller
             'email'           => 'nullable|email|max:255',
             'alamat'          => 'nullable|string',
             'status_karyawan' => 'required|string',
+            'divisi'          => 'nullable|in:keuangan,admin umum,akademik,marketing,office boy',
         ]);
 
         Karyawan::updateOrCreate(
@@ -284,6 +285,7 @@ class KepalaBagianController extends Controller
                 'email'           => $request->email,
                 'alamat'          => $request->alamat,
                 'status_karyawan' => $request->status_karyawan,
+                'divisi'          => $request->divisi,
                 // Kolom foto bisa ditambahkan nanti jika Anda sudah siap dengan logika file upload
             ]
         );

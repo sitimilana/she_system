@@ -41,10 +41,9 @@
         <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link active"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
         <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
         <li class="nav-item mt-4">
-            <a href="{{ route('logout') }}" class="nav-link text-white-50" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
         </li>
     </ul>
 </div>
@@ -70,8 +69,14 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Divisi</label>
-                    <input type="text" class="form-control" disabled readonly value="{{ $user->role->nama_role ?? '-' }}" style="background-color: #e9ecef; cursor: not-allowed;">
-                    <small class="text-muted" style="font-size: 0.8rem;">(Divisi mengambil dari hak akses Role, tidak bisa diubah dari sini)</small>
+                    <select class="form-select" name="divisi" required>
+                        <option value="" disabled {{ empty($user->karyawan->divisi) ? 'selected' : '' }}>Pilih Divisi...</option>
+                        <option value="keuangan" {{ (old('divisi', $user->karyawan->divisi ?? '') == 'keuangan') ? 'selected' : '' }}>Keuangan</option>
+                        <option value="admin umum" {{ (old('divisi', $user->karyawan->divisi ?? '') == 'admin umum') ? 'selected' : '' }}>Admin Umum</option>
+                        <option value="akademik" {{ (old('divisi', $user->karyawan->divisi ?? '') == 'akademik') ? 'selected' : '' }}>Akademik</option>
+                        <option value="marketing" {{ (old('divisi', $user->karyawan->divisi ?? '') == 'marketing') ? 'selected' : '' }}>Marketing</option>
+                        <option value="office boy" {{ (old('divisi', $user->karyawan->divisi ?? '') == 'office boy') ? 'selected' : '' }}>Office Boy</option>
+                    </select>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Status Karyawan</label>
@@ -108,5 +113,7 @@
     </div>
 </div>
 
+@include('auth.logout')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
