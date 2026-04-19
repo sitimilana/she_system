@@ -46,6 +46,9 @@
         <li class="nav-item">
             <a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a>
         </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link"><i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi</a>
+        </li>
         <li class="nav-item mt-3">
             <a href="{{ route('login') }}" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </li>

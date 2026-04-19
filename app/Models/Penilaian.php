@@ -19,6 +19,7 @@ class Penilaian extends Model
         'sikap_kerja',
         'loyalitas',
         'total_skor',
+        'catatan_evaluasi',
         'dinilai_oleh'
     ];
 
