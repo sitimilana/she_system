@@ -180,6 +180,7 @@
             <div class="score-box mt-4 mb-4">
                 <p class="text-muted fw-bold mb-0">TOTAL SKOR TERTIMBANG</p>
                 <input type="text" class="input-total" id="total_skor" name="total_skor" value="0" readonly>
+                <small class="text-muted">Skor akhir dibulatkan ke nilai terdekat (1-5).</small>
             </div>
 
             <div class="mb-4">

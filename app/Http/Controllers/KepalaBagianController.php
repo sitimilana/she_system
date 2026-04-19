@@ -81,6 +81,7 @@ class KepalaBagianController extends Controller
         foreach ($bobot as $indikator => $persentase) {
             $skorTertimbang += ((int)$validated[$indikator]) * $persentase;
         }
+        $skorAkhir = (int) round($skorTertimbang);
 
         Penilaian::create([
             'id_karyawan' => $validated['id_karyawan'],
@@ -91,7 +92,7 @@ class KepalaBagianController extends Controller
             'tanggung_jawab' => $validated['tanggung_jawab'],
             'sikap_kerja' => $validated['sikap_kerja'],
             'loyalitas' => $validated['loyalitas'],
-            'total_skor' => (int) round($skorTertimbang),
+            'total_skor' => $skorAkhir,
             'catatan_evaluasi' => $validated['catatan_evaluasi'] ?? null,
             'dinilai_oleh' => auth()->id(),
         ]);
