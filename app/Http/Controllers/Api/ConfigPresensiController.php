@@ -11,10 +11,16 @@ class ConfigPresensiController extends Controller
     {
         $config = PengaturanKantor::latest('id_pengaturan')->first();
 
+        if (!$config) {
+            return response()->json([
+                'message' => 'Konfigurasi presensi belum diatur.',
+            ], 404);
+        }
+
         return response()->json([
-            'latitude' => (float)($config->latitude ?? 0),
-            'longitude' => (float)($config->longitude ?? 0),
-            'radius' => (int)($config->radius ?? 100),
+            'latitude' => (float)$config->latitude,
+            'longitude' => (float)$config->longitude,
+            'radius' => (int)$config->radius,
         ]);
     }
 }

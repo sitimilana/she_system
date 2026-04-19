@@ -212,16 +212,15 @@
 
         inputs.forEach(input => {
             let val = parseFloat(input.value);
-            if (val > 5) { val = 5; }
-            if (val < 1) { val = 1; }
             total += (val || 0) * (bobot[input.name] || 0);
         });
 
-        totalEl.value = total.toFixed(2);
+        const totalRounded = Math.round(total);
+        totalEl.value = totalRounded;
 
-        if(total >= 4) {
+        if(totalRounded >= 4) {
             totalEl.style.color = '#10b981';
-        } else if (total < 2.5) {
+        } else if (totalRounded < 3) {
             totalEl.style.color = '#ef4444';
         } else {
             totalEl.style.color = '#3b82f6';
