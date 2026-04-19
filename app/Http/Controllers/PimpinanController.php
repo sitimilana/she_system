@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Karyawan;
 use App\Models\Cuti;
 use App\Models\Penggajian;
+use App\Models\PengaturanKantor;
 use Illuminate\Support\Facades\DB;
 
 class PimpinanController extends Controller
@@ -323,5 +324,32 @@ class PimpinanController extends Controller
         ];
 
         return view('pimpinan.reward', compact('topKandidat', 'daftarReward'));
+    }
+
+    public function pengaturanLokasi()
+    {
+        $pengaturan = PengaturanKantor::latest('id_pengaturan')->first();
+
+        return view('pimpinan.pengaturan_lokasi', compact('pengaturan'));
+    }
+
+    public function updatePengaturanLokasi(Request $request)
+    {
+        $validated = $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'radius' => 'required|integer|min:1',
+        ]);
+
+        $pengaturan = PengaturanKantor::latest('id_pengaturan')->first();
+
+        if ($pengaturan) {
+            $pengaturan->update($validated);
+        } else {
+            PengaturanKantor::create($validated);
+        }
+
+        return redirect()->route('pimpinan.pengaturan-lokasi')
+            ->with('success', 'Pengaturan lokasi kantor berhasil diperbarui.');
     }
 }

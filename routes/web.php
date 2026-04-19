@@ -34,6 +34,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/pimpinan/gaji/{id}', [PimpinanController::class, 'destroyGaji'])->name('pimpinan.gaji.destroy');
     # Reward
     Route::get('/pimpinan/reward', [PimpinanController::class, 'reward'])->name('pimpinan.reward');
+    # Pengaturan Lokasi Presensi
+    Route::get('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'pengaturanLokasi'])->name('pimpinan.pengaturan-lokasi');
+    Route::put('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'updatePengaturanLokasi'])->name('pimpinan.pengaturan-lokasi.update');
 });
 
 # KEPALA BAGIAN DASHBOARD
@@ -41,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian', [KepalaBagianController::class, 'index'])->name('kabag.dashboard');
     Route::get('/kepala-bagian/karyawan', [KepalaBagianController::class, 'karyawan'])->name('kabag.karyawan');
     Route::get('/kepala-bagian/penilaian', [KepalaBagianController::class, 'penilaian'])->name('kabag.penilaian');
+    Route::post('/kepala-bagian/penilaian', [KepalaBagianController::class, 'storePenilaian'])->name('kabag.penilaian.store');
     #Cuti
     Route::get('/kepala-bagian/cuti', [KepalaBagianController::class, 'cuti'])->name('kabag.cuti');
     Route::patch('/kepala-bagian/cuti/{id}/approve', [KepalaBagianController::class, 'approveCuti'])->name('kabag.cuti.approve');

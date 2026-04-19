@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SlipGajiController;
 use App\Http\Controllers\Api\CutiController;
+use App\Http\Controllers\Api\ConfigPresensiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,3 +34,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cuti', [CutiController::class, 'store'])->name('api.cuti.store');
 });
 
+Route::get('/config-presensi', ConfigPresensiController::class)->name('api.config-presensi');

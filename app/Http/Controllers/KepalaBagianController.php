@@ -49,12 +49,54 @@ class KepalaBagianController extends Controller
 
     public function penilaian()
     {
-        $karyawan = [
-            (object)['id' => 1, 'nama' => 'Budi Santoso'],
-            (object)['id' => 2, 'nama' => 'Siti Aminah'],
-        ];
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')
+            ->select('id_karyawan', 'nama')
+            ->orderBy('nama')
+            ->get();
 
         return view('kepala_bagian.penilaian_kinerja', compact('karyawan'));
+    }
+
+    public function storePenilaian(Request $request)
+    {
+        $validated = $request->validate([
+            'id_karyawan' => 'required|exists:karyawan,id_karyawan',
+            'disiplin' => 'required|integer|min:1|max:5',
+            'produktivitas' => 'required|integer|min:1|max:5',
+            'tanggung_jawab' => 'required|integer|min:1|max:5',
+            'sikap_kerja' => 'required|integer|min:1|max:5',
+            'loyalitas' => 'required|integer|min:1|max:5',
+            'catatan_evaluasi' => 'nullable|string',
+        ]);
+
+        $bobot = [
+            'disiplin' => 0.20,
+            'produktivitas' => 0.30,
+            'tanggung_jawab' => 0.20,
+            'sikap_kerja' => 0.15,
+            'loyalitas' => 0.15,
+        ];
+
+        $skorTertimbang = 0;
+        foreach ($bobot as $indikator => $persentase) {
+            $skorTertimbang += ((int)$validated[$indikator]) * $persentase;
+        }
+
+        Penilaian::create([
+            'id_karyawan' => $validated['id_karyawan'],
+            'bulan' => now()->month,
+            'tahun' => now()->year,
+            'disiplin' => $validated['disiplin'],
+            'produktivitas' => $validated['produktivitas'],
+            'tanggung_jawab' => $validated['tanggung_jawab'],
+            'sikap_kerja' => $validated['sikap_kerja'],
+            'loyalitas' => $validated['loyalitas'],
+            'total_skor' => (int) round($skorTertimbang),
+            'catatan_evaluasi' => $validated['catatan_evaluasi'] ?? null,
+            'dinilai_oleh' => auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.penilaian')->with('success', 'Penilaian kinerja berhasil disimpan.');
     }
 
     public function gaji(Request $request)
