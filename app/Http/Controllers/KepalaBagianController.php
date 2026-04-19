@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Karyawan;
+use App\Models\Cuti;
 use App\Models\Penilaian;
 use App\Models\Penggajian;
 use App\Models\User;
@@ -40,6 +41,11 @@ class KepalaBagianController extends Controller
         $karyawan = Karyawan::where('status_karyawan', 'Aktif')->get();
         $riwayatPenilaian = Penilaian::with('karyawan')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
 
+        $karyawan = Karyawan::where('status_karyawan', 'aktif')
+            ->select('id_karyawan', 'nama')
+            ->orderBy('nama')
+            ->get();
+
         return view('kepala_bagian.penilaian_kinerja', compact('karyawan', 'riwayatPenilaian'));
     }
 
@@ -72,6 +78,49 @@ class KepalaBagianController extends Controller
         ]);
 
         return redirect()->route('kabag.penilaian')->with('success', 'Penilaian Kinerja berhasil disimpan!');
+    }
+
+    public function storePenilaian(Request $request)
+    {
+        $validated = $request->validate([
+            'id_karyawan' => 'required|exists:karyawan,id_karyawan',
+            'disiplin' => 'required|integer|min:1|max:5',
+            'produktivitas' => 'required|integer|min:1|max:5',
+            'tanggung_jawab' => 'required|integer|min:1|max:5',
+            'sikap_kerja' => 'required|integer|min:1|max:5',
+            'loyalitas' => 'required|integer|min:1|max:5',
+            'catatan_evaluasi' => 'nullable|string',
+        ]);
+
+        $bobot = [
+            'disiplin' => 0.20,
+            'produktivitas' => 0.30,
+            'tanggung_jawab' => 0.20,
+            'sikap_kerja' => 0.15,
+            'loyalitas' => 0.15,
+        ];
+
+        $skorTertimbang = 0;
+        foreach ($bobot as $indikator => $persentase) {
+            $skorTertimbang += ((int)$validated[$indikator]) * $persentase;
+        }
+        $skorAkhir = (int) round($skorTertimbang);
+
+        Penilaian::create([
+            'id_karyawan' => $validated['id_karyawan'],
+            'bulan' => now()->month,
+            'tahun' => now()->year,
+            'disiplin' => $validated['disiplin'],
+            'produktivitas' => $validated['produktivitas'],
+            'tanggung_jawab' => $validated['tanggung_jawab'],
+            'sikap_kerja' => $validated['sikap_kerja'],
+            'loyalitas' => $validated['loyalitas'],
+            'total_skor' => $skorAkhir,
+            'catatan_evaluasi' => $validated['catatan_evaluasi'] ?? null,
+            'dinilai_oleh' => auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.penilaian')->with('success', 'Penilaian kinerja berhasil disimpan.');
     }
 
     public function gaji(Request $request)
@@ -254,7 +303,6 @@ class KepalaBagianController extends Controller
         return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
-
     public function detailKaryawan($id)
     {
         // Cari user berdasarkan id_user, sekalian bawa relasi karyawannya (jika sudah ada)
@@ -291,5 +339,43 @@ class KepalaBagianController extends Controller
         );
 
         return redirect()->route('kabag.karyawan')->with('success', 'Biodata karyawan berhasil disimpan.');
+    public function cuti()
+    {
+        $dataCuti = Cuti::with('karyawan')
+            ->where('status', 'pending_kabag')
+            ->orderByDesc('tanggal_pengajuan')
+            ->get();
+
+        return view('kepala_bagian.verifikasi_cuti', compact('dataCuti'));
+    }
+
+    public function approveCuti($id)
+    {
+        $cuti = Cuti::where('id_cuti', $id)
+            ->where('status', 'pending_kabag')
+            ->firstOrFail();
+
+        $cuti->update([
+            'status'        => 'pending_pimpinan',
+            'disetujui_oleh'=> auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.cuti')
+            ->with('success', 'Pengajuan cuti disetujui dan diteruskan ke Pimpinan.');
+    }
+
+    public function rejectCuti($id)
+    {
+        $cuti = Cuti::where('id_cuti', $id)
+            ->where('status', 'pending_kabag')
+            ->firstOrFail();
+
+        $cuti->update([
+            'status'        => 'rejected',
+            'disetujui_oleh'=> auth()->id(),
+        ]);
+
+        return redirect()->route('kabag.cuti')
+            ->with('success', 'Pengajuan cuti telah ditolak.');
     }
 }

@@ -96,13 +96,43 @@
         <h2 class="fw-bold m-0" style="color: #1e293b;">Penilaian Kinerja</h2>
         <p class="text-muted m-0">Evaluasi kinerja bulanan karyawan di departemen Anda.</p>
     </div>
-
+    
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
+    <div class="form-card">
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('kabag.penilaian.store') }}" method="POST">
+            @csrf
+            
+            <div class="mb-4">
+                <label class="form-label text-primary"><i class="bi bi-person-badge me-2"></i>Pilih Karyawan</label>
+                <select class="form-select form-select-lg" name="id_karyawan" required>
+                    <option value="" disabled selected>-- Pilih Nama Karyawan --</option>
+                    @foreach($karyawan as $k)
+                        <option value="{{ $k->id_karyawan }}">{{ $k->nama }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label
 
     <div class="row">
         <div class="col-lg-5 mb-4">
@@ -119,6 +149,7 @@
                             @endforeach
                         </select>
                     </div>
+
 
                     <div class="mb-4">
                         <label class="form-label"><i class="bi bi-calendar-month me-2"></i>Bulan & Tahun Penilaian</label>
@@ -145,6 +176,75 @@
                         <div class="col-sm-7"><label class="form-label m-0">Tanggung Jawab</label></div>
                         <div class="col-sm-5"><input type="number" class="form-control calc-score" name="tanggung_jawab" min="0" max="100" value="0" required></div>
                     </div>
+            <div class="alert alert-light border mb-4 text-muted small">
+                <i class="bi bi-info-circle me-1"></i> Masukkan nilai menggunakan <strong>Skala Likert 1 sampai 5</strong>.
+            </div>
+
+            <div class="row align-items-center mb-3">
+                <div class="col-sm-7"><label class="form-label m-0">Disiplin</label></div>
+                <div class="col-sm-5">
+                    <select class="form-select calc-score" name="disiplin" required>
+                        @for($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row align-items-center mb-3">
+                <div class="col-sm-7"><label class="form-label m-0">Produktivitas</label></div>
+                <div class="col-sm-5">
+                    <select class="form-select calc-score" name="produktivitas" required>
+                        @for($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+
+            <div class="row align-items-center mb-3">
+                <div class="col-sm-7"><label class="form-label m-0">Tanggung Jawab</label></div>
+                <div class="col-sm-5">
+                    <select class="form-select calc-score" name="tanggung_jawab" required>
+                        @for($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+
+            <div class="row align-items-center mb-3">
+                <div class="col-sm-7"><label class="form-label m-0">Sikap Kerja</label></div>
+                <div class="col-sm-5">
+                    <select class="form-select calc-score" name="sikap_kerja" required>
+                        @for($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+
+            <div class="row align-items-center mb-4">
+                <div class="col-sm-7"><label class="form-label m-0">Loyalitas</label></div>
+                <div class="col-sm-5">
+                    <select class="form-select calc-score" name="loyalitas" required>
+                        @for($i = 1; $i <= 5; $i++)
+                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+
+            <div class="score-box mt-4 mb-4">
+                <p class="text-muted fw-bold mb-0">TOTAL SKOR TERTIMBANG</p>
+                <input type="text" class="input-total" id="total_skor" name="total_skor" value="0" readonly>
+                <small class="text-muted">Skor akhir dibulatkan ke nilai terdekat (1-5).</small>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Catatan Evaluasi</label>
+                <textarea class="form-control" name="catatan_evaluasi" rows="4" placeholder="Tambahkan catatan evaluasi (opsional)"></textarea>
+            </div>
 
                     <div class="row align-items-center mb-3">
                         <div class="col-sm-7"><label class="form-label m-0">Sikap Kerja</label></div>
@@ -225,39 +325,36 @@
 <script>
     const inputs = document.querySelectorAll('.calc-score');
     const totalEl = document.getElementById('total_skor');
+    const bobot = {
+        disiplin: 0.20,
+        produktivitas: 0.30,
+        tanggung_jawab: 0.20,
+        sikap_kerja: 0.15,
+        loyalitas: 0.15
+    };
 
-    function hitungRataRata() {
+    function hitungSkorTertimbang() {
         let total = 0;
-        let count = 0;
 
         inputs.forEach(input => {
             let val = parseFloat(input.value);
-            // Cegah angka lebih dari 100
-            if(val > 100) { val = 100; input.value = 100; }
-            if(val < 0) { val = 0; input.value = 0; }
-            
-            total += (val || 0);
-            count++;
+            total += (val || 0) * (bobot[input.name] || 0);
         });
 
-        // Hitung rata-rata dan bulatkan 1 angka di belakang koma (jika ada)
-        let rataRata = count > 0 ? (total / count) : 0;
-        
-        // Cek apakah angkanya bulat atau desimal untuk format tampilan
-        totalEl.value = Number.isInteger(rataRata) ? rataRata : rataRata.toFixed(1);
-        
-        // Ubah warna text jika nilai di atas/di bawah standar (opsional UX)
-        if(rataRata >= 85) {
-            totalEl.style.color = '#10b981'; // Hijau jika bagus
-        } else if (rataRata < 60) {
-            totalEl.style.color = '#ef4444'; // Merah jika buruk
+        const totalRounded = Math.round(total);
+        totalEl.value = totalRounded;
+
+        if(totalRounded >= 4) {
+            totalEl.style.color = '#10b981';
+        } else if (totalRounded < 3) {
+            totalEl.style.color = '#ef4444';
         } else {
-            totalEl.style.color = '#3b82f6'; // Biru standar
+            totalEl.style.color = '#3b82f6';
         }
     }
 
-    // Pasang listener di setiap input
-    inputs.forEach(input => input.addEventListener('input', hitungRataRata));
+    inputs.forEach(input => input.addEventListener('change', hitungSkorTertimbang));
+    hitungSkorTertimbang();
 </script>
 
 @include('auth.logout')
