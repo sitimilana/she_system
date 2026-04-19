@@ -42,6 +42,11 @@ class AbsensiController extends Controller
             // ==========================================
             if ($request->jenis == 'masuk') {
                 
+                // Cek batas waktu absen masuk
+                if ($waktuSekarang < '06:00:00') {
+                    return response()->json(['success' => false, 'message' => 'Belum waktunya absen. Absen masuk dimulai pukul 06:00.'], 400);
+                }
+
                 // Cek apakah sudah absen masuk hari ini?
                 $cekAbsen = Absensi::where('id_karyawan', $id_karyawan)
                                    ->where('tanggal', $tanggalHariIni)
@@ -51,6 +56,9 @@ class AbsensiController extends Controller
                     return response()->json(['success' => false, 'message' => 'Anda sudah melakukan presensi MASUK hari ini!'], 400);
                 }
 
+                // Tentukan status terlambat atau tidak
+                $statusKehadiran = ($waktuSekarang > '22:00:00') ? 'terlambat' : 'hadir';
+
                 // Buat record absen baru
                 $absensi = Absensi::create([
                     'id_karyawan'     => $id_karyawan,
@@ -59,7 +67,7 @@ class AbsensiController extends Controller
                     'latitude_masuk'  => $request->latitude,
                     'longitude_masuk' => $request->longitude,
                     'foto_masuk'      => $pathFoto,
-                    'status'          => 'Hadir'
+                    'status'          => $statusKehadiran
                 ]);
 
                 return response()->json(['success' => true, 'message' => 'Presensi Masuk Berhasil!', 'data' => $absensi], 200);
@@ -70,6 +78,11 @@ class AbsensiController extends Controller
             // ==========================================
             else if ($request->jenis == 'pulang') {
                 
+                // Cek batas waktu absen pulang
+                if ($waktuSekarang < '23:00:00') {
+                    return response()->json(['success' => false, 'message' => 'Belum waktunya pulang. Absen pulang dimulai pukul 23:00.'], 400);
+                }
+
                 // Cari absen masuk milik karyawan ini pada hari ini
                 $absensi = Absensi::where('id_karyawan', $id_karyawan)
                                   ->where('tanggal', $tanggalHariIni)

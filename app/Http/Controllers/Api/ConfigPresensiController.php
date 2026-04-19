@@ -13,14 +13,19 @@ class ConfigPresensiController extends Controller
 
         if (!$config) {
             return response()->json([
+                'success' => false,
                 'message' => 'Konfigurasi presensi belum diatur.',
             ], 404);
         }
 
         return response()->json([
-            'latitude' => (float)$config->latitude,
-            'longitude' => (float)$config->longitude,
-            'radius' => (int)$config->radius,
+            'success' => true,
+            'message' => 'Konfigurasi berhasil dimuat',
+            'data' => [
+                'officeLat' => (float)$config->latitude,
+                'officeLon' => (float)$config->longitude,
+                'maxRadius' => (int)$config->radius,
+            ]
         ]);
     }
 }

@@ -80,7 +80,7 @@ class KepalaBagianController extends Controller
         return redirect()->route('kabag.penilaian')->with('success', 'Penilaian Kinerja berhasil disimpan!');
     }
 
-    public function storePenilaian(Request $request)
+    public function storePenilaianSkala5(Request $request)
     {
         $validated = $request->validate([
             'id_karyawan' => 'required|exists:karyawan,id_karyawan',
@@ -339,6 +339,8 @@ class KepalaBagianController extends Controller
         );
 
         return redirect()->route('kabag.karyawan')->with('success', 'Biodata karyawan berhasil disimpan.');
+    }
+
     public function cuti()
     {
         $dataCuti = Cuti::with('karyawan')

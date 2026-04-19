@@ -107,16 +107,16 @@
                 <i class="bi bi-person-gear"></i> Manajemen Role
             </a>
         </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi
+            </a>
+        </li>
         
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-        <li class="nav-item">
-            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link"><i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi</a>
-        </li>
-        <li class="nav-item mt-3">
-            <a href="{{ route('login') }}" class="nav-link"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </li>
     </ul>
 </div>
@@ -278,6 +278,8 @@
         });
     });
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 @include('auth.logout')
 

@@ -7,7 +7,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\KepalaBagianController;
 use App\Http\Controllers\AkademikController;
 use App\Http\Controllers\KaryawanController;
-use App\Http\Controllers\CutiController;
+use App\Http\Controllers\Api\CutiController;
 use App\Http\Controllers\RewardController;
 
 /* LOGIN */
@@ -23,9 +23,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/role', [RoleController::class, 'store'])->name('role.store');
     Route::delete('/role/{id}', [RoleController::class, 'destroy'])->name('role.destroy');
     #Cuti
-    Route::get('/pimpinan/cuti', [App\Http\Controllers\CutiController::class, 'indexPimpinan'])->name('pimpinan.cuti');
-    Route::post('/pimpinan/cuti/{id}/approve', [App\Http\Controllers\CutiController::class, 'approve'])->name('pimpinan.cuti.approve');
-    Route::post('/pimpinan/cuti/{id}/reject', [App\Http\Controllers\CutiController::class, 'reject'])->name('pimpinan.cuti.reject');
+    Route::get('/pimpinan/cuti', [App\Http\Controllers\Api\CutiController::class, 'indexPimpinan'])->name('pimpinan.cuti');
+    Route::post('/pimpinan/cuti/{id}/approve', [App\Http\Controllers\Api\CutiController::class, 'approve'])->name('pimpinan.cuti.approve');
+    Route::post('/pimpinan/cuti/{id}/reject', [App\Http\Controllers\Api\CutiController::class, 'reject'])->name('pimpinan.cuti.reject');
     #Gaji
     Route::get('/pimpinan/gaji', [PimpinanController::class, 'gaji'])->name('pimpinan.gaji');
     Route::get('/pimpinan/gaji/create', [PimpinanController::class, 'createGaji'])->name('pimpinan.gaji.create');
