@@ -78,12 +78,12 @@
 
 <div class="sidebar">
     <div class="logo">
-        <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
+        <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
     </div>
     
     <ul class="nav flex-column mt-5">
         <li class="nav-item">
-            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
+            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan') || Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
                 <i class="bi bi-house-door"></i> Home
             </a>
         </li>
@@ -109,7 +109,7 @@
         </li>
         <li class="nav-item">
             <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
-                <i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi
+                <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
             </a>
         </li>
         

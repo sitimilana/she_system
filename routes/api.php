@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\SlipGajiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AbsensiController;
 
-use App\Http\Controllers\Api\CutiController;
+use App\Http\Controllers\Api\ApiCutiController;
 use App\Http\Controllers\Api\ConfigPresensiController;
 
 /*
@@ -45,9 +45,9 @@ Route::post('/absensi', [AbsensiController::class, 'store']);
 
 /* MOBILE - Manajemen Cuti Karyawan */
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/cuti/sisa-cuti', [CutiController::class, 'sisaCuti'])->name('api.cuti.sisa-cuti');
-    Route::get('/cuti', [CutiController::class, 'index'])->name('api.cuti.index');
-    Route::post('/cuti', [CutiController::class, 'store'])->name('api.cuti.store');
+    Route::get('/cuti/sisa-cuti', [ApiCutiController::class, 'sisaCuti'])->name('api.cuti.sisa-cuti');
+    Route::get('/cuti', [ApiCutiController::class, 'index'])->name('api.cuti.index');
+    Route::post('/cuti', [ApiCutiController::class, 'store'])->name('api.cuti.store');
 });
 
 Route::get('/config-presensi', ConfigPresensiController::class)->name('api.config-presensi');

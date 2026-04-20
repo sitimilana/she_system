@@ -89,14 +89,13 @@
 <body>
 
 <div class="sidebar">
-<<<<<<< HEAD
     <div class="logo">
-        <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
+        <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
     </div>
     
     <ul class="nav flex-column mt-5">
         <li class="nav-item">
-            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
+            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan') || Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
                 <i class="bi bi-house-door"></i> Home
             </a>
         </li>
@@ -120,23 +119,16 @@
                 <i class="bi bi-person-gear"></i> Manajemen Role
             </a>
         </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
+            </a>
+        </li>
         
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
-
-    <div class="logo"><img src="{{ asset('images/logoshe.png') }}" alt="Logo"></div>
-    <ul class="nav flex-column mt-4">
-        <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door-fill"></i> Home</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link active"><i class="bi bi-calendar-check-fill"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift-fill"></i> Reward & Recognition</a></li>
-        <li class="nav-item"><a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a></li>
-        <li class="nav-item mt-3">
-            <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bi bi-box-arrow-right"></i> Logout</a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
-
         </li>
     </ul>
 </div>
@@ -149,14 +141,7 @@
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
-
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="d-flex justify-content-between mb-3">
-
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
@@ -251,42 +236,18 @@
             <tbody>
                 @forelse($riwayatCuti as $index => $cuti)
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td class="fw-bold">{{ $cuti->karyawan->nama ?? 'Tidak Diketahui' }}</td>
-                    <td>{{ $cuti->karyawan->user->role->nama_role ?? '-' }}</td>
-                    <td>{{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}</td>
-                    <td>{{ $cuti->alasan }}</td>
-                    <td class="text-center">
-                        @if($cuti->status == 'Pending')
-                            <span class="badge bg-warning text-dark">{{ $cuti->status }}</span>
-                        @elseif($cuti->status == 'Disetujui')
-                            <span class="badge bg-success">{{ $cuti->status }}</span>
                     <td class="text-center">{{ ($riwayatCuti->currentPage() - 1) * $riwayatCuti->perPage() + $index + 1 }}</td>
                     <td class="fw-bold">{{ $cuti->karyawan->nama ?? '-' }}</td>
                     <td>{{ $cuti->karyawan->jabatan ?? '-' }}</td>
                     <td>{{ $cuti->jenis_cuti }}</td>
-                    <td>{{ $cuti->tanggal_mulai }} s/d {{ $cuti->tanggal_selesai }}</td>
+                    <td>{{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }} s/d {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}</td>
                     <td class="text-center">
-                        @if($cuti->status === 'approved')
+                        @if($cuti->status === 'approved' || $cuti->status === 'Disetujui')
                             <span class="badge bg-success">Disetujui</span>
+                        @elseif($cuti->status === 'Pending' || $cuti->status === 'pending')
+                            <span class="badge bg-warning text-dark">Pending</span>
                         @else
                             <span class="badge bg-danger">{{ $cuti->status }}</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-info text-white action-btn me-1" title="Lihat Detail & Bukti">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        
-                        @if($cuti->status == 'Pending')
-                            <form action="{{ route('pimpinan.cuti.approve', $cuti->id_cuti) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-success action-btn me-1" title="Setujui"><i class="bi bi-check-circle"></i></button>
-                            </form>
-                            <form action="{{ route('pimpinan.cuti.reject', $cuti->id_cuti) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-danger action-btn" title="Tolak"><i class="bi bi-x-circle"></i></button>
-                            </form>
                         @endif
                     </td>
                 </tr>

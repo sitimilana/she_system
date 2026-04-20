@@ -8,7 +8,7 @@ use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
-class CutiController extends Controller
+class ApiCutiController extends Controller
 {
     /**
      * GET /api/cuti/sisa-cuti

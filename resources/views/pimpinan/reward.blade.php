@@ -45,14 +45,41 @@
 
 <div class="sidebar">
     <div class="logo">
-        <img src="{{ asset('storage/storage/images/logoshe.png') }}" alt="Logo">
+        <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
     </div>
+    
     <ul class="nav flex-column mt-5">
-        <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar2-check"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link active"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
-        <li class="nav-item"><a href="{{ route('role.index') }}" class="nav-link"><i class="bi bi-person-gear"></i> Manajemen Role</a></li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan') || Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.gaji') }}" class="nav-link {{ Request::is('pimpinan/gaji*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack"></i> Manajemen Gaji
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.cuti') }}" class="nav-link {{ Request::is('pimpinan/cuti*') ? 'active' : '' }}">
+                <i class="bi bi-calendar2-check"></i> Manajemen Cuti
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.reward') }}" class="nav-link {{ Request::is('pimpinan/reward*') ? 'active' : '' }}">
+                <i class="bi bi-gift"></i> Reward & Recognition
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('role.index') }}" class="nav-link {{ Request::is('role*') ? 'active' : '' }}">
+                <i class="bi bi-person-gear"></i> Manajemen Role
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
+            </a>
+        </li>
+        
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
