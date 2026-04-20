@@ -103,36 +103,17 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
-    <div class="form-card">
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
 
-        @if($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        <form action="{{ route('kabag.penilaian.store') }}" method="POST">
-            @csrf
-            
-            <div class="mb-4">
-                <label class="form-label text-primary"><i class="bi bi-person-badge me-2"></i>Pilih Karyawan</label>
-                <select class="form-select form-select-lg" name="id_karyawan" required>
-                    <option value="" disabled selected>-- Pilih Nama Karyawan --</option>
-                    @foreach($karyawan as $k)
-                        <option value="{{ $k->id_karyawan }}">{{ $k->nama }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
     <div class="row">
         <div class="col-lg-5 mb-4">

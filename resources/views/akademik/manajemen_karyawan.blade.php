@@ -89,7 +89,7 @@
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td class="fw-bold text-dark">{{ $karyawan->karyawan->nama ?? $karyawan->nama_lengkap }}</td>
-                        <td>{{ ucfirst($karyawan->role->nama_role) }}</td>
+                        <td class="text-capitalize">{{ $karyawan->karyawan->divisi ?? '-' }}</td>
                         <td>{{ $karyawan->karyawan->no_hp ?? '-' }}</td>
                         <td class="text-truncate" style="max-width: 150px;" title="{{ $karyawan->karyawan->alamat ?? '-' }}">
                             {{ $karyawan->karyawan->alamat ?? '-' }}

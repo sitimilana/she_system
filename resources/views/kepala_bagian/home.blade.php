@@ -126,7 +126,7 @@
 
     <div class="row">
         
-        <div class="col-md-8 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card card-custom p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
                     <h5 class="fw-bold m-0"><i class="bi bi-activity text-info me-2"></i>Ringkasan Aktivitas SDM & Evaluasi</h5>
@@ -165,52 +165,7 @@
             </div>
         </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card card-custom p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-ui-checks text-primary me-2"></i>Daftar Evaluasi Tim</h5>
-                    <a href="{{ route('kabag.karyawan') }}" class="btn btn-sm btn-light border small py-1 px-2 fw-medium text-muted rounded-pill hover-effect">Lihat Detail <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem;"></i></a>
-                </div>
-
-                <div class="d-flex flex-column gap-3 overflow-auto" style="max-height: 380px; padding-right: 5px;">
-                    @forelse($karyawan as $k)
-                        @php
-                            // Cek status sementara untuk demo UI. Anda dapat menghubungkan logika aslinya dari Controller.
-                            $sudahSelesai = $k->penilaian->count() > 0 ?? false;
-                            $skorKaryawan = $sudahSelesai ? ($k->penilaian->first()->total_skor ?? 0) : null;
-                        @endphp
-                        
-                        <div class="d-flex justify-content-between align-items-center p-3 rounded-3 transition hover-effect" style="border: 1px solid {{ $sudahSelesai ? '#dcfce7' : '#f1f5f9' }}; background-color: {{ $sudahSelesai ? '#f8fafc' : '#ffffff' }}; box-shadow: 0 2px 4px rgba(0,0,0,0.01);">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="bg-{{ $sudahSelesai ? 'success opacity-75' : 'secondary opacity-25' }} text-white rounded d-flex justify-content-center align-items-center fw-bold" style="width: 40px; height: 40px; font-size: 1rem;">
-                                    {{ substr($k->nama ?? 'U', 0, 1) }}
-                                </div>
-                                <div class="d-flex flex-column">
-                                    <span class="text-dark fw-bold mb-1" style="font-size: 0.95rem;">{{ $k->nama }}</span>
-                                    <span class="text-muted" style="font-size: 0.75rem;">Divisi Anda</span>
-                                </div>
-                            </div>
-                            <div>
-                                @if($sudahSelesai)
-                                    <div class="bg-success bg-opacity-25 text-success rounded-pill px-3 py-1 fw-bold border border-success border-opacity-25 shadow-sm d-flex align-items-center gap-1" style="font-size: 0.75rem;">
-                                        <i class="bi bi-check-circle-fill"></i> Skor: {{ $skorKaryawan }}
-                                    </div>
-                                @else
-                                    <div class="bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-1 fw-medium border border-danger border-opacity-25 d-flex align-items-center gap-1" style="font-size: 0.75rem;">
-                                        <i class="bi bi-x-circle-fill"></i> Belum
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted small py-4 bg-light rounded-3">
-                            <i class="bi bi-emoji-frown fs-4 pb-2 d-block text-black-50"></i>
-                            Tidak ada karyawan ditemukan.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
+        
 
     </div>
 </div>

@@ -57,7 +57,7 @@ class AbsensiController extends Controller
                 }
 
                 // Tentukan status terlambat atau tidak
-                $statusKehadiran = ($waktuSekarang > '22:00:00') ? 'terlambat' : 'hadir';
+                $statusKehadiran = ($waktuSekarang > '10:00:00') ? 'terlambat' : 'hadir';
 
                 // Buat record absen baru
                 $absensi = Absensi::create([

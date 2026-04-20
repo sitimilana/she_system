@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\AbsensiController;
 use App\Http\Controllers\Api\ApiCutiController;
 use App\Http\Controllers\Api\ConfigPresensiController;
 
+use App\Http\Controllers\Api\ApiPenilaianController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -48,6 +50,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cuti/sisa-cuti', [ApiCutiController::class, 'sisaCuti'])->name('api.cuti.sisa-cuti');
     Route::get('/cuti', [ApiCutiController::class, 'index'])->name('api.cuti.index');
     Route::post('/cuti', [ApiCutiController::class, 'store'])->name('api.cuti.store');
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    // ... route lain ...
+    Route::get('/penilaian', [ApiPenilaianController::class, 'getPenilaian']);
 });
 
 Route::get('/config-presensi', ConfigPresensiController::class)->name('api.config-presensi');
