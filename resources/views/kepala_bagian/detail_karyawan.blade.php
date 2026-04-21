@@ -7,26 +7,78 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { background: #f4f7f6; font-family: 'Inter', sans-serif; color: #333; }
+        body { 
+            background: #f4f7f6; 
+            font-family: 'Inter', sans-serif; c
+            olor: #333; 
+        }
         
         .sidebar {
-            width: 250px; min-height: 100vh; background-color: #8f9fc4;
-            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
+            width: 250px; 
+            min-height: 100vh; 
+            background-color: #8f9fc4;
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
+            z-index: 100;
         }
-        .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
-        .sidebar .logo img { width: 100px; }
-        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
-        .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        .sidebar .logo { 
+            width: 140px; 
+            display: block; 
+            margin: 0 auto; 
+            margin-top: 20px;
+        }
+        .sidebar .logo img { 
+            width: 100px; 
+        }
+        .sidebar .nav-link { 
+            color: #fff; 
+            font-size: 16px; 
+            padding: 12px 25px; 
+            margin: 4px 15px; 
+            transition: 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { 
+            background-color: rgba(255,255,255,0.2); 
+            border-radius: 8px; 
+            font-weight: 600;
+        }
+        .sidebar .nav-link i { 
+            margin-right: 12px; 
+            font-size: 1.1rem; 
+        }
         
-        .content { margin-left: 250px; padding: 40px; }
-        .form-card {
-            background-color: #ffffff; border-radius: 16px; padding: 40px; 
-            max-width: 800px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);
+        .content { 
+            margin-left: 250px; 
+            padding: 40px; 
         }
-        .form-label { font-weight: 600; color: #4a5568; font-size: 0.9rem; margin-bottom: 6px;}
-        .form-control, .form-select { border-radius: 8px; border: 1px solid #cbd5e0; padding: 10px 15px; background-color: #f8fafc; }
-        .form-control:focus, .form-select:focus { background-color: #fff; border-color: #8f9fc4; box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15); }
+        .form-card {
+            background-color: #ffffff; 
+            border-radius: 16px; 
+            padding: 40px; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .form-label { 
+            font-weight: 600; 
+            color: #4a5568; 
+            font-size: 0.9rem; 
+            margin-bottom: 6px;
+        }
+        .form-control, .form-select { 
+            border-radius: 8px; 
+            border: 1px solid #cbd5e0; 
+            padding: 10px 15px; 
+            background-color: #f8fafc; 
+        }
+        .form-control:focus, .form-select:focus { 
+            background-color: #fff; 
+            border-color: #8f9fc4; 
+            box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15); 
+        }
     </style>
 </head>
 

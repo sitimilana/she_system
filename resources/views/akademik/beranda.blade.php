@@ -60,7 +60,7 @@
         </div>
         <div class="col-md-3">
             <div class="card card-custom p-4 h-100 text-center" style="border-bottom: 4px solid #3b82f6;">
-                <div class="metric-value text-primary">{{ $hadirHariIni }}</div>
+                <div class="metric-value text-primary">{{ $hadir }}</div>
                 <p class="text-muted m-0 fw-medium">Karyawan Hadir Hari Ini</p>
             </div>
         </div>

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\Karyawan;
+use App\Models\Cuti; // Tambahkan ini
 use Illuminate\Support\Facades\Storage;
 
 class AbsensiController extends Controller
@@ -14,8 +15,8 @@ class AbsensiController extends Controller
     {
         // 1. Validasi Input dari Android
         $request->validate([
-            'id_user'   => 'required', // Android mengirim id_user dari SharedPreferences
-            'jenis'     => 'required|in:masuk,pulang', // Wajib mengirim status absen
+            'id_user'   => 'required', 
+            'jenis'     => 'required|in:masuk,pulang',
             'latitude'  => 'required',
             'longitude' => 'required',
             'foto'      => 'required|image|max:3072' // Maks 3MB
@@ -32,6 +33,22 @@ class AbsensiController extends Controller
             $tanggalHariIni = now()->toDateString(); // YYYY-MM-DD
             $waktuSekarang = now()->toTimeString();  // HH:MM:SS
 
+            // ==========================================
+            // CEK APAKAH KARYAWAN SEDANG CUTI HARI INI
+            // ==========================================
+            $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
+                ->whereIn('status', ['disetujui_hrd', 'disetujui_kabag', 'approved', 'Disetujui']) // Sesuaikan dengan status ACC di sistem Anda
+                ->where('tanggal_mulai', '<=', $tanggalHariIni)
+                ->where('tanggal_selesai', '>=', $tanggalHariIni)
+                ->first();
+
+            if ($sedangCuti) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Anda sedang dalam masa cuti (' . $sedangCuti->jenis_cuti . '). Tidak perlu melakukan presensi.'
+                ], 400);
+            }
+
             // 3. Simpan Foto ke Storage
             $file = $request->file('foto');
             $namaFile = $id_karyawan . '_' . $request->jenis . '_' . time() . '.' . $file->extension();
@@ -42,9 +59,14 @@ class AbsensiController extends Controller
             // ==========================================
             if ($request->jenis == 'masuk') {
                 
-                // Cek batas waktu absen masuk
+                // Jangan izinkan absen masuk jika masih terlalu pagi (misal sebelum 06:00)
                 if ($waktuSekarang < '06:00:00') {
                     return response()->json(['success' => false, 'message' => 'Belum waktunya absen. Absen masuk dimulai pukul 06:00.'], 400);
+                }
+
+                // Jangan izinkan absen masuk jika sudah lewat jam 17:00 (Otomatis Alpha)
+                if ($waktuSekarang >= '17:00:00') {
+                    return response()->json(['success' => false, 'message' => 'Batas waktu absen masuk telah habis (17:00). Anda tercatat Alpha.'], 400);
                 }
 
                 // Cek apakah sudah absen masuk hari ini?
@@ -56,8 +78,9 @@ class AbsensiController extends Controller
                     return response()->json(['success' => false, 'message' => 'Anda sudah melakukan presensi MASUK hari ini!'], 400);
                 }
 
-                // Tentukan status terlambat atau tidak
-                $statusKehadiran = ($waktuSekarang > '10:00:00') ? 'terlambat' : 'hadir';
+                // Tentukan status terlambat atau tidak (Jam 08:00 + toleransi 15 menit)
+                $batasToleransi = '08:15:00';
+                $statusKehadiran = ($waktuSekarang > $batasToleransi) ? 'terlambat' : 'hadir';
 
                 // Buat record absen baru
                 $absensi = Absensi::create([
@@ -78,9 +101,9 @@ class AbsensiController extends Controller
             // ==========================================
             else if ($request->jenis == 'pulang') {
                 
-                // Cek batas waktu absen pulang
-                if ($waktuSekarang < '23:00:00') {
-                    return response()->json(['success' => false, 'message' => 'Belum waktunya pulang. Absen pulang dimulai pukul 23:00.'], 400);
+                // Cek batas waktu absen pulang (Hanya boleh jam 15:00 ke atas)
+                if ($waktuSekarang < '15:00:00') {
+                    return response()->json(['success' => false, 'message' => 'Belum waktunya pulang. Absen pulang baru bisa dilakukan pukul 15:00.'], 400);
                 }
 
                 // Cari absen masuk milik karyawan ini pada hari ini

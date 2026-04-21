@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Karyawan;
-use App\Models\PenilaianKinerja; // Pastikan model ini sesuai dengan nama model Anda
+use App\Models\Penilaian; // Pastikan model ini sesuai dengan nama model Anda
 use Illuminate\Http\Request;
 
 class ApiPenilaianController extends Controller
@@ -27,7 +27,7 @@ class ApiPenilaianController extends Controller
         $tahun = $request->query('tahun', now()->year);
 
         // Asumsi tabel Anda memiliki kolom 'bulan' dan 'tahun', atau Anda bisa mem-filter dari 'tanggal_penilaian'
-        $penilaian = PenilaianKinerja::where('id_karyawan', $karyawan->id_karyawan)
+        $penilaian = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
             ->whereMonth('tanggal_penilaian', $bulan)
             ->whereYear('tanggal_penilaian', $tahun)
             ->first();

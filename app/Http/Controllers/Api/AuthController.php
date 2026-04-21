@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Karyawan; // Pastikan model Karyawan di-import
 
 class AuthController extends Controller
 {
@@ -36,13 +37,23 @@ class AuthController extends Controller
         // 5. Buat Token
         $token = $user->createToken('MobileAppToken')->plainTextToken;
 
+        // 6. Ambil relasi data Karyawan berdasarkan ID User yang login
+        // (Pastikan menggunakan $user->id atau $user->id_user sesuai dengan nama kolom primary key di tabel users Anda)
+        $karyawan = Karyawan::where('id_user', $user->id)->first();
+
+        // 7. Kembalikan Response ke Android
         return response()->json([
             'success' => true,
             'message' => 'Login Berhasil',
-            'data' => [
-                'user' => $user,
-                'token' => $token
+            'token'   => $token,
+            'data'    => [
+                'id_user'      => $user->id,
+                'username'     => $user->username,
+                // Ambil nama dari tabel karyawan jika ada, jika tidak fallback ke nama/username di tabel users
+                'nama_lengkap' => $karyawan ? $karyawan->nama : $user->username,
+                // Kirim divisi jika ada, jika tidak kirim string kosong
+                'divisi'       => $karyawan ? $karyawan->divisi : '' 
             ]
-        ], 200);
+        ]);
     }
 }

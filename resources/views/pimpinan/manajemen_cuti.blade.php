@@ -90,7 +90,7 @@
 
 <div class="sidebar">
     <div class="logo">
-        <img src="{{ asset('images/logoshe.png') }}" alt="Logo">
+        <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
     
     <ul class="nav flex-column mt-5">
