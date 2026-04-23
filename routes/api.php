@@ -2,61 +2,49 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SlipGajiController;
 
+// Import Controllers
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AbsensiController;
-
-use App\Http\Controllers\Api\ApiCutiController;
 use App\Http\Controllers\Api\ConfigPresensiController;
-
+use App\Http\Controllers\Api\ApiCutiController;
 use App\Http\Controllers\Api\ApiPenilaianController;
+use App\Http\Controllers\Api\SlipGajiController;
+// Tambahkan RewardController jika Anda sudah membuatnya
+// use App\Http\Controllers\Api\RewardController; 
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-/* MOBILE - Slip Gaji Karyawan */
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
-    Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
-});
-
-
-/* MOBILE - Bebas Akses (Belum punya token) */
+// ==========================================================
+// 1. ZONA BEBAS (Tidak butuh Token Sanctum dari Android)
+// Sesuai ApiService: login, config-presensi, absensi, absensi/riwayat
+// ==========================================================
 Route::post('/login', [AuthController::class, 'login']);
-
-/* MOBILE - Harus Pakai Token Sanctum */
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/slip-gaji', [SlipGajiController::class, 'index'])->name('api.slip-gaji.index');
-    Route::get('/slip-gaji/{id}', [SlipGajiController::class, 'show'])->name('api.slip-gaji.show');
-});
+Route::get('/config-presensi', [ConfigPresensiController::class, '__invoke']); // atau method-nya jika bukan invokeable
 
 Route::post('/absensi', [AbsensiController::class, 'store']);
+Route::post('/absensi/riwayat', [AbsensiController::class, 'riwayatAbsensi']);
 
-/* MOBILE - Manajemen Cuti Karyawan */
+
+// ==========================================================
+// 2. ZONA AMAN (Wajib bawa @Header("Authorization") dari Android)
+// ==========================================================
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/cuti/sisa-cuti', [ApiCutiController::class, 'sisaCuti'])->name('api.cuti.sisa-cuti');
-    Route::get('/cuti', [ApiCutiController::class, 'index'])->name('api.cuti.index');
-    Route::post('/cuti', [ApiCutiController::class, 'store'])->name('api.cuti.store');
-});
-
-
-Route::middleware('auth:sanctum')->group(function () {
-    // ... route lain ...
+    
+    // Cuti
+    Route::get('/cuti', [ApiCutiController::class, 'index']);
+    Route::post('/cuti', [ApiCutiController::class, 'store']);
+    
+    // Penilaian
     Route::get('/penilaian', [ApiPenilaianController::class, 'getPenilaian']);
+    
+    // Gaji (Di ApiService dipanggil 'gaji')
+    Route::get('/gaji', [SlipGajiController::class, 'index']);
+    
+    // Reward (Sesuaikan dengan nama controller Anda)
+    // Route::get('/rewards', [RewardController::class, 'index']);
 });
-
-Route::get('/config-presensi', ConfigPresensiController::class)->name('api.config-presensi');
-

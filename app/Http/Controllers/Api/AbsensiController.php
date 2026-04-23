@@ -8,6 +8,7 @@ use App\Models\Absensi;
 use App\Models\Karyawan;
 use App\Models\Cuti; // Tambahkan ini
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon; // Untuk catch-up tanggal alpha
 
 class AbsensiController extends Controller
 {
@@ -66,7 +67,7 @@ class AbsensiController extends Controller
 
                 // Jangan izinkan absen masuk jika sudah lewat jam 17:00 (Otomatis Alpha)
                 if ($waktuSekarang >= '17:00:00') {
-                    return response()->json(['success' => false, 'message' => 'Batas waktu absen masuk telah habis (17:00). Anda tercatat Alpha.'], 400);
+                    return response()->json(['success' => false, 'message' => 'Batas waktu absen masuk telah habis (17:00). Anda tercatat Alfa.'], 400);
                 }
 
                 // Cek apakah sudah absen masuk hari ini?
@@ -135,5 +136,86 @@ class AbsensiController extends Controller
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    // FUNGSI UNTUK MENGAMBIL RIWAYAT SEKALIGUS MERAPEL ALPHA
+    public function riwayatAbsensi(Request $request)
+    {
+        $request->validate([
+            'id_user' => 'required'
+        ]);
+
+        $karyawan = Karyawan::where('id_user', $request->id_user)->first();
+        if (!$karyawan) {
+            return response()->json(['success' => false, 'message' => 'Karyawan tidak ditemukan'], 404);
+        }
+
+        $id_karyawan = $karyawan->id_karyawan;
+
+        // =================================================================
+        // PROSES CATCH-UP (MERAPEL ALPHA OTOMATIS)
+        // Kita hitung misalnya dari awal bulan (atau min 30 hari kebelakang)
+        // =================================================================
+        $startDate = Carbon::now()->startOfMonth();
+        $endDate = Carbon::now()->subDay(); // Sampai H-1 (Kemarin)
+
+        // Jika hari ini sudah lewat jam 17:00, kita include hari ini untuk dicek Alpha-nya
+        if (now()->toTimeString() >= '17:00:00') {
+            $endDate = Carbon::now();
+        }
+
+        while ($startDate->lte($endDate)) {
+            $tanggalCek = $startDate->toDateString();
+
+            // Jika Anda ingin melewati hari minggu, uncomment kode dibawah ini
+            // if ($startDate->isSunday()) {
+            //     $startDate->addDay();
+            //     continue;
+            // }
+
+            // Mencegah insert dobel: Cek apakah karyawan sudah punya record/absen/alpha di tanggalCek?
+            $sudahAdaAbsen = Absensi::where('id_karyawan', $id_karyawan)
+                                    ->where('tanggal', $tanggalCek)
+                                    ->exists();
+
+            if (!$sudahAdaAbsen) {
+                // Cek apakah karyawan sedang cuti ACC di tanggalCek?
+                $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
+                    ->whereIn('status', ['disetujui_hrd', 'disetujui_kabag', 'approved', 'Disetujui'])
+                    ->where('tanggal_mulai', '<=', $tanggalCek)
+                    ->where('tanggal_selesai', '>=', $tanggalCek)
+                    ->exists();
+
+                if ($sedangCuti) {
+                    // Jika cuti, simpan sbg cuti
+                    Absensi::create([
+                        'id_karyawan' => $id_karyawan,
+                        'tanggal'     => $tanggalCek,
+                        'status'      => 'cuti'
+                    ]);
+                } else {
+                    // Jika tidak cuti & tidak ada rekam, simpan secara Alpha otomatis
+                    Absensi::create([
+                        'id_karyawan' => $id_karyawan,
+                        'tanggal'     => $tanggalCek,
+                        'status'      => 'alfa'
+                    ]);
+                }
+            }
+            $startDate->addDay();
+        }
+
+        // =================================================================
+        // BACA KEMBALI DATABASE SETELAH REKAP
+        // =================================================================
+        $riwayat = Absensi::where('id_karyawan', $id_karyawan)
+                          ->orderBy('tanggal', 'desc')
+                          ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Berhasil mengambil riwayat absensi',
+            'data'    => $riwayat
+        ]);
     }
 }

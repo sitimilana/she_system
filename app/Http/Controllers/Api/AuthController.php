@@ -38,8 +38,7 @@ class AuthController extends Controller
         $token = $user->createToken('MobileAppToken')->plainTextToken;
 
         // 6. Ambil relasi data Karyawan berdasarkan ID User yang login
-        // (Pastikan menggunakan $user->id atau $user->id_user sesuai dengan nama kolom primary key di tabel users Anda)
-        $karyawan = Karyawan::where('id_user', $user->id)->first();
+        $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         // 7. Kembalikan Response ke Android
         return response()->json([
@@ -47,7 +46,7 @@ class AuthController extends Controller
             'message' => 'Login Berhasil',
             'token'   => $token,
             'data'    => [
-                'id_user'      => $user->id,
+                'id_user'      => $user->id_user,
                 'username'     => $user->username,
                 // Ambil nama dari tabel karyawan jika ada, jika tidak fallback ke nama/username di tabel users
                 'nama_lengkap' => $karyawan ? $karyawan->nama : $user->username,
