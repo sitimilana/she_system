@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AbsensiController;
 use App\Http\Controllers\Api\ConfigPresensiController;
-use App\Http\Controllers\Api\ApiCutiController;
+use App\Http\Controllers\Api\PengajuanController;
 use App\Http\Controllers\Api\ApiPenilaianController;
 use App\Http\Controllers\Api\SlipGajiController;
 // Tambahkan RewardController jika Anda sudah membuatnya
@@ -36,8 +36,8 @@ Route::post('/absensi/riwayat', [AbsensiController::class, 'riwayatAbsensi']);
 Route::middleware('auth:sanctum')->group(function () {
     
     // Cuti
-    Route::get('/cuti', [ApiCutiController::class, 'index']);
-    Route::post('/cuti', [ApiCutiController::class, 'store']);
+    Route::get('/cuti', [PengajuanController::class, 'index']);
+    Route::post('/cuti', [PengajuanController::class, 'store']);
     
     // Penilaian
     Route::get('/penilaian', [ApiPenilaianController::class, 'getPenilaian']);

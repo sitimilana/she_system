@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
-class ApiCutiController extends Controller
+class PengajuanController extends Controller
 {
     public function sisaCuti(Request $request)
     {
@@ -66,8 +66,7 @@ class ApiCutiController extends Controller
             return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
         }
 
-        // Validasi dasar (hapus aturan after_or_equal:today agar kita bisa atur manual)
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'tanggal_mulai'   => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
             'jenis_cuti'      => 'required|string|max:100',
@@ -75,44 +74,103 @@ class ApiCutiController extends Controller
             'berkas_bukti'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:3072',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        $jenisCuti = strtolower($request->jenis_cuti);
+
         // ==========================================
-        // LOGIKA ATURAN HARI (H-1 atau Hari H)
+        // 1. KATEGORI & SYARAT BERKAS
+        // ==========================================
+        if ($jenisCuti === 'sakit' && !$request->hasFile('berkas_bukti')) {
+            return response()->json([
+                'message' => 'Pengajuan Sakit wajib melampirkan berkas (surat keterangan dokter/bukti sakit).'
+            ], 422);
+        }
+
+        // ==========================================
+        // 2. ATURAN WAKTU PENGAJUAN
         // ==========================================
         $tglMulai = Carbon::parse($request->tanggal_mulai)->startOfDay();
         $hariIni = now()->startOfDay();
 
-        if (strtolower($request->jenis_cuti) === 'sakit') {
-            // Jika SAKIT, boleh hari ini (tapi tidak boleh masa lalu)
+        if ($jenisCuti === 'cuti tahunan' || $jenisCuti === 'cuti') {
+            // CUTI: Wajib H-1 atau sebelumnya
+            if ($tglMulai->lessThanOrEqualTo($hariIni)) {
+                return response()->json([
+                    'message' => 'Pengajuan Cuti harus dilakukan minimal 1 hari sebelumnya (H-1).'
+                ], 422);
+            }
+        } elseif ($jenisCuti === 'izin') {
+            // IZIN: Boleh H-1 atau Hari H (tidak boleh masa lalu)
+            if ($tglMulai->lessThan($hariIni)) {
+                return response()->json([
+                    'message' => 'Tanggal mulai izin tidak boleh di masa lalu.'
+                ], 422);
+            }
+        } elseif ($jenisCuti === 'sakit') {
+            // SAKIT: Boleh Hari H (tidak boleh masa lalu)
             if ($tglMulai->lessThan($hariIni)) {
                 return response()->json([
                     'message' => 'Tanggal mulai sakit tidak boleh di masa lalu.'
                 ], 422);
             }
-        } else {
-            // Jika CUTI/IZIN dll, HARUS minimal besok (H-1)
-            if ($tglMulai->lessThanOrEqualTo($hariIni)) {
-                return response()->json([
-                    'message' => 'Pengajuan ' . $request->jenis_cuti . ' harus dilakukan minimal 1 hari sebelumnya (H-1).'
-                ], 422);
-            }
         }
 
         // ==========================================
-        // LOGIKA SISA CUTI
+        // 3. VALIDASI KEAMANAN SISTEM (Pencegahan Bentrok)
+        // ==========================================
+
+        // a) Cek Bentrok Izin Aktif Lainnya
+        $izinBentrok = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereNotIn('status', ['ditolak', 'Ditolak'])
+            ->where(function($query) use ($request) {
+                $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_selesai])
+                      ->orWhereBetween('tanggal_selesai', [$request->tanggal_mulai, $request->tanggal_selesai])
+                      ->orWhere(function($q) use ($request) {
+                          $q->where('tanggal_mulai', '<=', $request->tanggal_mulai)
+                            ->where('tanggal_selesai', '>=', $request->tanggal_selesai);
+                      });
+            })->exists();
+            
+        if ($izinBentrok) {
+            return response()->json([
+                'message' => 'Anda sudah memiliki pengajuan aktif pada rentang tanggal tersebut.'
+            ], 422);
+        }
+
+        // b) Cek Absen Ganda (Sudah Absen Masuk/Pulang)
+        $sudahAbsen = \App\Models\Absensi::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereBetween('tanggal', [$request->tanggal_mulai, $request->tanggal_selesai])
+            ->whereNotNull('jam_masuk')
+            ->exists();
+            
+        if ($sudahAbsen) {
+             return response()->json([
+                'message' => 'Pengajuan ditolak. Anda sudah melakukan presensi di rentang tanggal tersebut.'
+            ], 422);
+        }
+
+        // ==========================================
+        // 4. LOGIKA SISA CUTI (Hanya untuk Cuti Tahunan)
         // ==========================================
         $jumlahHari = $tglMulai->diffInDays(Carbon::parse($request->tanggal_selesai)) + 1;
 
-        // Asumsi: Cuti mengurangi sisa cuti. (Opsional: Anda bisa mengecualikan 'Sakit' agar tidak memotong sisa cuti tahunan jika aturan perusahaan Anda begitu).
-        if ($karyawan->sisa_cuti <= 0) {
-            return response()->json([
-                'message' => 'Jatah cuti tahunan Anda telah habis.',
-            ], 422);
-        }
+        if (str_contains($jenisCuti, 'cuti')) {
+            if ($karyawan->sisa_cuti <= 0) {
+                return response()->json([
+                    'message' => 'Jatah cuti tahunan Anda telah habis.',
+                ], 422);
+            }
 
-        if ($jumlahHari > $karyawan->sisa_cuti) {
-            return response()->json([
-                'message' => "Durasi pengajuan ({$jumlahHari} hari) melebihi sisa kuota cuti Anda ({$karyawan->sisa_cuti} hari).",
-            ], 422);
+            if ($jumlahHari > $karyawan->sisa_cuti) {
+                return response()->json([
+                    'message' => "Durasi pengajuan ({$jumlahHari} hari) melebihi sisa kuota cuti Anda ({$karyawan->sisa_cuti} hari).",
+                ], 422);
+            }
         }
 
         // Proses Simpan

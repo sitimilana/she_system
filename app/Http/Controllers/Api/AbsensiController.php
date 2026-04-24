@@ -179,22 +179,32 @@ class AbsensiController extends Controller
                                     ->exists();
 
             if (!$sudahAdaAbsen) {
-                // Cek apakah karyawan sedang cuti ACC di tanggalCek?
+                // Cek apakah karyawan sedang memiliki pengajuan (Cuti/Izin/Sakit) yang ACC di tanggalCek?
                 $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
                     ->whereIn('status', ['disetujui_hrd', 'disetujui_kabag', 'approved', 'Disetujui'])
                     ->where('tanggal_mulai', '<=', $tanggalCek)
                     ->where('tanggal_selesai', '>=', $tanggalCek)
-                    ->exists();
+                    ->first(); // Ganti exists() menjadi first() agar kita bisa baca jenis_cuti-nya
 
                 if ($sedangCuti) {
-                    // Jika cuti, simpan sbg cuti
+                    // Deteksi status berdasarkan jenis_cuti (Asumsi: isinya bisa 'Sakit', 'Izin', atau 'Cuti Tahunan')
+                    $jenisPengajuan = strtolower($sedangCuti->jenis_cuti);
+                    $statusAbsen = 'cuti'; // Default
+
+                    if (str_contains($jenisPengajuan, 'sakit')) {
+                        $statusAbsen = 'sakit';
+                    } elseif (str_contains($jenisPengajuan, 'izin')) {
+                        $statusAbsen = 'izin';
+                    }
+
+                    // Simpan status sesuai jenis pengajuannya
                     Absensi::create([
                         'id_karyawan' => $id_karyawan,
                         'tanggal'     => $tanggalCek,
-                        'status'      => 'cuti'
+                        'status'      => $statusAbsen
                     ]);
                 } else {
-                    // Jika tidak cuti & tidak ada rekam, simpan secara Alpha otomatis
+                    // Jika tidak ada pengajuan apa-apa & tidak ada rekam absen, simpan secara Alfa otomatis
                     Absensi::create([
                         'id_karyawan' => $id_karyawan,
                         'tanggal'     => $tanggalCek,

@@ -28,9 +28,7 @@ class PimpinanCutiController extends Controller
         }
 
         // Data Cuti Menunggu Validasi (Pimpinan)
-        // Jika sebelumnya sudah diverifikasi Kabag, berarti statusnya 'pending_pimpinan'
-        // Namun sesuaikan dengan status aktual aplikasi Anda, misalnya 'Pending'
-        $dataCuti = (clone $query)->where('status', 'Pending')->paginate(10, ['*'], 'pending_page');
+        $dataCuti = (clone $query)->whereIn('status', ['Pending', 'pending_kabag'])->paginate(10, ['*'], 'pending_page');
 
         // Riwayat Cuti (yang sudah disetujui / ditolak)
         $riwayatCuti = (clone $query)->whereIn('status', ['Disetujui', 'Ditolak', 'approved', 'rejected'])->paginate(10, ['*'], 'riwayat_page');
@@ -45,8 +43,8 @@ class PimpinanCutiController extends Controller
     {
         $cuti = Cuti::findOrFail($id);
         $cuti->update([
-            'status' => 'Disetujui',
-            'disetujui_oleh' => Auth::id() // Menyimpan ID pimpinan yang menyetujui
+            'status' => 'approved',
+            'disetujui_oleh' => Auth::user()->id_user // Menyimpan ID pimpinan yang menyetujui
         ]);
 
         return redirect()->back()->with('success', 'Pengajuan cuti berhasil disetujui.');
@@ -59,8 +57,8 @@ class PimpinanCutiController extends Controller
     {
         $cuti = Cuti::findOrFail($id);
         $cuti->update([
-            'status' => 'Ditolak',
-            'disetujui_oleh' => Auth::id() // Menyimpan ID pimpinan yang menolak
+            'status' => 'rejected',
+            'disetujui_oleh' => Auth::user()->id_user // Menyimpan ID pimpinan yang menolak
         ]);
 
         return redirect()->back()->with('success', 'Pengajuan cuti telah ditolak.');

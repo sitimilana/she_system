@@ -203,11 +203,11 @@
                     </td>
                     <td class="text-center">
                         <form action="{{ route('pimpinan.cuti.approve', $cuti->id_cuti) }}" method="POST" class="d-inline">
-                            @csrf @method('PATCH')
+                            @csrf 
                             <button type="submit" class="btn btn-success action-btn me-1" onclick="return confirm('Setujui & potong saldo cuti karyawan ini?')"><i class="bi bi-check-circle"></i> Setujui</button>
                         </form>
                         <form action="{{ route('pimpinan.cuti.reject', $cuti->id_cuti) }}" method="POST" class="d-inline">
-                            @csrf @method('PATCH')
+                            @csrf 
                             <button type="submit" class="btn btn-danger action-btn" onclick="return confirm('Tolak pengajuan cuti ini?')"><i class="bi bi-x-circle"></i> Tolak</button>
                         </form>
                     </td>
