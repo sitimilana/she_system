@@ -124,9 +124,8 @@ class PengajuanController extends Controller
         // 3. VALIDASI KEAMANAN SISTEM (Pencegahan Bentrok)
         // ==========================================
 
-        // a) Cek Bentrok Izin Aktif Lainnya
         $izinBentrok = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereNotIn('status', ['ditolak', 'Ditolak'])
+            ->where('status', '!=', 'rejected') 
             ->where(function($query) use ($request) {
                 $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_selesai])
                       ->orWhereBetween('tanggal_selesai', [$request->tanggal_mulai, $request->tanggal_selesai])

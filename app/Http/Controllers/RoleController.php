@@ -43,7 +43,7 @@ class RoleController extends Controller
             'nama'     => 'required',
             'role'     => 'required', // Ini menerima TEKS dari dropdown (Pimpinan/Karyawan)
             'username' => 'required|unique:user,username',
-            'password' => 'required'
+            'password' => 'required|min:8'
         ]);
 
         // 2. Cari atau buat role berdasarkan nama role yang dipilih dari select option

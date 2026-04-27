@@ -19,7 +19,7 @@ class PimpinanCutiController extends Controller
             $search = $request->search;
             $query->whereHas('karyawan', function($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('jabatan', 'like', "%{$search}%");
+                  ->orWhere('divisi', 'like', "%{$search}%");
             });
         }
 

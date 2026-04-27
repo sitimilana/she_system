@@ -13,14 +13,47 @@ class KepalaBagianController extends Controller
 {
     public function index()
     {
-        $jumlahKaryawan = Karyawan::count();
+        $jumlahKaryawan = Karyawan::where('status_karyawan', 'aktif')->count();
         $penilaian = Penilaian::latest()->take(2)->get();
         $karyawan = Karyawan::latest()->take(5)->get();
+
+        $karyawanBelumLengkap = User::whereHas('role', function ($query) {
+            $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+        })->where(function ($query) {
+            $query->doesntHave('karyawan')
+                  ->orWhereHas('karyawan', function ($sub) {
+                      $sub->whereNull('status_karyawan')->orWhere('status_karyawan', '');
+                  });
+        })->count();
+
+        $karyawanTidakAktif = Karyawan::where('status_karyawan', 'keluar')->count();
+
+        $bulanSekarang = now()->month;
+        $tahunSekarang = now()->year;
+
+        $evaluasiSelesai = Penilaian::where('bulan', $bulanSekarang)
+            ->where('tahun', $tahunSekarang)
+            ->distinct('id_karyawan')
+            ->count('id_karyawan');
+
+        $progressPenilaian = Karyawan::where('status_karyawan', 'aktif')
+            ->leftJoin('penilaian', function ($join) use ($bulanSekarang, $tahunSekarang) {
+                $join->on('karyawan.id_karyawan', '=', 'penilaian.id_karyawan')
+                     ->where('penilaian.bulan', '=', $bulanSekarang)
+                     ->where('penilaian.tahun', '=', $tahunSekarang);
+            })
+            ->select('karyawan.*', 'penilaian.id_penilaian as is_dinilai', 'penilaian.total_skor')
+            ->orderBy('karyawan.nama')
+            ->get();
 
         return view('kepala_bagian.home', compact(
             'jumlahKaryawan',
             'penilaian',
-            'karyawan'
+            'karyawan',
+            'karyawanBelumLengkap',
+            'karyawanTidakAktif',
+            'evaluasiSelesai',
+            'progressPenilaian'
         ));
     }
 

@@ -141,6 +141,12 @@
 
     <div class="card shadow-sm border-0 mb-4 p-3 bg-light">
         <form method="GET" action="{{ route('pimpinan.gaji') }}" class="row g-3 align-items-center">
+            <div class="col-12 col-md-4 mb-2 mb-md-0">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0" placeholder="Cari nama karyawan..." value="{{ request('search') }}">
+                </div>
+            </div>
             <div class="col-auto">
                 <label class="col-form-label fw-bold">Periode Penggajian:</label>
             </div>
@@ -158,8 +164,11 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-secondary">Tampilkan</button>
+            <div class="col-auto d-flex gap-2">
+                <button type="submit" class="btn btn-secondary shadow-sm"><i class="bi bi-filter"></i> Tampilkan</button>
+                @if(request('search'))
+                    <a href="{{ route('pimpinan.gaji') }}?bulan={{ $bulan }}&tahun={{ $tahun }}" class="btn btn-outline-secondary">Reset Pencarian</a>
+                @endif
             </div>
         </form>
     </div>

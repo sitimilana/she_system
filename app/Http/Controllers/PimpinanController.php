@@ -45,23 +45,29 @@ class PimpinanController extends Controller
         $query = Cuti::with('karyawan')
             ->where('status', 'pending_pimpinan');
 
+        $queryRiwayat = Cuti::with('karyawan')
+            ->whereIn('status', ['approved', 'rejected']);
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('karyawan', function ($q) use ($search) {
+            $karyawanFilter = function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('jabatan', 'like', "%{$search}%");
-            });
+                  ->orWhere('divisi', 'like', "%{$search}%");
+            };
+            $query->whereHas('karyawan', $karyawanFilter);
+            $queryRiwayat->whereHas('karyawan', $karyawanFilter);
         }
 
         if ($request->filled('jenis_cuti')) {
             $query->where('jenis_cuti', $request->jenis_cuti);
+            $queryRiwayat->where('jenis_cuti', $request->jenis_cuti);
         }
 
-        $dataCuti = $query->orderByDesc('tanggal_pengajuan')->paginate(10)->withQueryString();
+        $dataCuti = $query->orderByDesc('tanggal_pengajuan')
+            ->paginate(10, ['*'], 'page')
+            ->withQueryString();
 
-        $riwayatCuti = Cuti::with('karyawan')
-            ->whereIn('status', ['approved', 'rejected'])
-            ->orderByDesc('updated_at')
+        $riwayatCuti = $queryRiwayat->orderByDesc('updated_at')
             ->paginate(10, ['*'], 'riwayat_page')
             ->withQueryString();
 
@@ -125,11 +131,19 @@ class PimpinanController extends Controller
     {
         $bulan = $request->input('bulan', now()->month);
         $tahun = $request->input('tahun', now()->year);
+        $search = $request->input('search');
 
-        $dataGaji = Penggajian::with('karyawan')
+        $query = Penggajian::with('karyawan')
             ->where('bulan', $bulan)
-            ->where('tahun', $tahun)
-            ->get();
+            ->where('tahun', $tahun);
+
+        if ($search) {
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', '%' . $search . '%');
+            });
+        }
+
+        $dataGaji = $query->get();
 
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',

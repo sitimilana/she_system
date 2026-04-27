@@ -144,34 +144,61 @@
         <p class="text-muted">Berikut adalah ringkasan operasional departemen Anda hari ini.</p>
     </div>
 
-    <div class="row mb-5">
-        <div class="col-md-4">
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card card-custom stat-widget p-4 h-100">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="text-white-50 fw-medium mb-1">Total Karyawan Divisi</p>
+                        <p class="text-white-50 fw-medium mb-1">Karyawan Aktif</p>
                         <div class="stat-value">{{ $jumlahKaryawan ?? 0 }}</div>
-                        <span class="badge bg-success bg-opacity-25 text-light mt-2"><i class="bi bi-arrow-up-short"></i> Aktif Beroperasi</span>
+                        <span class="badge bg-success bg-opacity-25 text-light mt-2"><i class="bi bi-person-check-fill"></i> Sedang Beroperasi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card card-custom stat-widget p-4 h-100" style="background: linear-gradient(135deg, #475569 0%, #334155 100%);">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="text-white-50 fw-medium mb-1">Karyawan Tidak Aktif</p>
+                        <div class="stat-value">{{ $karyawanTidakAktif ?? 0 }}</div>
+                        <span class="badge bg-secondary bg-opacity-25 text-light mt-2"><i class="bi bi-person-x-fill"></i> Tidak Aktif</span>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-8">
-            <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
-                <div class="d-flex justify-content-between align-items-end mb-3">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card card-custom stat-widget p-4 h-100" style="background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);">
+                <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h5 class="fw-bold mb-1 text-dark">Progress Evaluasi Kinerja</h5>
-                        <p class="text-muted m-0 small">Progress Evaluasi: <span class="fw-bold text-dark">{{ $evaluasiSelesai ?? 0 }} dari {{ $jumlahKaryawan ?? 0 }}</span> Karyawan Selesai</p>
+                        <p class="text-white-50 fw-medium mb-1">Data Belum Lengkap</p>
+                        <div class="stat-value mb-1">{{ $karyawanBelumLengkap ?? 0 }}</div>
+                        <a href="{{ route('kabag.karyawan') }}" class="badge bg-light bg-opacity-10 text-white mt-1 text-decoration-none">
+                            <i class="bi bi-pencil-square"></i> Lengkapi Data
+                        </a>
                     </div>
-                    <a href="{{ route('kabag.penilaian') }}" class="btn btn-primary shadow-sm px-4 py-2 rounded-pill fw-medium" style="font-size: 0.9rem;">
-                        Lanjutkan Evaluasi <i class="bi bi-arrow-right ms-1"></i>
+                    <i class="bi bi-exclamation-triangle text-white" style="opacity: 0.15; font-size: 4rem; position: absolute; right: 10px; bottom: -10px;"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Progress Evaluasi Kinerja ({{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }})</h6>
+                        <p class="text-muted m-0 small"><span class="fw-bold text-dark">{{ $evaluasiSelesai ?? 0 }} / {{ $jumlahKaryawan ?? 0 }}</span> Selesai</p>
+                    </div>
+                    <a href="{{ route('kabag.penilaian') }}" class="btn btn-primary shadow-sm px-3 py-1 rounded-pill fw-medium" style="font-size: 0.8rem;">
+                        <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
                 @php
                     $persentase = ($jumlahKaryawan > 0) ? round((($evaluasiSelesai ?? 0) / $jumlahKaryawan) * 100) : 0;
                 @endphp
-                <div class="progress bg-secondary bg-opacity-10 mt-1" style="height: 12px; border-radius: 10px;">
+                <div class="progress bg-secondary bg-opacity-10 mt-1" style="height: 10px; border-radius: 10px;">
                     <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $persentase }}%" aria-valuenow="{{ $persentase }}" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
             </div>
@@ -179,48 +206,58 @@
     </div>
 
     <div class="row">
-        
         <div class="col-md-12 mb-4">
             <div class="card card-custom p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-activity text-info me-2"></i>Ringkasan Aktivitas SDM & Evaluasi</h5>
+                    <h5 class="fw-bold m-0"><i class="bi bi-list-check text-info me-2"></i>Progress Penilaian Kinerja {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }}</h5>
+                    <a href="{{ route('kabag.penilaian') }}" class="btn btn-sm btn-outline-primary">Lihat Selengkapnya</a>
                 </div>
 
-                <div>
-                    <div class="list-item-custom d-flex align-items-center bg-light border-0 mb-3 shadow-sm">
-                        <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex justify-content-center align-items-center fs-5 me-3 flex-shrink-0" style="width: 45px; height: 45px;">
-                            <i class="bi bi-person-plus-fill"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Karyawan Baru Terdaftar</h6>
-                            <p class="text-muted small m-0">Terdapat <strong class="text-dark">{{ $karyawanBaru ?? 0 }}</strong> karyawan baru yang bergabung di divisi Anda bulan ini.</p>
-                        </div>
-                    </div>
-
-                    @forelse($penilaian as $p)
-                    <div class="list-item-custom d-flex align-items-center bg-light border-0 mb-3 shadow-sm hover-effect">
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex justify-content-center align-items-center fs-5 me-3 flex-shrink-0" style="width: 45px; height: 45px;">
-                            <i class="bi bi-star-fill"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-1 text-dark">Penilaian Kinerja Disimpan</h6>
-                            <p class="text-muted m-0" style="font-size: 0.85rem;">
-                                Anda baru saja mengevaluasi <strong>{{ $p->karyawan->nama ?? 'Nama Tidak Diketahui' }}</strong> pada periode {{ $p->bulan ?? '-' }}-{{ $p->tahun ?? '-' }} dengan hasil skor <strong class="text-primary">{{ $p->total_skor ?? '-' }}</strong>.
-                            </p>
-                        </div>
-                    </div>
-                    @empty
-                    <div class="text-center py-5 text-muted">
-                        <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
-                        Belum ada riwayat aktivitas terbaru.
-                    </div>
-                    @endforelse
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%" class="text-center">No</th>
+                                <th width="30%">Nama Karyawan</th>
+                                <th width="20%">Divisi</th>
+                                <th width="25%" class="text-center">Status Evaluasi</th>
+                                <th width="20%" class="text-center">Aksi / Skor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($progressPenilaian as $index => $pegawai)
+                            <tr>
+                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="fw-bold">{{ $pegawai->nama }}</td>
+                                <td class="text-capitalize">{{ $pegawai->divisi ?? '-' }}</td>
+                                <td class="text-center">
+                                    @if($pegawai->is_dinilai)
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Telah Dinilai</span>
+                                    @else
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill"><i class="bi bi-clock-fill me-1"></i> Menunggu Evaluasi</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    @if($pegawai->is_dinilai)
+                                        <span class="fw-bold text-primary">{{ $pegawai->total_skor }}</span> Poin
+                                    @else
+                                        <a href="{{ route('kabag.penilaian') }}" class="btn btn-sm btn-primary py-1 px-3" style="font-size: 0.8rem;">Evaluasi Sekarang</a>
+                                    @endif
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
+                                    Belum ada data Karyawan Aktif.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-
-        
-
     </div>
 </div>
 

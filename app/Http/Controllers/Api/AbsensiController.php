@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\Karyawan;
-use App\Models\Cuti; // Tambahkan ini
+use App\Models\Cuti; 
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon; // Untuk catch-up tanggal alpha
+use Carbon\Carbon;
 
 class AbsensiController extends Controller
 {
@@ -38,7 +38,7 @@ class AbsensiController extends Controller
             // CEK APAKAH KARYAWAN SEDANG CUTI HARI INI
             // ==========================================
             $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
-                ->whereIn('status', ['disetujui_hrd', 'disetujui_kabag', 'approved', 'Disetujui']) // Sesuaikan dengan status ACC di sistem Anda
+                ->where('status', 'approved') // <-- SUDAH DIPERBAIKI SESUAI ENUM DATABASE
                 ->where('tanggal_mulai', '<=', $tanggalHariIni)
                 ->where('tanggal_selesai', '>=', $tanggalHariIni)
                 ->first();
@@ -46,7 +46,7 @@ class AbsensiController extends Controller
             if ($sedangCuti) {
                 return response()->json([
                     'success' => false, 
-                    'message' => 'Anda sedang dalam masa cuti (' . $sedangCuti->jenis_cuti . '). Tidak perlu melakukan presensi.'
+                    'message' => 'Anda sedang dalam masa pengajuan (' . $sedangCuti->jenis_cuti . '). Tidak perlu melakukan presensi.'
                 ], 400);
             }
 
@@ -65,7 +65,7 @@ class AbsensiController extends Controller
                     return response()->json(['success' => false, 'message' => 'Belum waktunya absen. Absen masuk dimulai pukul 06:00.'], 400);
                 }
 
-                // Jangan izinkan absen masuk jika sudah lewat jam 17:00 (Otomatis Alpha)
+                // Jangan izinkan absen masuk jika sudah lewat jam 17:00 (Otomatis Alfa)
                 if ($waktuSekarang >= '17:00:00') {
                     return response()->json(['success' => false, 'message' => 'Batas waktu absen masuk telah habis (17:00). Anda tercatat Alfa.'], 400);
                 }
@@ -138,7 +138,7 @@ class AbsensiController extends Controller
         }
     }
 
-    // FUNGSI UNTUK MENGAMBIL RIWAYAT SEKALIGUS MERAPEL ALPHA
+    // FUNGSI UNTUK MENGAMBIL RIWAYAT SEKALIGUS MERAPEL ALFA
     public function riwayatAbsensi(Request $request)
     {
         $request->validate([
@@ -153,13 +153,12 @@ class AbsensiController extends Controller
         $id_karyawan = $karyawan->id_karyawan;
 
         // =================================================================
-        // PROSES CATCH-UP (MERAPEL ALPHA OTOMATIS)
-        // Kita hitung misalnya dari awal bulan (atau min 30 hari kebelakang)
+        // PROSES CATCH-UP (MERAPEL ALFA OTOMATIS)
         // =================================================================
         $startDate = Carbon::now()->startOfMonth();
         $endDate = Carbon::now()->subDay(); // Sampai H-1 (Kemarin)
 
-        // Jika hari ini sudah lewat jam 17:00, kita include hari ini untuk dicek Alpha-nya
+        // Jika hari ini sudah lewat jam 17:00, kita include hari ini untuk dicek Alfa-nya
         if (now()->toTimeString() >= '17:00:00') {
             $endDate = Carbon::now();
         }
@@ -167,13 +166,7 @@ class AbsensiController extends Controller
         while ($startDate->lte($endDate)) {
             $tanggalCek = $startDate->toDateString();
 
-            // Jika Anda ingin melewati hari minggu, uncomment kode dibawah ini
-            // if ($startDate->isSunday()) {
-            //     $startDate->addDay();
-            //     continue;
-            // }
-
-            // Mencegah insert dobel: Cek apakah karyawan sudah punya record/absen/alpha di tanggalCek?
+            // Mencegah insert dobel: Cek apakah karyawan sudah punya record absen di tanggalCek?
             $sudahAdaAbsen = Absensi::where('id_karyawan', $id_karyawan)
                                     ->where('tanggal', $tanggalCek)
                                     ->exists();
@@ -181,13 +174,13 @@ class AbsensiController extends Controller
             if (!$sudahAdaAbsen) {
                 // Cek apakah karyawan sedang memiliki pengajuan (Cuti/Izin/Sakit) yang ACC di tanggalCek?
                 $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
-                    ->whereIn('status', ['disetujui_hrd', 'disetujui_kabag', 'approved', 'Disetujui'])
+                    ->where('status', 'approved') // <-- SUDAH DIPERBAIKI SESUAI ENUM DATABASE
                     ->where('tanggal_mulai', '<=', $tanggalCek)
                     ->where('tanggal_selesai', '>=', $tanggalCek)
-                    ->first(); // Ganti exists() menjadi first() agar kita bisa baca jenis_cuti-nya
+                    ->first(); 
 
                 if ($sedangCuti) {
-                    // Deteksi status berdasarkan jenis_cuti (Asumsi: isinya bisa 'Sakit', 'Izin', atau 'Cuti Tahunan')
+                    // Deteksi status berdasarkan jenis_cuti
                     $jenisPengajuan = strtolower($sedangCuti->jenis_cuti);
                     $statusAbsen = 'cuti'; // Default
 
