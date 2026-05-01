@@ -30,6 +30,9 @@ class AuthController extends Controller
         }
 
         // 4. Jika cocok, cek status akun
+        if ($user->status_akun === 'pending') {
+            return response()->json(['success' => false, 'message' => 'Akun menunggu persetujuan Pimpinan'], 403);
+        }
         if ($user->status_akun !== 'aktif') {
             return response()->json(['success' => false, 'message' => 'Akun dinonaktifkan!'], 403);
         }

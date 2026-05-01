@@ -17,14 +17,6 @@ class KepalaBagianController extends Controller
         $penilaian = Penilaian::latest()->take(2)->get();
         $karyawan = Karyawan::latest()->take(5)->get();
 
-        $karyawanBelumLengkap = User::whereHas('role', function ($query) {
-            $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
-        })->where(function ($query) {
-            $query->doesntHave('karyawan')
-                  ->orWhereHas('karyawan', function ($sub) {
-                      $sub->whereNull('status_karyawan')->orWhere('status_karyawan', '');
-                  });
-        })->count();
 
         $karyawanTidakAktif = Karyawan::where('status_karyawan', 'keluar')->count();
 
@@ -50,7 +42,6 @@ class KepalaBagianController extends Controller
             'jumlahKaryawan',
             'penilaian',
             'karyawan',
-            'karyawanBelumLengkap',
             'karyawanTidakAktif',
             'evaluasiSelesai',
             'progressPenilaian'
@@ -59,14 +50,13 @@ class KepalaBagianController extends Controller
 
     public function karyawan()
     {
-        // Mengambil user dengan role 'karyawan'
-        // Jika belum ada data karyawan, otomatis kita tampung (bisa null relation-nya)
         $dataKaryawan = User::with('karyawan')
-            ->whereHas('role', function ($query) {
-                $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
-            })->get();
+        ->whereHas('role', function ($query) {
+            $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+        })->get();
+        $roles = \App\Models\Role::all();
 
-        return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan'));
+        return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan', 'roles'));
     }
 
     public function penilaian()
@@ -336,42 +326,38 @@ class KepalaBagianController extends Controller
         return redirect()->route('kabag.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
-    public function detailKaryawan($id)
+    public function store(Request $request)
     {
-        // Cari user berdasarkan id_user, sekalian bawa relasi karyawannya (jika sudah ada)
-        $user = User::with('karyawan')->findOrFail($id);
-        
-        return view('kepala_bagian.detail_karyawan', compact('user'));
-    }
-
-    public function storeKaryawan(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        // 1. Validasi inputan form
         $request->validate([
-            'nama'            => 'required|string|max:255',
-            'no_hp'           => 'nullable|string|max:20',
-            'email'           => 'nullable|email|max:255',
-            'alamat'          => 'nullable|string',
-            'status_karyawan' => 'required|string',
-            'divisi'          => 'nullable|in:keuangan,admin umum,akademik,marketing,office boy',
+            'nama_lengkap' => 'required|string|max:255',
+            'username'     => 'required|unique:user,username',
+            'password'     => 'required|min:6',
+            'role_id'      => 'required|exists:roles,role_id',
+            'no_hp'        => 'nullable|string|max:20',
+            'email'        => 'nullable|email|max:255',
+            'alamat'       => 'nullable|string',
+            'divisi'       => 'nullable|in:keuangan,admin umum,akademik,marketing,office boy',
         ]);
 
-        Karyawan::updateOrCreate(
-            ['id_user' => $user->id_user], 
-            [
-                'nama'            => $request->nama,
-                'no_hp'           => $request->no_hp,
-                'email'           => $request->email,
-                'alamat'          => $request->alamat,
-                'status_karyawan' => $request->status_karyawan,
-                'divisi'          => $request->divisi,
-                // Kolom foto bisa ditambahkan nanti jika Anda sudah siap dengan logika file upload
-            ]
-        );
+        $user = User::create([
+            'nama_lengkap' => $request->nama_lengkap,
+            'username'     => $request->username,
+            'password'     => bcrypt($request->password),
+            'role_id'      => $request->role_id,
+            'status_akun'  => 'pending',
+        ]);
 
-        return redirect()->route('kabag.karyawan')->with('success', 'Biodata karyawan berhasil disimpan.');
+        Karyawan::create([
+            'id_user'         => $user->id_user,
+            'nama'            => $request->nama_lengkap,
+            'no_hp'           => $request->no_hp ?? '-',
+            'email'           => $request->email ?? '-',
+            'alamat'          => $request->alamat ?? '-',
+            'status_karyawan' => 'pending',
+            'divisi'          => $request->divisi, // hapus default '-' agar lolos ENUM MySQL
+        ]);
+
+        return redirect()->route('kabag.karyawan')->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan pimpinan.');
     }
 
     public function cuti()

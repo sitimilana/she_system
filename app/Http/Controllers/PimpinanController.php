@@ -13,6 +13,28 @@ use Illuminate\Support\Facades\DB;
 
 class PimpinanController extends Controller
 {
+    public function karyawanPending()
+    {
+        $users = User::with('role', 'karyawan')
+                     ->where('status_akun', 'pending')
+                     ->get();
+        return view('pimpinan.karyawan_pending', compact('users'));
+    }
+
+    public function approveKaryawan($id)
+    {
+        $user = User::with('karyawan')->findOrFail($id);
+        $user->status_akun = 'aktif';
+        $user->save();
+        
+        if ($user->karyawan) {
+            $user->karyawan->status_karyawan = 'aktif';
+            $user->karyawan->save();
+        }
+
+        return redirect()->route('pimpinan.karyawan_pending')->with('success', 'Akun & Profil karyawan berhasil diaktifkan dan siap lakukan presensi.');
+    }
+
     public function index()
     {
         // 1. Metrik Utama
@@ -325,35 +347,7 @@ class PimpinanController extends Controller
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
 
-    public function storeKaryawan(Request $request)
-    {
-        // 1. Validasi Input dari form website
-        $request->validate([
-            'nama_lengkap' => 'required',
-            'username'     => 'required|unique:user,username',
-            'password'     => 'required',
-            // Pastikan ID Role Karyawan sudah benar (misal ID-nya 4 untuk Karyawan)
-            'role_id'      => 'required|exists:roles,role_id' 
-        ]);
-
-        // 2. Buat Akun User (INI YANG MEMBUAT LOGIN BISA BERHASIL NANTINYA)
-        $user = User::create([
-            'nama_lengkap' => $request->nama_lengkap,
-            'username'     => $request->username,
-            'password'     => Hash::make($request->password), // WAJIB DI-HASH!
-            'role_id'      => $request->role_id,
-            'status_akun'  => 'aktif'
-        ]);
-
-        // 3. Buat Profil Karyawan yang terhubung ke User
-        Karyawan::create([
-            'id_user'         => $user->id_user,
-            'nama'            => $request->nama_lengkap,
-            'status_karyawan' => 'aktif'
-        ]);
-
-        return back()->with('success', 'Akun Karyawan berhasil dibuat. Silakan login di Aplikasi Mobile!');
-    }
+    
     public function destroyKaryawan($id_user)
     {
         // 1. Cari data profil karyawan berdasarkan id_user
@@ -399,4 +393,18 @@ class PimpinanController extends Controller
         return redirect()->route('pimpinan.pengaturan-lokasi')
             ->with('success', 'Pengaturan lokasi kantor berhasil diperbarui.');
     }
+    public function rejectKaryawan($id)
+{
+    $user = User::with('karyawan')->findOrFail($id);
+    
+    // Hapus profil karyawannya dulu jika ada
+    if ($user->karyawan) {
+        $user->karyawan->delete();
+    }
+    
+    // Baru hapus akun user-nya
+    $user->delete();
+
+    return redirect()->route('pimpinan.karyawan_pending')->with('error', 'Pengajuan karyawan baru telah ditolak dan dihapus.');
+}
 }

@@ -56,6 +56,26 @@
         </div>
     </div>
 
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4">
+            <i class="bi bi-exclamation-octagon-fill me-2"></i> <strong>Terjadi Kesalahan:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+
     <div class="card card-custom p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="input-group" style="max-width: 400px;">
@@ -67,7 +87,7 @@
                 <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
                 <button class="btn btn-outline-secondary shadow-sm"><i class="bi bi-printer me-2"></i>Cetak</button>
                 
-                <button class="btn btn-primary shadow-sm"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
             </div>
         </div>
 
@@ -81,7 +101,7 @@
                         <th width="15%">Kontak</th>
                         <th width="20%">Alamat</th>
                         <th width="15%" class="text-center">Status Kerja</th>
-                        <th width="10%" class="text-center">Detail</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -96,7 +116,7 @@
                         </td>
                         <td class="text-center">
                             @if($user->karyawan && $user->karyawan->status_karyawan)
-                                <span class="badge bg-{{ Illuminate\Support\Str::lower($user->karyawan->status_karyawan) == 'aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
+                                <span class="badge bg-{{ strtolower($user->karyawan->status_karyawan) == 'aktif' ? 'success' : (strtolower($user->karyawan->status_karyawan) == 'pending' ? 'warning text-dark' : 'danger') }} px-3 py-2 rounded-pill text-capitalize">
                                     {{ $user->karyawan->status_karyawan }}
                                 </span>
                             @else
@@ -105,11 +125,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="text-center">
-                            <a href="{{ route('kabag.karyawan.detail', $user->id_user) }}" class="btn btn-sm btn-light border text-primary" title="Lengkapi Profil">
-                                <i class="bi bi-pencil-square"></i>
-                            </a>
-                        </td>
+                        
                     </tr>
                     @empty
                     <tr>
@@ -135,7 +151,97 @@
     </div>
 </div>
 
+<!-- Modal Tambah Karyawan Baru -->
+<div class="modal fade" id="modalTambahBaru" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow rounded-4">
+
+            <form action="{{ route('kabag.karyawan.store') }}" method="POST">
+    @csrf
+    <div class="row">
+        <!-- Kolom Kiri: Akun Login -->
+        <div class="col-md-6 border-end">
+            <h5 class="mb-3 text-primary">Informasi Akun (Login)</h5>
+            <div class="mb-3">
+                <label class="form-label">Username <span class="text-danger">*</span></label>
+                <input type="text" name="username" class="form-control" placeholder="Masukkan username" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password <span class="text-danger">*</span></label>
+                <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Role Akses <span class="text-danger">*</span></label>
+                <!-- Pastikan value ini sesuai dengan ID Role Karyawan di database Anda (misal ID 2) -->
+                <select name="role_id" class="form-select" required>
+                    <option value="" disabled selected>Pilih Role...</option>
+                    @foreach($roles as $r)
+                        @if(strtolower($r->nama_role) != 'pimpinan')
+                             <option value="{{ $r->role_id }}">{{ $r->nama_role }}</option>
+                        @endif
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Biodata Karyawan -->
+        <div class="col-md-6">
+            <h5 class="mb-3 text-primary">Biodata Karyawan</h5>
+            <div class="mb-3">
+                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                <input type="text" name="nama_lengkap" class="form-control" placeholder="Nama lengkap sesuai KTP" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Divisi <span class="text-danger">*</span></label>
+                <select name="divisi" class="form-select" required>
+                    <option value="" disabled selected>Pilih Divisi...</option>
+                    <option value="keuangan">Keuangan</option>
+                    <option value="admin umum">Admin Umum</option>
+                    <option value="akademik">Akademik</option>
+                    <option value="marketing">Marketing</option>
+                    <option value="office boy">Office Boy</option>
+                </select>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nomor HP</label>
+                    <input type="text" name="no_hp" class="form-control" placeholder="08xxxxxxx">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="email@contoh.com">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Alamat Lengkap</label>
+                <textarea name="alamat" class="form-control" rows="3" placeholder="Alamat domisili saat ini"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <hr class="my-4">
+    
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-person-plus-fill me-2"></i> Daftarkan Karyawan Baru
+        </button>
+    </div>
+</form>
+        </div>
+    </div>
+</div>
+
 @include('auth.logout')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+@if($errors->any())
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var myModal = new bootstrap.Modal(document.getElementById('modalTambahBaru'));
+        myModal.show();
+    });
+</script>
+@endif
+
 </body>
 </html>

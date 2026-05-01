@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PimpinanController;
-use App\Http\Controllers\RoleController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\KepalaBagianController;
 use App\Http\Controllers\AkademikController;
@@ -18,10 +17,10 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 # PIMPINAN DASHBOARD
 Route::middleware(['auth'])->group(function () {
     Route::get('/pimpinan', [PimpinanController::class, 'index'])->name('pimpinan.dashboard');
-    #Role
-    Route::get('/role', [RoleController::class, 'index'])->name('role.index');
-    Route::post('/role', [RoleController::class, 'store'])->name('role.store');
-    Route::delete('/role/{id}', [RoleController::class, 'destroy'])->name('role.destroy');
+    #Persetujuan Karyawan Baru
+    Route::get('/pimpinan/karyawan-pending', [PimpinanController::class, 'karyawanPending'])->name('pimpinan.karyawan_pending');
+    Route::post('/pimpinan/karyawan-pending/{id}/approve', [PimpinanController::class, 'approveKaryawan'])->name('pimpinan.karyawan_approve');
+    Route::delete('/pimpinan/karyawan-pending/{id}/reject', [PimpinanController::class, 'rejectKaryawan'])->name('pimpinan.rejectKaryawan');
     #Cuti
     Route::get('/pimpinan/cuti', [PimpinanCutiController::class, 'indexPimpinan'])->name('pimpinan.cuti');
     Route::post('/pimpinan/cuti/{id}/approve', [PimpinanCutiController::class, 'approve'])->name('pimpinan.cuti.approve');
@@ -39,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
     # Pengaturan Lokasi Presensi
     Route::get('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'pengaturanLokasi'])->name('pimpinan.pengaturan-lokasi');
     Route::put('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'updatePengaturanLokasi'])->name('pimpinan.pengaturan-lokasi.update');
+    Route::delete('/pimpinan/karyawan-pending/{id}/reject', [PimpinanController::class, 'rejectKaryawan'])->name('pimpinan.rejectKaryawan');
+    Route::put('/pimpinan/karyawan-pending/{id}/approve', [PimpinanController::class, 'approveKaryawan'])->name('pimpinan.approveKaryawan');
 });
 
 # KEPALA BAGIAN DASHBOARD
@@ -48,8 +49,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian/penilaian', [KepalaBagianController::class, 'penilaian'])->name('kabag.penilaian');
     Route::post('/kepala-bagian/penilaian', [KepalaBagianController::class, 'storePenilaian'])->name('kabag.penilaian.store');
     #Kelola Karyawan
-    Route::get('/kepala-bagian/karyawan/{id}', [KepalaBagianController::class, 'detailKaryawan'])->name('kabag.karyawan.detail');
-    Route::post('/kepala-bagian/karyawan/{id}', [KepalaBagianController::class, 'storeKaryawan'])->name('kabag.karyawan.store');
+    Route::post('/kepala-bagian/karyawan', [KepalaBagianController::class, 'store'])->name('kabag.karyawan.store_baru');
+    Route::post('/kabag/karyawan/store', [App\Http\Controllers\KepalaBagianController::class, 'store'])->name('kabag.karyawan.store');
     
     #Cuti
     Route::get('/kepala-bagian/cuti', [KepalaBagianController::class, 'cuti'])->name('kabag.cuti');

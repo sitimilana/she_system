@@ -70,8 +70,8 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('role.index') }}" class="nav-link {{ Request::is('role*') ? 'active' : '' }}">
-                <i class="bi bi-person-gear"></i> Manajemen Role
+            <a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link {{ Request::is('pimpinan/karyawan-pending*') ? 'active' : '' }}">
+                <i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan
             </a>
         </li>
         <li class="nav-item">
