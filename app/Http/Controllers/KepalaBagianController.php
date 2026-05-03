@@ -8,6 +8,8 @@ use App\Models\Cuti;
 use App\Models\Penilaian;
 use App\Models\Penggajian;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\KaryawanBaruMail;
 
 class KepalaBagianController extends Controller
 {
@@ -340,11 +342,12 @@ class KepalaBagianController extends Controller
         ]);
 
         $user = User::create([
-            'nama_lengkap' => $request->nama_lengkap,
-            'username'     => $request->username,
-            'password'     => bcrypt($request->password),
-            'role_id'      => $request->role_id,
-            'status_akun'  => 'pending',
+            'nama_lengkap'       => $request->nama_lengkap,
+            'username'           => $request->username,
+            'password'           => bcrypt($request->password),
+            'password_sementara' => $request->password,
+            'role_id'            => $request->role_id,
+            'status_akun'        => 'pending',
         ]);
 
         Karyawan::create([
@@ -357,7 +360,8 @@ class KepalaBagianController extends Controller
             'divisi'          => $request->divisi, // hapus default '-' agar lolos ENUM MySQL
         ]);
 
-        return redirect()->route('kabag.karyawan')->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan pimpinan.');
+        return redirect()->route('kabag.karyawan')
+         ->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan Pimpinan.');
     }
 
     public function cuti()

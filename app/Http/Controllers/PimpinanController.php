@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\PengaturanKantor;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\KaryawanApproveMail;
 
 class PimpinanController extends Controller
 {
@@ -25,14 +27,25 @@ class PimpinanController extends Controller
     {
         $user = User::with('karyawan')->findOrFail($id);
         $user->status_akun = 'aktif';
-        $user->save();
+        // Password disave di memori dulu untuk email sebelum dihapus dari DB
         
         if ($user->karyawan) {
             $user->karyawan->status_karyawan = 'aktif';
             $user->karyawan->save();
-        }
 
-        return redirect()->route('pimpinan.karyawan_pending')->with('success', 'Akun & Profil karyawan berhasil diaktifkan dan siap lakukan presensi.');
+            if($user->karyawan->email && $user->karyawan->email != '-') {
+                try {
+                    Mail::to($user->karyawan->email)->send(new KaryawanApproveMail($user));
+                } catch (\Exception $e) {
+                    // Abaikan jika error
+                }
+            }
+        }
+        
+        $user->password_sementara = null;
+        $user->save();
+
+        return redirect()->route('pimpinan.karyawan_pending')->with('success', 'Akun & Profil karyawan berhasil diaktifkan dan dikirimkan email kredensial.');
     }
 
     public function index()

@@ -17,6 +17,7 @@ class User extends Authenticatable
         'nama_lengkap',
         'username',
         'password',
+        'password_sementara',
         'role_id',
         'status_akun'
     ];
