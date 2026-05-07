@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { background: #f4f7f6; font-family: 'Inter', sans-serif; color: #333; }
         
-        /* SIDEBAR (Konsisten) */
+        /* SIDEBAR */
         .sidebar {
             width: 250px; min-height: 100vh; background-color: #8f9fc4;
             position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
@@ -20,56 +20,18 @@
         .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
         .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
         
-        /* CONTENT & FORM */
+        /* CONTENT */
         .content { margin-left: 250px; padding: 40px; }
-        .form-card {
-            background-color: #ffffff;
-            border-radius: 16px;
-            padding: 40px;
-            width: 100%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
         .card-custom { 
             background-color: #ffffff; 
             border-radius: 16px; 
             border: 1px solid rgba(0,0,0,0.05); 
             box-shadow: 0 4px 15px rgba(0,0,0,0.03); 
         }
+        
         /* TABLE STYLES */
         .table-custom th { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
         .table-custom td { vertical-align: middle; border-bottom: 1px solid #e2e8f0; }
-        
-        .form-label { font-weight: 600; color: #4a5568; font-size: 0.95rem; }
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid #cbd5e0;
-            padding: 10px 15px;
-            background-color: #f8fafc;
-        }
-        .form-control:focus, .form-select:focus {
-            background-color: #fff; border-color: #8f9fc4; box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15);
-        }
-        
-        /* TOTAL SKOR STYLING */
-        .score-box {
-            background-color: #f8fafc;
-            border: 2px dashed #cbd5e0;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-        .input-total {
-            background: transparent;
-            border: none;
-            font-size: 3rem;
-            font-weight: 800;
-            color: #3b82f6;
-            text-align: center;
-            width: 100%;
-            outline: none;
-            pointer-events: none; /* Mencegah user mengetik manual */
-        }
     </style>
 </head>
 
@@ -92,21 +54,28 @@
 </div>
 
 <div class="content">
-    <div class="mb-4">
-        <h2 class="fw-bold m-0" style="color: #1e293b;">Penilaian Kinerja</h2>
-        <p class="text-muted m-0">Evaluasi kinerja bulanan karyawan di departemen Anda.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0" style="color: #1e293b;">Penilaian Kinerja</h2>
+            <p class="text-muted m-0">Evaluasi kinerja bulanan karyawan di departemen Anda.</p>
+        </div>
+        <!-- Tombol Pemicu Modal -->
+        <button class="btn btn-primary shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambahPenilaian">
+            <i class="bi bi-plus-circle me-2"></i>Tambah Penilaian
+        </button>
     </div>
     
     @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     @endif
 
     @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <ul class="mb-0">
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><strong>Terjadi Kesalahan:</strong>
+            <ul class="mb-0 mt-1">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -115,154 +84,20 @@
         </div>
     @endif
 
+    <!-- Tabel Riwayat (Sekarang Full Width) -->
     <div class="row">
-        <div class="col-lg-5 mb-4">
-            <div class="form-card">
-                <form action="{{ route('kabag.penilaian.store') }}" method="POST">
-                    @csrf
-                    
-                    <div class="mb-4">
-                        <label class="form-label text-primary"><i class="bi bi-person-badge me-2"></i>Pilih Karyawan</label>
-                        <select class="form-select form-select-lg" name="id_karyawan" required>
-                            <option value="" disabled selected>-- Pilih Nama Karyawan --</option>
-                            @foreach($karyawan as $k)
-                                <option value="{{ $k->id_karyawan }}">{{ $k->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-
-                    <div class="mb-4">
-                        <label class="form-label"><i class="bi bi-calendar-month me-2"></i>Bulan & Tahun Penilaian</label>
-                        <input type="month" class="form-control" name="periode" required value="{{ date('Y-m') }}">
-                    </div>
-
-                    <hr class="mb-4 border-secondary">
-
-                    <div class="alert alert-light border mb-4 text-muted small">
-                        <i class="bi bi-info-circle me-1"></i> Masukkan nilai dari skala <strong>0 hingga 100</strong>.
-                    </div>
-
-                    <div class="row align-items-center mb-3">
-                        <div class="col-sm-7"><label class="form-label m-0">Disiplin</label></div>
-                        <div class="col-sm-5"><input type="number" class="form-control calc-score" name="disiplin" min="0" max="100" value="0" required></div>
-                    </div>
-                    
-                    <div class="row align-items-center mb-3">
-                        <div class="col-sm-7"><label class="form-label m-0">Produktivitas</label></div>
-                        <div class="col-sm-5"><input type="number" class="form-control calc-score" name="produktivitas" min="0" max="100" value="0" required></div>
-                    </div>
-
-                    <div class="row align-items-center mb-3">
-                        <div class="col-sm-7"><label class="form-label m-0">Tanggung Jawab</label></div>
-                        <div class="col-sm-5"><input type="number" class="form-control calc-score" name="tanggung_jawab" min="0" max="100" value="0" required></div>
-                    </div>
-            <div class="alert alert-light border mb-4 text-muted small">
-                <i class="bi bi-info-circle me-1"></i> Masukkan nilai menggunakan <strong>Skala Likert 1 sampai 5</strong>.
-            </div>
-
-            <div class="row align-items-center mb-3">
-                <div class="col-sm-7"><label class="form-label m-0">Disiplin</label></div>
-                <div class="col-sm-5">
-                    <select class="form-select calc-score" name="disiplin" required>
-                        @for($i = 1; $i <= 5; $i++)
-                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-            </div>
-            
-            <div class="row align-items-center mb-3">
-                <div class="col-sm-7"><label class="form-label m-0">Produktivitas</label></div>
-                <div class="col-sm-5">
-                    <select class="form-select calc-score" name="produktivitas" required>
-                        @for($i = 1; $i <= 5; $i++)
-                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-            </div>
-
-            <div class="row align-items-center mb-3">
-                <div class="col-sm-7"><label class="form-label m-0">Tanggung Jawab</label></div>
-                <div class="col-sm-5">
-                    <select class="form-select calc-score" name="tanggung_jawab" required>
-                        @for($i = 1; $i <= 5; $i++)
-                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-            </div>
-
-            <div class="row align-items-center mb-3">
-                <div class="col-sm-7"><label class="form-label m-0">Sikap Kerja</label></div>
-                <div class="col-sm-5">
-                    <select class="form-select calc-score" name="sikap_kerja" required>
-                        @for($i = 1; $i <= 5; $i++)
-                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-            </div>
-
-            <div class="row align-items-center mb-4">
-                <div class="col-sm-7"><label class="form-label m-0">Loyalitas</label></div>
-                <div class="col-sm-5">
-                    <select class="form-select calc-score" name="loyalitas" required>
-                        @for($i = 1; $i <= 5; $i++)
-                            <option value="{{ $i }}" {{ $i === 1 ? 'selected' : '' }}>{{ $i }}</option>
-                        @endfor
-                    </select>
-                </div>
-            </div>
-
-            <div class="score-box mt-4 mb-4">
-                <p class="text-muted fw-bold mb-0">TOTAL SKOR TERTIMBANG</p>
-                <input type="text" class="input-total" id="total_skor" name="total_skor" value="0" readonly>
-                <small class="text-muted">Skor akhir dibulatkan ke nilai terdekat (1-5).</small>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label">Catatan Evaluasi</label>
-                <textarea class="form-control" name="catatan_evaluasi" rows="4" placeholder="Tambahkan catatan evaluasi (opsional)"></textarea>
-            </div>
-
-                    <div class="row align-items-center mb-3">
-                        <div class="col-sm-7"><label class="form-label m-0">Sikap Kerja</label></div>
-                        <div class="col-sm-5"><input type="number" class="form-control calc-score" name="sikap_kerja" min="0" max="100" value="0" required></div>
-                    </div>
-
-                    <div class="row align-items-center mb-4">
-                        <div class="col-sm-7"><label class="form-label m-0">Loyalitas</label></div>
-                        <div class="col-sm-5"><input type="number" class="form-control calc-score" name="loyalitas" min="0" max="100" value="0" required></div>
-                    </div>
-
-                    <div class="score-box mt-4 mb-4">
-                        <p class="text-muted fw-bold mb-0">TOTAL SKOR RATA-RATA</p>
-                        <input type="text" class="input-total" id="total_skor" name="total_skor" value="0" readonly>
-                    </div>
-
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
-                            <i class="bi bi-save me-2"></i>Simpan Penilaian
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="col-lg-7">
+        <div class="col-lg-12">
             <div class="card card-custom p-4 h-100">
-                <h5 class="fw-bold mb-4 border-bottom pb-2" style="color: #1e293b;">Riwayat Penilaian</h5>
+                <h5 class="fw-bold mb-4 border-bottom pb-2" style="color: #1e293b;"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Penilaian</h5>
                 
                 <div class="table-responsive">
                     <table class="table table-hover table-custom m-0">
                         <thead>
                             <tr>
-                                <th width="25%">Bulan</th>
-                                <th width="35%">Karyawan</th>
-                                <th width="20%" class="text-center">Total Skor</th>
-                                <th width="20%" class="text-center">Status</th>
+                                <th width="20%">Bulan & Tahun</th>
+                                <th width="35%">Nama Karyawan</th>
+                                <th width="20%" class="text-center">Total Skor Akhir</th>
+                                <th width="25%" class="text-center">Kategori</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -276,22 +111,26 @@
                                     <span class="fw-medium">{{ $monthName }} {{ $rp->tahun }}</span>
                                 </td>
                                 <td>{{ $rp->karyawan->nama ?? 'Tidak Ditemukan' }}</td>
-                                <td class="text-center fw-bold text-primary">{{ $rp->total_skor }}</td>
+                                <td class="text-center fw-bold text-primary fs-5">{{ $rp->total_skor }}</td>
                                 <td class="text-center">
-                                    @if($rp->total_skor >= 85)
-                                        <span class="badge bg-success">Sangat Baik</span>
-                                    @elseif($rp->total_skor >= 70)
-                                        <span class="badge bg-primary">Baik</span>
+                                    <!-- Menyesuaikan badge dengan skor 1-100 hasil konversi controller -->
+                                    @if($rp->total_skor >= 90)
+                                        <span class="badge bg-success px-3 py-2 rounded-pill">Sangat Baik</span>
+                                    @elseif($rp->total_skor >= 80)
+                                        <span class="badge bg-primary px-3 py-2 rounded-pill">Baik</span>
                                     @elseif($rp->total_skor >= 60)
-                                        <span class="badge bg-warning text-dark">Cukup</span>
+                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Cukup</span>
                                     @else
-                                        <span class="badge bg-danger">Kurang</span>
+                                        <span class="badge bg-danger px-3 py-2 rounded-pill">Kurang</span>
                                     @endif
                                 </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-4 text-muted">Belum ada riwayat penilaian.</td>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-light"></i>
+                                    Belum ada riwayat penilaian.
+                                </td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -303,42 +142,124 @@
     </div>
 </div>
 
-<script>
-    const inputs = document.querySelectorAll('.calc-score');
-    const totalEl = document.getElementById('total_skor');
-    const bobot = {
-        disiplin: 0.20,
-        produktivitas: 0.30,
-        tanggung_jawab: 0.20,
-        sikap_kerja: 0.15,
-        loyalitas: 0.15
-    };
+<!-- ============================================== -->
+<!-- MODAL TAMBAH PENILAIAN DITARUH DI SINI -->
+<!-- ============================================== -->
+<div class="modal fade" id="modalTambahPenilaian" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header bg-light border-bottom-0 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-clipboard-check me-2 text-primary"></i>Form Penilaian Kuisioner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form action="{{ route('kabag.penilaian.store') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Pilih Karyawan</label>
+                            <select name="id_karyawan" class="form-select form-select-lg" required>
+                                <option value="" disabled selected>-- Nama Karyawan --</option>
+                                @foreach($karyawan as $k)
+                                    <option value="{{ $k->id_karyawan }}">{{ $k->nama }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Periode Penilaian</label>
+                            <input type="month" name="periode" class="form-control form-control-lg" required value="{{ date('Y-m') }}">
+                        </div>
+                    </div>
 
-    function hitungSkorTertimbang() {
-        let total = 0;
+                    <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i> Pilih skala <strong>1 (Sangat Kurang)</strong> hingga <strong>5 (Sangat Baik)</strong>. Skor akan dikalkulasi otomatis menjadi skala 100.
+                    </div>
+                    
+                    <div class="table-responsive border rounded-3 mb-4">
+                        <table class="table table-sm text-center align-middle m-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-start py-3 px-3" width="45%">Aspek Penilaian</th>
+                                    <th class="py-3">1</th>
+                                    <th class="py-3">2</th>
+                                    <th class="py-3">3</th>
+                                    <th class="py-3">4</th>
+                                    <th class="py-3">5</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start px-3 py-2 fw-medium">Kedisiplinan & Kehadiran (20%)</td>
+                                    <td><input class="form-check-input" type="radio" name="disiplin" value="1" required></td>
+                                    <td><input class="form-check-input" type="radio" name="disiplin" value="2"></td>
+                                    <td><input class="form-check-input" type="radio" name="disiplin" value="3"></td>
+                                    <td><input class="form-check-input" type="radio" name="disiplin" value="4"></td>
+                                    <td><input class="form-check-input" type="radio" name="disiplin" value="5"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start px-3 py-2 fw-medium">Produktivitas Target (30%)</td>
+                                    <td><input class="form-check-input" type="radio" name="produktivitas" value="1" required></td>
+                                    <td><input class="form-check-input" type="radio" name="produktivitas" value="2"></td>
+                                    <td><input class="form-check-input" type="radio" name="produktivitas" value="3"></td>
+                                    <td><input class="form-check-input" type="radio" name="produktivitas" value="4"></td>
+                                    <td><input class="form-check-input" type="radio" name="produktivitas" value="5"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start px-3 py-2 fw-medium">Tanggung Jawab Pekerjaan (20%)</td>
+                                    <td><input class="form-check-input" type="radio" name="tanggung_jawab" value="1" required></td>
+                                    <td><input class="form-check-input" type="radio" name="tanggung_jawab" value="2"></td>
+                                    <td><input class="form-check-input" type="radio" name="tanggung_jawab" value="3"></td>
+                                    <td><input class="form-check-input" type="radio" name="tanggung_jawab" value="4"></td>
+                                    <td><input class="form-check-input" type="radio" name="tanggung_jawab" value="5"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start px-3 py-2 fw-medium">Sikap Kerja & Perilaku (15%)</td>
+                                    <td><input class="form-check-input" type="radio" name="sikap_kerja" value="1" required></td>
+                                    <td><input class="form-check-input" type="radio" name="sikap_kerja" value="2"></td>
+                                    <td><input class="form-check-input" type="radio" name="sikap_kerja" value="3"></td>
+                                    <td><input class="form-check-input" type="radio" name="sikap_kerja" value="4"></td>
+                                    <td><input class="form-check-input" type="radio" name="sikap_kerja" value="5"></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-start px-3 py-2 fw-medium">Loyalitas & Kerja Sama (15%)</td>
+                                    <td><input class="form-check-input" type="radio" name="loyalitas" value="1" required></td>
+                                    <td><input class="form-check-input" type="radio" name="loyalitas" value="2"></td>
+                                    <td><input class="form-check-input" type="radio" name="loyalitas" value="3"></td>
+                                    <td><input class="form-check-input" type="radio" name="loyalitas" value="4"></td>
+                                    <td><input class="form-check-input" type="radio" name="loyalitas" value="5"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-        inputs.forEach(input => {
-            let val = parseFloat(input.value);
-            total += (val || 0) * (bobot[input.name] || 0);
-        });
+                    <div class="mb-2">
+                        <label class="form-label fw-bold">Catatan Evaluasi / Feedback (Opsional)</label>
+                        <textarea name="catatan_evaluasi" class="form-control" rows="3" placeholder="Tambahkan catatan khusus untuk karyawan ini..."></textarea>
+                    </div>
 
-        const totalRounded = Math.round(total);
-        totalEl.value = totalRounded;
-
-        if(totalRounded >= 4) {
-            totalEl.style.color = '#10b981';
-        } else if (totalRounded < 3) {
-            totalEl.style.color = '#ef4444';
-        } else {
-            totalEl.style.color = '#3b82f6';
-        }
-    }
-
-    inputs.forEach(input => input.addEventListener('change', hitungSkorTertimbang));
-    hitungSkorTertimbang();
-</script>
+                </div>
+                <div class="modal-footer bg-light border-top-0 rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="bi bi-save me-2"></i>Simpan Penilaian</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @include('auth.logout')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Jika ada error validasi, otomatis buka modal lagi -->
+@if($errors->any())
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var myModal = new bootstrap.Modal(document.getElementById('modalTambahPenilaian'));
+        myModal.show();
+    });
+</script>
+@endif
+
 </body>
 </html>

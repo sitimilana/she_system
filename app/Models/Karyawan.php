@@ -19,6 +19,9 @@ class Karyawan extends Model
         'status_karyawan',
         'divisi',
         'sisa_cuti',
+        'gaji_pokok',
+        'tunjangan_jabatan',
+        'tunjangan_bpjs',
     ];
 
     public function user()

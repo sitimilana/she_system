@@ -155,7 +155,7 @@
             <div class="row mb-4">
                 <div class="col-md-7 mb-3 mb-md-0">
                     <label class="form-label">Nama Karyawan</label>
-                    <select class="form-select" name="id_karyawan" required>
+                    <select class="form-select" name="id_karyawan" id="id_karyawan" required>
                         <option value="" disabled>-- Pilih Karyawan --</option>
                         @foreach($karyawan as $k)
                             <option value="{{ $k->id_karyawan }}" {{ $gaji->id_karyawan == $k->id_karyawan ? 'selected' : '' }}>
@@ -177,34 +177,41 @@
                 <div class="col-md-6 pe-md-4 border-end">
                     <h5 class="form-section-title"><i class="bi bi-plus-circle text-success me-2"></i>Komponen Penerimaan</h5>
                     
+                    <!-- DATA MASTER: READONLY -->
                     <div class="mb-3">
-                        <label class="form-label">Gaji Pokok</label>
+                        <label class="form-label text-secondary">Gaji Pokok (Otomatis dari Master)</label>
                         <div class="input-group">
-                            <span class="input-group-text">Rp</span>
-                            <input type="number" class="form-control calc-penerimaan" name="gaji_pokok" value="{{ $gaji->gaji_pokok ?? 0 }}">
+                            <span class="input-group-text bg-light text-muted">Rp</span>
+                            <input type="number" class="form-control calc-penerimaan bg-light text-muted" name="gaji_pokok" id="gaji_pokok" value="{{ $gaji->gaji_pokok ?? 0 }}" readonly>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Uang Makan</label>
+                        <label class="form-label">Uang Makan (Otomatis dari Absen)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
+                            <!-- Dibiarkan bisa diedit jika sewaktu-waktu ada koreksi manual dari Pimpinan -->
                             <input type="number" class="form-control calc-penerimaan" name="uang_makan" value="{{ $gaji->uang_makan ?? 0 }}">
                         </div>
                     </div>
+                    
+                    <!-- DATA MASTER: READONLY -->
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Leader</label>
+                        <label class="form-label text-secondary">Tunjangan Leader (Otomatis dari Master)</label>
                         <div class="input-group">
-                            <span class="input-group-text">Rp</span>
-                            <input type="number" class="form-control calc-penerimaan" name="tunjangan_jabatan" value="{{ $gaji->tunjangan_jabatan ?? 0 }}">
+                            <span class="input-group-text bg-light text-muted">Rp</span>
+                            <input type="number" class="form-control calc-penerimaan bg-light text-muted" name="tunjangan_jabatan" id="tunjangan_jabatan" value="{{ $gaji->tunjangan_jabatan ?? 0 }}" readonly>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Kinerja</label>
+                        <label class="form-label">Tunjangan Kinerja (Otomatis dari Penilaian)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-penerimaan" name="insentif_kinerja" value="{{ $gaji->insentif_kinerja ?? 0 }}">
                         </div>
                     </div>
+                    
                     <div class="mb-3">
                         <label class="form-label">Tunjangan Program</label>
                         <div class="input-group">
@@ -212,22 +219,25 @@
                             <input type="number" class="form-control calc-penerimaan" name="tunjangan_program" value="{{ $gaji->tunjangan_program ?? 0 }}">
                         </div>
                     </div>
+                    
+                    <!-- DATA MASTER: READONLY -->
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan BPJS</label>
+                        <label class="form-label text-secondary">Tunjangan BPJS (Otomatis dari Master)</label>
                         <div class="input-group">
-                            <span class="input-group-text">Rp</span>
-                            <input type="number" class="form-control calc-penerimaan" name="tunjangan_bpjs" value="{{ $gaji->tunjangan_bpjs ?? 0 }}">
+                            <span class="input-group-text bg-light text-muted">Rp</span>
+                            <input type="number" class="form-control calc-penerimaan bg-light text-muted" name="tunjangan_bpjs" id="tunjangan_bpjs" value="{{ $gaji->tunjangan_bpjs ?? 0 }}" readonly>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Bonus</label>
+                        <label class="form-label">Bonus (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-penerimaan" name="bonus" value="{{ $gaji->bonus ?? 0 }}">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Lain-lain</label>
+                        <label class="form-label">Lain-lain (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-penerimaan" name="lain_lain" value="{{ $gaji->lain_lain ?? 0 }}">
@@ -239,28 +249,32 @@
                     <h5 class="form-section-title"><i class="bi bi-dash-circle text-danger me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label">Potongan Absen</label>
+                        <label class="form-label">Potongan Absen (Otomatis dari Alpha)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-potongan" name="potongan_absen" value="{{ $gaji->potongan_absen ?? 0 }}">
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Cash Bon</label>
+                        <label class="form-label">Cash Bon (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-potongan" name="cash_bon" value="{{ $gaji->cash_bon ?? 0 }}">
                         </div>
                     </div>
+                    
+                    <!-- DATA MASTER: READONLY -->
                     <div class="mb-3">
-                        <label class="form-label">Potongan BPJS</label>
+                        <label class="form-label text-secondary">Potongan BPJS (Otomatis dari Master)</label>
                         <div class="input-group">
-                            <span class="input-group-text">Rp</span>
-                            <input type="number" class="form-control calc-potongan" name="potongan_bpjs" value="{{ $gaji->potongan_bpjs ?? 0 }}">
+                            <span class="input-group-text bg-light text-muted">Rp</span>
+                            <input type="number" class="form-control calc-potongan bg-light text-muted" name="potongan_bpjs" value="{{ $gaji->potongan_bpjs ?? 0 }}" readonly>
                         </div>
                     </div>
+                    
                     <div class="mb-3">
-                        <label class="form-label">Potongan Lain-lain</label>
+                        <label class="form-label">Potongan Lain-lain (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-potongan" name="potongan_lain" value="{{ $gaji->potongan_lain ?? 0 }}">
@@ -283,16 +297,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="mt-4">
-                        <label class="form-label">Status Slip</label>
-                        <select class="form-select" name="status_slip">
-                            <option value="draft" {{ $gaji->status_slip == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="final" {{ $gaji->status_slip == 'final' ? 'selected' : '' }}>Final</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
 
             <div class="d-flex justify-content-end gap-3 mt-5 pt-4 border-top">
                 <a href="{{ route('pimpinan.gaji') }}" class="btn btn-modern btn-outline-custom">
@@ -341,5 +345,52 @@
 
 @include('auth.logout')
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectKaryawan = document.getElementById('id_karyawan');
+        const inputGajiPokok = document.getElementById('gaji_pokok');
+        const inputTunjJabatan = document.getElementById('tunjangan_jabatan');
+        const inputTunjBpjs = document.getElementById('tunjangan_bpjs');
+
+        if(selectKaryawan) {
+            selectKaryawan.addEventListener('change', function() {
+                const idKaryawan = this.value;
+                
+                if(idKaryawan) {
+                    // Tampilkan indikator proses (Nolkan sementara)
+                    inputGajiPokok.value = 0;
+                    inputTunjJabatan.value = 0;
+                    inputTunjBpjs.value = 0;
+                    
+                    // Ambil data ke server
+                    const url = `{{ url('/pimpinan/karyawan') }}/${idKaryawan}/finansial`;
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('Network error');
+                            return response.json();
+                        })
+                        .then(data => {
+                            // Isi data otomatis berdasarkan respon server
+                            inputGajiPokok.value = data.gaji_pokok || 0;
+                            inputTunjJabatan.value = data.tunjangan_jabatan || 0;
+                            inputTunjBpjs.value = data.tunjangan_bpjs || 0;
+                            
+                            // Panggil ulang fungsi hitung total agar berubah real-time
+                            if (typeof calculateTotal === "function") {
+                                calculateTotal();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching data:', error);
+                            inputGajiPokok.value = 0;
+                            inputTunjJabatan.value = 0;
+                            inputTunjBpjs.value = 0;
+                            alert('Gagal mengambil data finansial master.');
+                        });
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

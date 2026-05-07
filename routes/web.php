@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'updatePengaturanLokasi'])->name('pimpinan.pengaturan-lokasi.update');
     Route::delete('/pimpinan/karyawan-pending/{id}/reject', [PimpinanController::class, 'rejectKaryawan'])->name('pimpinan.rejectKaryawan');
     Route::put('/pimpinan/karyawan-pending/{id}/approve', [PimpinanController::class, 'approveKaryawan'])->name('pimpinan.approveKaryawan');
+    Route::get('/pimpinan/karyawan/{id}/finansial', [App\Http\Controllers\PimpinanController::class, 'getKaryawanFinansial']);
 });
 
 # KEPALA BAGIAN DASHBOARD
@@ -58,12 +59,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/kepala-bagian/cuti/{id}/reject', [KepalaBagianController::class, 'rejectCuti'])->name('kabag.cuti.reject');
     
     #Gaji
-    Route::get('/kepala-bagian/gaji', [KepalaBagianController::class, 'gaji'])->name('kabag.gaji');
-    Route::get('/kepala-bagian/gaji/create', [KepalaBagianController::class, 'createGaji'])->name('kabag.gaji.create');
-    Route::post('/kepala-bagian/gaji', [KepalaBagianController::class, 'storeGaji'])->name('kabag.gaji.store');
-    Route::get('/kepala-bagian/gaji/{id}/edit', [KepalaBagianController::class, 'editGaji'])->name('kabag.gaji.edit');
-    Route::put('/kepala-bagian/gaji/{id}', [KepalaBagianController::class, 'updateGaji'])->name('kabag.gaji.update');
-    Route::delete('/kepala-bagian/gaji/{id}', [KepalaBagianController::class, 'destroyGaji'])->name('kabag.gaji.destroy');
+
 });
 
 # AKADEMIK DASHBOARD

@@ -9,9 +9,28 @@ use App\Models\Karyawan;
 use App\Models\Cuti; 
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AbsensiController extends Controller
 {
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // Radius bumi dalam kilometer
+        $latFrom = deg2rad($lat1);
+        $lonFrom = deg2rad($lon1);
+        $latTo = deg2rad($lat2);
+        $lonTo = deg2rad($lon2);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $a = sin($latDelta / 2) * sin($latDelta / 2) +
+             cos($latFrom) * cos($latTo) *
+             sin($lonDelta / 2) * sin($lonDelta / 2);
+             
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
     public function store(Request $request)
     {
         // 1. Validasi Input dari Android
@@ -28,6 +47,23 @@ class AbsensiController extends Controller
             $karyawan = Karyawan::where('id_user', $request->id_user)->first();
             if (!$karyawan) {
                 return response()->json(['success' => false, 'message' => 'Data Karyawan tidak ditemukan!'], 404);
+            }
+            $officeSetting = DB::table('pengaturan_kantor')->first(); 
+            
+            if ($officeSetting) {
+                $distance = $this->calculateDistance(
+                    $officeSetting->latitude, 
+                    $officeSetting->longitude, 
+                    $request->latitude, 
+                    $request->longitude
+                );
+
+                if ($distance > $officeSetting->radius) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Absensi ditolak! Jarak Anda terlalu jauh dari kantor (' . round($distance) . ' km).'
+                    ], 403);
+                }
             }
 
             $id_karyawan = $karyawan->id_karyawan;

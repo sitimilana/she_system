@@ -7,6 +7,8 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -17,7 +19,7 @@
             color: #333; 
         }
 
-        /* SIDEBAR STRUKTUR */
+        /* ================= SIDEBAR (TIDAK DIUBAH) ================= */
         .sidebar {
             width: 250px; 
             min-height: 100vh; 
@@ -40,7 +42,6 @@
             width: 100px; 
         }
 
-        /* LINK NAVIGASI */
         .sidebar .nav-link { 
             color: #fff; 
             font-size: 16px; 
@@ -57,7 +58,6 @@
             font-size: 1.1rem; 
         }
 
-        /* HOVER & ACTIVE STATE */
         .sidebar .nav-link:hover, 
         .sidebar .nav-link.active { 
             background-color: rgba(255,255,255,0.2); 
@@ -66,15 +66,135 @@
             color: #fff;
         }
 
-        /* LOGOUT STYLE */
         .sidebar .nav-link.text-white-50:hover {
             color: #fff !important;
         }
+        /* ========================================================== */
 
-        /* SPACING FOR CONTENT */
+        /* KUSTOMISASI KONTEN UTAMA ESTETIK */
         .content { 
             margin-left: 250px; 
-            padding: 40px; 
+            padding: 40px 50px; 
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h2 {
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: -0.5px;
+        }
+
+        .page-header p {
+            color: #6c757d;
+            font-size: 15px;
+        }
+
+        .custom-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            background: #fff;
+            max-width: 800px;
+        }
+
+        .custom-card .card-body {
+            padding: 35px;
+        }
+
+        /* Styling Form & Input */
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            background-color: #fcfcfc;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            background-color: #fff;
+            border-color: #8f9fc4;
+            box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15);
+        }
+
+        .form-control[readonly] {
+            background-color: #f1f3f5;
+            cursor: not-allowed;
+            color: #6c757d;
+        }
+
+        /* Area Map & Tombol Melayang */
+        .map-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+            margin-bottom: 25px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.03);
+        }
+
+        #map {
+            height: 350px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        .btn-floating-location {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 400; /* Berada di atas layer peta Leaflet */
+            background: white;
+            color: #4a6fa5;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-weight: 600;
+            font-size: 13px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .btn-floating-location:hover {
+            background: #4a6fa5;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Area Radius Spesial */
+        .radius-box {
+            background: #f8f9fa;
+            border: 1px dashed #adb5bd;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Tombol Simpan Utama */
+        .btn-save {
+            background-color: #4a6fa5;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            background-color: #385682;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
         }
     </style>
 </head>
@@ -127,17 +247,20 @@
 
 <div class="content">
 
-    <h2 class="fw-bold mb-4">Pengaturan Lokasi Kantor</h2>
+    <div class="page-header">
+        <h2>Pengaturan Lokasi Kantor</h2>
+        <p>Tentukan titik koordinat pusat dan batas area presensi karyawan.</p>
+    </div>
 
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
+        <div class="alert alert-success alert-dismissible fade show" style="max-width: 800px;">
+            <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show">
+        <div class="alert alert-danger alert-dismissible fade show" style="max-width: 800px;">
             <ul class="mb-0">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -147,28 +270,42 @@
         </div>
     @endif
 
-    <div class="card shadow" style="max-width: 720px;">
+    <div class="card custom-card">
         <div class="card-body">
             <form method="POST" action="{{ route('pimpinan.pengaturan-lokasi.update') }}">
                 @csrf
                 @method('PUT')
 
-                <div class="mb-3">
-                    <label class="form-label">Latitude</label>
-                    <input type="number" step="0.0000001" name="latitude" class="form-control" value="{{ old('latitude', $pengaturan->latitude ?? '') }}" required>
+                <div class="map-wrapper">
+                    <button type="button" id="btn-current-loc" class="btn-floating-location">
+                        <i class="bi bi-crosshair me-1"></i> Gunakan Lokasi Saya
+                    </button>
+                    <div id="map"></div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Longitude</label>
-                    <input type="number" step="0.0000001" name="longitude" class="form-control" value="{{ old('longitude', $pengaturan->longitude ?? '') }}" required>
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <label class="form-label"><i class="bi bi-geo text-primary me-1"></i> Latitude</label>
+                        <input type="number" step="0.0000001" name="latitude" id="input-lat" class="form-control" value="{{ old('latitude', $pengaturan->latitude ?? '') }}" required readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label"><i class="bi bi-geo text-primary me-1"></i> Longitude</label>
+                        <input type="number" step="0.0000001" name="longitude" id="input-lng" class="form-control" value="{{ old('longitude', $pengaturan->longitude ?? '') }}" required readonly>
+                    </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Radius (meter)</label>
-                    <input type="number" name="radius" min="1" class="form-control" value="{{ old('radius', $pengaturan->radius ?? 100) }}" required>
+                <div class="radius-box">
+                    <label class="form-label text-danger fs-6"><i class="bi bi-bullseye me-1"></i> Jangkauan Radius Presensi (Kilometer)</label>
+                    <input type="number" step="0.001" min="0.001" name="radius" class="form-control form-control-lg border-secondary" value="{{ old('radius', $pengaturan->radius ?? 0.1) }}" required>
+                    <div class="form-text text-muted mt-2" style="font-size: 13px;">
+                        Masukkan jarak dalam hitungan Kilometer (km). <br>
+                        Contoh: <b class="text-dark">0.1</b> untuk 100 meter (m).
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Simpan Pengaturan</button>
+                <button type="submit" class="btn btn-primary btn-save w-100">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Simpan Pengaturan
+                </button>
             </form>
         </div>
     </div>
@@ -178,6 +315,77 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 @include('auth.logout')
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const latInput = document.getElementById('input-lat');
+        const lngInput = document.getElementById('input-lng');
+        const btnCurrentLoc = document.getElementById('btn-current-loc');
+
+        // Koordinat default atau dari database
+        let startLat = parseFloat(latInput.value) || -7.7509239; 
+        let startLng = parseFloat(lngInput.value) || 111.9946412;
+
+        const map = L.map('map').setView([startLat, startLng], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker = L.marker([startLat, startLng], { draggable: true }).addTo(map);
+
+        function updateInputs(lat, lng) {
+            latInput.value = lat.toFixed(7);
+            lngInput.value = lng.toFixed(7);
+        }
+
+        marker.on('dragend', function (e) {
+            const position = marker.getLatLng();
+            updateInputs(position.lat, position.lng);
+        });
+
+        map.on('click', function (e) {
+            marker.setLatLng(e.latlng);
+            updateInputs(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Fitur GPS Lokasi Saat Ini
+        btnCurrentLoc.addEventListener('click', function() {
+            if (navigator.geolocation) {
+                const originalText = btnCurrentLoc.innerHTML;
+                btnCurrentLoc.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mencari...';
+                btnCurrentLoc.disabled = true;
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) { 
+                        const currentLat = position.coords.latitude;
+                        const currentLng = position.coords.longitude;
+                        
+                        const newLatLng = new L.LatLng(currentLat, currentLng);
+                        marker.setLatLng(newLatLng);
+                        map.setView(newLatLng, 17); 
+                        
+                        updateInputs(currentLat, currentLng);
+
+                        btnCurrentLoc.innerHTML = originalText;
+                        btnCurrentLoc.disabled = false;
+                    }, 
+                    function(error) { 
+                        alert("Gagal mengambil lokasi GPS. Pastikan izin akses lokasi pada browser/HP Anda aktif.");
+                        btnCurrentLoc.innerHTML = originalText;
+                        btnCurrentLoc.disabled = false;
+                    },
+                    {
+                        enableHighAccuracy: true, 
+                        timeout: 10000 
+                    }
+                );
+            } else {
+                alert("Browser Anda tidak mendukung fitur lokasi.");
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

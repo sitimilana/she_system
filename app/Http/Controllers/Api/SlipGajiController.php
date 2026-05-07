@@ -18,6 +18,9 @@ class SlipGajiController extends Controller
     /**
      * Get list of salary slips for the authenticated employee (mobile).
      */
+    /**
+     * Get list of salary slips for the authenticated employee (mobile).
+     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -25,27 +28,33 @@ class SlipGajiController extends Controller
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         if (!$karyawan) {
-            return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Data karyawan tidak ditemukan.',
+                'data'    => []
+            ], 404);
         }
 
         $slipGaji = Penggajian::where('id_karyawan', $karyawan->id_karyawan)
             ->where('status_slip', 'final')
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
-            ->get()
-            ->map(function ($slip) {
-                return [
-                    'id_gaji'    => $slip->id_gaji,
-                    'periode'    => (self::BULAN_LIST[$slip->bulan] ?? $slip->bulan) . ' ' . $slip->tahun,
-                    'total_gaji' => $slip->total_gaji,
-                    'status'     => $slip->status_slip,
-                ];
-            });
+            ->get();
 
+        if ($slipGaji->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Belum ada data slip gaji yang difinalisasi.',
+                'data'    => []
+            ], 200);
+        }
+
+        // Kembalikan JSON dengan format success, message, dan data
         return response()->json([
-            'karyawan' => $karyawan->nama,
-            'data'     => $slipGaji,
-        ]);
+            'success' => true,
+            'message' => 'Berhasil mengambil riwayat slip gaji',
+            'data'    => $slipGaji,
+        ], 200);
     }
 
     /**
@@ -55,45 +64,48 @@ class SlipGajiController extends Controller
     {
         $user = $request->user();
 
+        // Cari profil karyawan
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         if (!$karyawan) {
             return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
         }
 
-        $slip = Penggajian::where('id_gaji', $id)
+        // CARI SLIP GAJI (Menggunakan id_gaji sesuai dengan gambar tabel database Anda)
+        $slip = Penggajian::where('id_gaji', $id) 
             ->where('id_karyawan', $karyawan->id_karyawan)
             ->where('status_slip', 'final')
             ->first();
 
         if (!$slip) {
-            return response()->json(['message' => 'Slip gaji tidak ditemukan.'], 404);
+            return response()->json(['message' => 'Slip gaji tidak ditemukan atau belum difinalisasi.'], 404);
         }
 
+        // KEMBALIKAN JSON SESUAI STRUKTUR ANDROID (SalaryDetailResponse)
         return response()->json([
-            'id_gaji'        => $slip->id_gaji,
+            'id_gaji'        => $slip->id_gaji, 
             'karyawan'       => $karyawan->nama,
-            'jabatan'        => $karyawan->jabatan,
+            'jabatan'        => $karyawan->divisi ?? '-', // Pakai divisi agar tidak error (karena Anda pakai kolom divisi saat pendaftaran)
             'periode'        => (self::BULAN_LIST[$slip->bulan] ?? $slip->bulan) . ' ' . $slip->tahun,
             'status'         => $slip->status_slip,
+            'total_gaji'     => (int) $slip->total_gaji,
             'penerimaan'     => [
-                'gaji_pokok'        => $slip->gaji_pokok,
-                'uang_makan'        => $slip->uang_makan,
-                'tunjangan_jabatan' => $slip->tunjangan_jabatan,
-                'insentif_kinerja'  => $slip->insentif_kinerja,
-                'tunjangan_program' => $slip->tunjangan_program,
-                'tunjangan_bpjs'    => $slip->tunjangan_bpjs,
-                'bonus'             => $slip->bonus,
-                'lain_lain'         => $slip->lain_lain,
-                'total_penerimaan'  => $slip->total_penerimaan,
+                'gaji_pokok'        => (int) $slip->gaji_pokok,
+                'uang_makan'        => (int) $slip->uang_makan,
+                'tunjangan_jabatan' => (int) $slip->tunjangan_jabatan,
+                'insentif_kinerja'  => (int) $slip->insentif_kinerja,
+                'tunjangan_program' => (int) $slip->tunjangan_program,
+                'tunjangan_bpjs'    => (int) $slip->tunjangan_bpjs,
+                'bonus'             => (int) $slip->bonus,
+                'lain_lain'         => (int) $slip->lain_lain,
+                'total_penerimaan'  => (int) $slip->total_penerimaan,
             ],
             'potongan'       => [
-                'potongan_absen' => $slip->potongan_absen,
-                'cash_bon'       => $slip->cash_bon,
-                'potongan_bpjs'  => $slip->potongan_bpjs,
-                'potongan_lain'  => $slip->potongan_lain,
+                'potongan_absen' => (int) $slip->potongan_absen,
+                'cash_bon'       => (int) $slip->cash_bon,
+                'potongan_bpjs'  => (int) $slip->potongan_bpjs,
+                'potongan_lain'  => (int) $slip->potongan_lain,
             ],
-            'total_gaji'     => $slip->total_gaji,
             'tanggal_dibuat' => $slip->tanggal_dibuat,
         ]);
     }

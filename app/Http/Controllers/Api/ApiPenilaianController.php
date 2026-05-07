@@ -3,55 +3,70 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Karyawan;
-use App\Models\Penilaian; // Pastikan model ini sesuai dengan nama model Anda
 use Illuminate\Http\Request;
+use App\Models\Penilaian;
+use App\Models\Karyawan;
+use Illuminate\Support\Facades\Auth;
 
 class ApiPenilaianController extends Controller
 {
-    /**
-     * GET /api/penilaian
-     * Mengambil data penilaian berdasarkan bulan & tahun yang dipilih
-     */
-    public function getPenilaian(Request $request)
+    public function index()
     {
-        $user = $request->user();
+        // 1. Cek token user yang sedang login di HP
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized / Sesi telah habis'
+            ], 401);
+        }
+
+        // 2. Cari ID Karyawan yang terhubung dengan akun login tersebut
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         if (!$karyawan) {
-            return response()->json(['success' => false, 'message' => 'Data karyawan tidak ditemukan.'], 404);
-        }
-
-        // Ambil filter bulan & tahun dari request Android (atau gunakan bulan saat ini sebagai default)
-        $bulan = $request->query('bulan', now()->month);
-        $tahun = $request->query('tahun', now()->year);
-
-        // Asumsi tabel Anda memiliki kolom 'bulan' dan 'tahun', atau Anda bisa mem-filter dari 'tanggal_penilaian'
-        $penilaian = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereMonth('tanggal_penilaian', $bulan)
-            ->whereYear('tanggal_penilaian', $tahun)
-            ->first();
-
-        if (!$penilaian) {
             return response()->json([
-                'success' => true, 
-                'message' => 'Belum ada penilaian untuk bulan ini.',
-                'data' => null
-            ], 200); // 200 OK karena aplikasinya tidak error, hanya datanya saja yang belum ada
+                'success' => false,
+                'message' => 'Profil Karyawan tidak ditemukan.',
+                'data' => []
+            ], 404);
         }
 
-        // Asumsi kolom-kolom ini ada di tabel PenilaianKinerja Anda
+        // 3. Ambil seluruh riwayat penilaian, urutkan dari tahun & bulan terbaru
+        $riwayatPenilaian = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
+                                     ->orderBy('tahun', 'desc')
+                                     ->orderBy('bulan', 'desc')
+                                     ->get();
+
+        // 4. Jika belum pernah dinilai oleh Kepala Bagian
+        if ($riwayatPenilaian->isEmpty()) {
+            return response()->json([
+                'success' => true, // Sukses diakses, hanya saja datanya memang kosong
+                'message' => 'Belum ada riwayat penilaian kinerja dari Kepala Bagian.',
+                'data' => []
+            ], 200);
+        }
+
+        // 5. Mapping data agar formatnya sesuai (angka murni) dengan yang diminta Retrofit Android
+        $data = $riwayatPenilaian->map(function ($item) {
+            return [
+                'disiplin'       => (int) $item->disiplin,
+                'produktivitas'  => (int) $item->produktivitas,
+                'tanggung_jawab' => (int) $item->tanggung_jawab,
+                'sikap_kerja'    => (int) $item->sikap_kerja,
+                'loyalitas'      => (int) $item->loyalitas,
+                'total_skor'     => (int) $item->total_skor, // Hasil konversi ke skala 1-100
+                'bulan'          => (int) $item->bulan,
+                'tahun'          => (int) $item->tahun,
+            ];
+        });
+
+        // 6. Kirim JSON ke Aplikasi Android
         return response()->json([
             'success' => true,
-            'data' => [
-                'disiplin' => $penilaian->disiplin ?? 0,
-                'produktivitas' => $penilaian->produktivitas ?? 0,
-                'tanggung_jawab' => $penilaian->tanggung_jawab ?? 0,
-                'sikap_kerja' => $penilaian->sikap_kerja ?? 0,
-                'loyalitas' => $penilaian->loyalitas ?? 0,
-                'total_skor' => $penilaian->total_skor ?? 0,
-                'bulan_tahun' => \Carbon\Carbon::parse($penilaian->tanggal_penilaian)->translatedFormat('F Y')
-            ]
+            'message' => 'Riwayat penilaian berhasil diambil.',
+            'data'    => $data
         ], 200);
     }
 }

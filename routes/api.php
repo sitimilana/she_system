@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ConfigPresensiController;
 use App\Http\Controllers\Api\PengajuanController;
 use App\Http\Controllers\Api\ApiPenilaianController;
 use App\Http\Controllers\Api\SlipGajiController;
+
 // Tambahkan RewardController jika Anda sudah membuatnya
 // use App\Http\Controllers\Api\RewardController; 
 
@@ -41,10 +42,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Penilaian
     Route::get('/penilaian', [ApiPenilaianController::class, 'getPenilaian']);
+    Route::get('/penilaian', [ApiPenilaianController::class, 'index']);
     
     // Gaji (Di ApiService dipanggil 'gaji')
     Route::get('/gaji', [SlipGajiController::class, 'index']);
+    Route::get('/gaji/{id}', [SlipGajiController::class, 'show']);
     
-    // Reward (Sesuaikan dengan nama controller Anda)
-    // Route::get('/rewards', [RewardController::class, 'index']);
+    //Penilaian
+
 });

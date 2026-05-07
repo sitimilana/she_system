@@ -137,9 +137,23 @@
                         </p>
                     </div>
                     <div class="col-md-7">
-                        <p class="text-muted text-center mb-1 small fw-bold">Insight Kehadiran Hari Ini</p>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <p class="text-muted mb-0 small fw-bold">Insight Kehadiran</p>
+                            <form action="{{ route('pimpinan.dashboard') }}" method="GET" class="m-0">
+                                <select name="filter_kehadiran" class="form-select form-select-sm border-secondary shadow-none" style="font-size: 0.8rem; border-radius: 6px; cursor: pointer;" onchange="this.form.submit()">
+                                    <option value="hari_ini" {{ $filterKehadiran == 'hari_ini' ? 'selected' : '' }}>Hari Ini</option>
+                                    <option value="minggu_ini" {{ $filterKehadiran == 'minggu_ini' ? 'selected' : '' }}>Minggu Ini</option>
+                                    <option value="bulan_ini" {{ $filterKehadiran == 'bulan_ini' ? 'selected' : '' }}>Bulan Ini</option>
+                                </select>
+                            </form>
+                        </div>
+                        
                         <div class="d-flex justify-content-center align-items-center" style="height: 120px;">
-                            <canvas id="kehadiranChart"></canvas>
+                            @if($jmlHadir == 0 && $jmlTerlambat == 0 && $jmlAlpha == 0 && $jmlCuti == 0)
+                                <span class="text-muted small fst-italic">Belum ada data di periode ini.</span>
+                            @else
+                                <canvas id="kehadiranChart"></canvas>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -244,43 +258,44 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var ctx = document.getElementById('kehadiranChart').getContext('2d');
-        var kehadiranChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Hadir', 'Terlambat', 'Alpha', 'Cuti'],
-                datasets: [{
-                    // Anda bisa mengganti data dummy di bawah ini dengan variabel dari controller
-                    data: [{{ $jmlHadir ?? 85 }}, {{ $jmlTerlambat ?? 10 }}, {{ $jmlAlpha ?? 2 }}, {{ $karyawanCutiHariIni ?? 3 }}], 
-                    backgroundColor: [
-                        '#a8e6cf', // pastel green (Hadir)
-                        '#ffd3b6', // pastel orange/yellow (Terlambat)
-                        '#ffaaa5', // pastel red (Alpha)
-                        '#a2d5f2'  // pastel blue (Cuti)
-                    ],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            boxWidth: 12,
-                            font: { size: 10, family: 'Inter' }
-                        }
-                    }
+        // Cek dulu apakah canvas chart tersedia (tidak disembunyikan oleh if empty data)
+        var canvas = document.getElementById('kehadiranChart');
+        if (canvas) {
+            var ctx = canvas.getContext('2d');
+            var kehadiranChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hadir', 'Terlambat', 'Alpha', 'Cuti/Izin/Sakit'],
+                    datasets: [{
+                        // MENGGUNAKAN VARIABEL DARI CONTROLLER
+                        data: [{{ $jmlHadir }}, {{ $jmlTerlambat }}, {{ $jmlAlpha }}, {{ $jmlCuti }}], 
+                        backgroundColor: [
+                            '#a8e6cf', // pastel green (Hadir)
+                            '#ffd3b6', // pastel orange/yellow (Terlambat)
+                            '#ffaaa5', // pastel red (Alpha)
+                            '#a2d5f2'  // pastel blue (Cuti)
+                        ],
+                        borderWidth: 0
+                    }]
                 },
-                cutout: '70%'
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10, family: 'Inter' }
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
     });
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
 @include('auth.logout')
 
 </body>
