@@ -15,6 +15,7 @@ use App\Models\Penilaian;
 use App\Models\Absensi;
 use Carbon\Carbon;
 
+
 class PimpinanController extends Controller
 {
     
@@ -65,10 +66,15 @@ class PimpinanController extends Controller
             ->whereDate('tanggal_mulai', '<=', Carbon::today())
             ->whereDate('tanggal_selesai', '>=', Carbon::today())
             ->count();
+        
+        $karyawanTanpaCuti = Karyawan::where('sisa_cuti', 0)
+            ->where('status_karyawan', 'aktif') // Pastikan hanya menghitung yang aktif
+            ->count();
 
-        // ==================================================
-        // LOGIKA FILTER GRAFIK KEHADIRAN
-        // ==================================================
+        $totalSaldoCutiPerusahaan = Karyawan::where('status_karyawan', 'aktif')
+            ->sum('sisa_cuti');
+
+
         $filterKehadiran = $request->input('filter_kehadiran', 'hari_ini');
         $queryAbsensi = Absensi::query();
 
@@ -107,7 +113,9 @@ class PimpinanController extends Controller
             'jmlTerlambat',
             'jmlAlpha',
             'jmlCuti',
-            'filterKehadiran'
+            'filterKehadiran',
+            'karyawanTanpaCuti',
+            'totalSaldoCutiPerusahaan'
         ));
     }
 
@@ -473,5 +481,21 @@ class PimpinanController extends Controller
             'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
             'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
         ]);
+    }
+    public function tambahJatahBulanan()
+    {
+        // Ambil semua karyawan aktif
+        $karyawans = \App\Models\Karyawan::where('status_karyawan', 'aktif')->get();
+        
+        $jumlahDiupdate = 0;
+        foreach ($karyawans as $karyawan) {
+            // Batas maksimal celengan adalah 12
+            if ($karyawan->sisa_cuti < 12) {
+                $karyawan->increment('sisa_cuti', 1);
+                $jumlahDiupdate++;
+            }
+        }
+
+        return redirect()->back()->with('success', "Jatah cuti bulanan (+1) berhasil dibagikan ke $jumlahDiupdate karyawan aktif.");
     }
 }

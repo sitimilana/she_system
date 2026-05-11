@@ -155,6 +155,12 @@
             <h2 class="fw-bold m-0" style="color: #1e293b;">Manajemen Cuti</h2>
             <p class="text-muted m-0">Verifikasi dan pantau pengajuan cuti seluruh karyawan.</p>
         </div>
+        <form action="{{ route('pimpinan.cuti.tambah_jatah') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-info px-4 py-2 fw-bold shadow-sm text-white" onclick="return confirm('PENTING: Apakah Anda yakin ingin membagikan jatah cuti (+1 hari) untuk bulan ini? Pastikan Anda hanya menekan tombol ini 1 kali dalam sebulan!')">
+                <i class="bi bi-plus-circle me-2"></i> Bagikan Jatah Cuti Bulanan
+            </button>
+        </form>
     </div>
 
     @if(session('success'))

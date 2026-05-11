@@ -100,6 +100,7 @@
                         <th width="15%">Divisi</th>
                         <th width="15%">Kontak</th>
                         <th width="20%">Alamat</th>
+                        <th width="10%" class="text-center">Sisa Cuti</th>
                         <th width="15%" class="text-center">Status Kerja</th>
                         
                     </tr>
@@ -113,6 +114,12 @@
                         <td>{{ $user->karyawan->no_hp ?? '-' }}</td>
                         <td class="text-truncate" style="max-width: 150px;" title="{{ $user->karyawan->alamat ?? '-' }}">
                             {{ $user->karyawan->alamat ?? '-' }}
+                        </td>
+                        <td class="text-center">
+                            @php $sisaCuti = $user->karyawan->sisa_cuti ?? 0; @endphp
+                            <span class="badge {{ $sisaCuti > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill">
+                                {{ $sisaCuti }} Hari
+                            </span>
                         </td>
                         <td class="text-center">
                             @if($user->karyawan && $user->karyawan->status_karyawan)
@@ -151,7 +158,6 @@
     </div>
 </div>
 
-<!-- Modal Tambah Karyawan Baru -->
 <div class="modal fade" id="modalTambahBaru" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow rounded-4">
@@ -159,7 +165,6 @@
             <form action="{{ route('kabag.karyawan.store') }}" method="POST">
     @csrf
     <div class="row">
-        <!-- Kolom Kiri: Akun Login -->
         <div class="col-md-6 border-end">
             <h5 class="mb-3 text-primary">Informasi Akun (Login)</h5>
             <div class="mb-3">
@@ -172,7 +177,6 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Role Akses <span class="text-danger">*</span></label>
-                <!-- Pastikan value ini sesuai dengan ID Role Karyawan di database Anda (misal ID 2) -->
                 <select name="role_id" class="form-select" required>
                     <option value="" disabled selected>Pilih Role...</option>
                     @foreach($roles as $r)
@@ -184,7 +188,6 @@
             </div>
         </div>
 
-        <!-- Kolom Kanan: Biodata Karyawan -->
         <div class="col-md-6">
             <h5 class="mb-3 text-primary">Biodata Karyawan</h5>
             <div class="mb-3">

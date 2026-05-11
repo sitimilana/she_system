@@ -8,6 +8,7 @@ use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail; // Tambahan untuk kirim email
 
 class PengajuanController extends Controller
 {
@@ -16,13 +17,9 @@ class PengajuanController extends Controller
         $user = $request->user();
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
-        if (!$karyawan) {
-            return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
-        }
-
         return response()->json([
             'nama'      => $karyawan->nama,
-            'sisa_cuti' => $karyawan->sisa_cuti,
+            'sisa_cuti' => $karyawan->sisa_cuti, // Data ini yang dikirim ke Android
         ]);
     }
 
@@ -121,7 +118,7 @@ class PengajuanController extends Controller
         }
 
         // ==========================================
-        // 3. VALIDASI KEAMANAN SISTEM (Pencegahan Bentrok)
+        // 3. VALIDASI KEAMANAN SISTEM (Pencegahan Bentrok Diri Sendiri)
         // ==========================================
 
         $izinBentrok = Cuti::where('id_karyawan', $karyawan->id_karyawan)
@@ -152,6 +149,32 @@ class PengajuanController extends Controller
                 'message' => 'Pengajuan ditolak. Anda sudah melakukan presensi di rentang tanggal tersebut.'
             ], 422);
         }
+
+        // ==========================================
+        // FITUR BARU: CEK BENTROK DENGAN KARYAWAN LAIN (KHUSUS CUTI)
+        // ==========================================
+        $karyawanBentrok = [];
+        if (str_contains($jenisCuti, 'cuti')) {
+            $bentrokLain = Cuti::with('karyawan')
+                ->where('id_karyawan', '!=', $karyawan->id_karyawan)
+                // PERBAIKAN: Masukkan semua status pending yang mungkin ada di DB Anda
+                ->whereIn('status', ['approved', 'pending_pimpinan', 'pending_kabag', 'Disetujui', 'pending'])
+                ->where(function($query) use ($request) {
+                    $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_selesai])
+                        ->orWhereBetween('tanggal_selesai', [$request->tanggal_mulai, $request->tanggal_selesai])
+                        ->orWhere(function($q) use ($request) {
+                            $q->where('tanggal_mulai', '<=', $request->tanggal_mulai)
+                                ->where('tanggal_selesai', '>=', $request->tanggal_selesai);
+                        });
+                })->get();
+
+            // Mengumpulkan nama karyawan yang bentrok jadwalnya
+            foreach ($bentrokLain as $b) {
+            if ($b->karyawan) {
+                $karyawanBentrok[] = $b->karyawan->nama;
+            }
+        }
+    }
 
         // ==========================================
         // 4. LOGIKA SISA CUTI (Hanya untuk Cuti Tahunan)
@@ -186,8 +209,21 @@ class PengajuanController extends Controller
             'jenis_cuti'       => $request->jenis_cuti,
             'alasan'           => $request->alasan,
             'berkas_bukti'     => $berkasPath,
-            'status'           => 'pending_kabag',
+            'status'           => 'pending_pimpinan', // UBAH: Langsung status Pending agar dilihat pimpinan
         ]);
+
+        // Cari bagian ini di paling bawah method store:
+        if (!empty($karyawanBentrok) && $karyawan->email) { // PERBAIKAN: Pakai $karyawan->email
+            $namaUnik = array_unique($karyawanBentrok);
+            $listNama = implode(', ', $namaUnik);
+            
+            try {
+                // PERBAIKAN: Wajib masukkan ($cuti, $listNama)
+                Mail::to($karyawan->email)->send(new \App\Mail\NotifikasiBentrokMail($cuti, $listNama));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Gagal mengirim email bentrok: " . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Pengajuan berhasil dikirim. Menunggu persetujuan.',
@@ -200,4 +236,5 @@ class PengajuanController extends Controller
             ],
         ], 201);
     }
+    
 }

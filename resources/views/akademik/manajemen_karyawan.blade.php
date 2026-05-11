@@ -81,6 +81,7 @@
                         <th width="15%">Divisi</th>
                         <th width="15%">Kontak</th>
                         <th width="20%">Alamat</th>
+                        <th width="10%" class="text-center">Sisa Cuti</th>
                         <th width="15%" class="text-center">Status Kerja</th>
                     </tr>
                 </thead>
@@ -93,6 +94,12 @@
                         <td>{{ $karyawan->karyawan->no_hp ?? '-' }}</td>
                         <td class="text-truncate" style="max-width: 150px;" title="{{ $karyawan->karyawan->alamat ?? '-' }}">
                             {{ $karyawan->karyawan->alamat ?? '-' }}
+                        </td>
+                        <td class="text-center">
+                            @php $sisaCuti = $karyawan->karyawan->sisa_cuti ?? 0; @endphp
+                            <span class="badge {{ $sisaCuti > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill">
+                                {{ $sisaCuti }} Hari
+                            </span>
                         </td>
                         <td class="text-center">
                             @php

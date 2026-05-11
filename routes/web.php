@@ -25,6 +25,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pimpinan/cuti', [PimpinanCutiController::class, 'indexPimpinan'])->name('pimpinan.cuti');
     Route::post('/pimpinan/cuti/{id}/approve', [PimpinanCutiController::class, 'approve'])->name('pimpinan.cuti.approve');
     Route::post('/pimpinan/cuti/{id}/reject', [PimpinanCutiController::class, 'reject'])->name('pimpinan.cuti.reject');
+    Route::post('/pimpinan/cuti/tambah-jatah', [App\Http\Controllers\PimpinanCutiController::class, 'tambahJatahBulanan'])->name('pimpinan.cuti.tambah_jatah');
+    
     #Gaji
     Route::get('/pimpinan/gaji', [PimpinanController::class, 'gaji'])->name('pimpinan.gaji');
     Route::get('/pimpinan/gaji/create', [PimpinanController::class, 'createGaji'])->name('pimpinan.gaji.create');
