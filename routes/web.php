@@ -55,6 +55,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kepala-bagian/karyawan', [KepalaBagianController::class, 'store'])->name('kabag.karyawan.store_baru');
     Route::post('/kabag/karyawan/store', [App\Http\Controllers\KepalaBagianController::class, 'store'])->name('kabag.karyawan.store');
     
+    Route::put('/kabag/karyawan/{id}', [App\Http\Controllers\KepalaBagianController::class, 'updateKaryawan'])->name('kabag.karyawan.update');
+    Route::delete('/kabag/karyawan/{id}', [App\Http\Controllers\KepalaBagianController::class, 'destroyKaryawan'])->name('kabag.karyawan.destroy');
+
     #Cuti
     Route::get('/kepala-bagian/cuti', [KepalaBagianController::class, 'cuti'])->name('kabag.cuti');
     Route::patch('/kepala-bagian/cuti/{id}/approve', [KepalaBagianController::class, 'approveCuti'])->name('kabag.cuti.approve');

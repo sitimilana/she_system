@@ -88,10 +88,16 @@
     <div class="row">
         <div class="col-lg-12">
             <div class="card card-custom p-4 h-100">
-                <h5 class="fw-bold mb-4 border-bottom pb-2" style="color: #1e293b;"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Penilaian</h5>
+                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                    <h5 class="fw-bold m-0" style="color: #1e293b;"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Penilaian</h5>
+                    <div class="input-group" style="max-width: 300px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="searchInputPenilaian" class="form-control border-start-0 ps-0" placeholder="Cari karyawan atau bulan...">
+                    </div>
+                </div>
                 
                 <div class="table-responsive">
-                    <table class="table table-hover table-custom m-0">
+                    <table class="table table-hover table-custom m-0" id="tabelPenilaian">
                         <thead>
                             <tr>
                                 <th width="20%">Bulan & Tahun</th>
@@ -260,6 +266,24 @@
     });
 </script>
 @endif
+
+<script>
+    document.getElementById('searchInputPenilaian').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#tabelPenilaian tbody tr');
+        
+        rows.forEach(row => {
+            if (row.querySelector('td[colspan]')) return; // Abaikan baris "Data Kosong"
+            
+            let text = row.textContent.toLowerCase();
+            if (text.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
 
 </body>
 </html>

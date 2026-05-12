@@ -62,16 +62,51 @@
             <h3 class="fw-bold m-0" style="color: #1e293b;">Riwayat Cuti & Izin</h3>
             <p class="text-muted m-0">Data pengajuan cuti karyawan dan status persetujuan pimpinan.</p>
         </div>
-        <div class="d-flex gap-2">
-            <div class="input-group shadow-sm">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" class="form-control border-start-0" placeholder="Cari karyawan...">
-            </div>
-            <button class="btn btn-outline-secondary bg-white shadow-sm text-nowrap"><i class="bi bi-funnel me-2"></i>Filter</button>
-        </div>
     </div>
 
     <div class="card card-custom p-4">
+        <!-- Filter Section Modern -->
+        <form action="{{ route('akademik.cuti') }}" method="GET" class="mb-4 bg-light p-3 rounded-4 border">
+            <div class="row g-3">
+                <!-- Kolom Pencarian -->
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person me-1"></i> Cari Karyawan</label>
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Ketik nama karyawan..." value="{{ request('search') }}">
+                    </div>
+                </div>
+                
+                <!-- Kolom Bulan & Tahun -->
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-month me-1"></i> Bulan Pengajuan</label>
+                    <input type="month" name="bulan" class="form-control shadow-sm" value="{{ request('bulan') }}">
+                </div>
+                
+                <!-- Kolom Status -->
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-check-circle me-1"></i> Status Cuti</label>
+                    <select name="status" class="form-select shadow-sm">
+                        <option value="">-- Semua Status --</option>
+                        <option value="pending_kabag" {{ request('status') == 'pending_kabag' ? 'selected' : '' }}>⏳ Menunggu Kabag</option>
+                        <option value="pending_pimpinan" {{ request('status') == 'pending_pimpinan' ? 'selected' : '' }}>⏳ Menunggu Pimpinan</option>
+                        <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>🟢 Disetujui</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>🔴 Ditolak</option>
+                    </select>
+                </div>
+                
+                <!-- Kolom Tombol -->
+                <div class="col-md-2" style="margin-top: auto;">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary shadow-sm flex-grow-1 fw-bold"><i class="bi bi-funnel-fill me-1"></i> Filter</button>
+                        @if(request('search') || request('bulan') || request('status'))
+                            <a href="{{ route('akademik.cuti') }}" class="btn btn-danger text-white shadow-sm px-3" title="Reset Semua Filter"><i class="bi bi-arrow-clockwise"></i></a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </form>
+
         <div class="table-responsive">
             <table class="table table-hover table-custom m-0 text-nowrap">
                 <thead>
@@ -117,20 +152,22 @@
                         <td class="text-center">
                             @php
                                 $badgeClass = 'secondary';
-                                $icon = '';
-                                if($cuti->status == 'disetujui') {
+                                $icon = 'bi-record-circle';
+                                $statusLower = strtolower($cuti->status);
+                                
+                                if(in_array($statusLower, ['disetujui', 'approved'])) {
                                     $badgeClass = 'success';
                                     $icon = 'bi-check-circle-fill';
-                                } elseif($cuti->status == 'menunggu') {
+                                } elseif(in_array($statusLower, ['menunggu', 'pending_kabag', 'pending_pimpinan'])) {
                                     $badgeClass = 'warning text-dark';
                                     $icon = 'bi-clock-fill';
-                                } elseif($cuti->status == 'ditolak') {
+                                } elseif(in_array($statusLower, ['ditolak', 'rejected'])) {
                                     $badgeClass = 'danger';
                                     $icon = 'bi-x-circle-fill';
                                 }
                             @endphp
                             <span class="badge bg-{{ $badgeClass }} px-3 py-2 text-uppercase" style="letter-spacing: 0.5px;">
-                                <i class="bi {{ $icon }} me-1"></i> {{ $cuti->status }}
+                                <i class="bi {{ $icon }} me-1"></i> {{ str_replace('_', ' ', $cuti->status) }}
                             </span>
                         </td>
                     </tr>

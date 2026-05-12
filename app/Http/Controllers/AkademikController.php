@@ -70,15 +70,69 @@ class AkademikController extends Controller
         // Variabel $hadirHariIni saya arahkan ke $hadir agar konsisten
         return view('akademik.beranda', compact('totalKaryawan', 'hadir', 'rekapCuti', 'rekapAbsensi'));
     }
-    public function absensi()
+    public function absensi(Request $request)
     {
-        $dataAbsensi = \App\Models\Absensi::with(['karyawan.user'])->orderBy('tanggal', 'desc')->get();
+        $query = \App\Models\Absensi::with(['karyawan.user']);
+
+        // 1. Filter Pencarian Nama
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('nama_lengkap', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 2. Filter Berdasarkan Bulan (format: YYYY-MM)
+        if ($request->filled('bulan')) {
+            $bulan = explode('-', $request->bulan);
+            if (count($bulan) == 2) {
+                $query->whereYear('tanggal', $bulan[0])
+                      ->whereMonth('tanggal', $bulan[1]);
+            }
+        }
+
+        // 3. Filter Berdasarkan Status (hadir, absen, dll)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $dataAbsensi = $query->orderBy('tanggal', 'desc')->get();
 
         return view('akademik.riwayat_absensi', compact('dataAbsensi'));
     }
-    public function cuti()
+    public function cuti(Request $request)
     {
-        $dataCuti = \App\Models\Cuti::with(['karyawan.user'])->orderBy('tanggal_pengajuan', 'desc')->get();
+        $query = \App\Models\Cuti::with(['karyawan.user']);
+
+        // 1. Filter Pencarian Nama
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($qu) use ($search) {
+                      $qu->where('nama_lengkap', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // 2. Filter Berdasarkan Bulan Pengajuan (format: YYYY-MM)
+        if ($request->filled('bulan')) {
+            $bulan = explode('-', $request->bulan);
+            if (count($bulan) == 2) {
+                $query->whereYear('tanggal_pengajuan', $bulan[0])
+                      ->whereMonth('tanggal_pengajuan', $bulan[1]);
+            }
+        }
+
+        // 3. Filter Berdasarkan Status Cuti
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $dataCuti = $query->orderBy('tanggal_pengajuan', 'desc')->get();
 
         return view('akademik.riwayat_cuti', compact('dataCuti'));
     }

@@ -48,12 +48,26 @@ class KepalaBagianController extends Controller
         ));
     }
 
-    public function karyawan()
+    public function karyawan(Request $request)
     {
-        $dataKaryawan = User::with('karyawan')
+        $search = $request->input('search');
+
+        $query = User::with('karyawan')
         ->whereHas('role', function ($query) {
             $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
-        })->get();
+        });
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhereHas('karyawan', function($qKar) use ($search) {
+                      $qKar->where('divisi', 'like', "%{$search}%")
+                           ->orWhere('status_karyawan', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $dataKaryawan = $query->get();
         $roles = \App\Models\Role::all();
 
         return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan', 'roles'));
@@ -207,5 +221,69 @@ class KepalaBagianController extends Controller
 
         return redirect()->route('kabag.cuti')
             ->with('success', 'Pengajuan cuti telah ditolak.');
+    }
+
+    // ==========================================================
+    // PERUBAHAN: Tambahkan fungsi Edit dan Hapus Karyawan
+    // ==========================================================
+    public function updateKaryawan(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'nama_lengkap'    => 'required|string|max:255',
+            'divisi'          => 'required|string',
+            'no_hp'           => 'nullable|string|max:20',
+            'email'           => 'nullable|email|max:255',
+            'alamat'          => 'nullable|string',
+            'status_karyawan' => 'required|string'
+        ]);
+
+        // Update data login User
+        $user->update([
+            'nama_lengkap' => $request->nama_lengkap,
+            // Matikan akses login jika diubah menjadi tidak aktif
+            'status_akun'  => $request->status_karyawan == 'keluar' ? 'nonaktif' : $user->status_akun,
+        ]);
+
+        // Update data biodata Karyawan
+        if ($user->karyawan) {
+            $user->karyawan->update([
+                'nama'            => $request->nama_lengkap,
+                'divisi'          => $request->divisi,
+                'no_hp'           => $request->no_hp ?? '-',
+                'email'           => $request->email ?? '-',
+                'alamat'          => $request->alamat ?? '-',
+                'status_karyawan' => $request->status_karyawan,
+            ]);
+        }
+
+        return redirect()->route('kabag.karyawan')->with('success', 'Data dan status karyawan berhasil diperbarui.');
+    }
+
+    public function destroyKaryawan($id)
+    {
+        $user = User::with('karyawan')->findOrFail($id);
+        
+        // Keamanan ekstra: pastikan hanya yang tidak aktif/keluar yang bisa dihapus
+        $status = strtolower($user->karyawan->status_karyawan ?? '');
+        if (!in_array($status, ['tidak aktif', 'keluar', 'resign'])) {
+            return redirect()->route('kabag.karyawan')->with('error', 'Gagal! Hanya karyawan berstatus Tidak Aktif atau Keluar yang boleh dihapus.');
+        }
+
+        if ($user->karyawan) {
+            // Hapus relasi data yang terikat (foreign key constraint)
+            $id_karyawan = $user->karyawan->id_karyawan;
+            \App\Models\Absensi::where('id_karyawan', $id_karyawan)->delete();
+            \App\Models\Cuti::where('id_karyawan', $id_karyawan)->delete();
+            \App\Models\Penilaian::where('id_karyawan', $id_karyawan)->delete();
+            \App\Models\Penggajian::where('id_karyawan', $id_karyawan)->delete();
+            \App\Models\Reward::where('id_karyawan', $id_karyawan)->delete();
+
+            $user->karyawan->delete();
+        }
+        $user->delete();
+
+        return redirect()->route('kabag.karyawan')->with('success', 'Data karyawan berstatus tidak aktif beserta data terkait (absensi, cuti, dl) berhasil dihapus permanen.');
     }
 }

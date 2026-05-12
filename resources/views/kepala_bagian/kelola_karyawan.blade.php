@@ -80,11 +80,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="input-group" style="max-width: 400px;">
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" class="form-control border-start-0 ps-0" placeholder="Cari nama atau jabatan...">
+                <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, divisi, atau status...">
             </div>
             
             <div class="d-flex gap-2">
-                <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
                 <button class="btn btn-outline-secondary shadow-sm"><i class="bi bi-printer me-2"></i>Cetak</button>
                 
                 <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
@@ -92,7 +91,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-hover table-custom m-0">
+            <table class="table table-hover table-custom m-0" id="tabelKaryawan">
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No</th>
@@ -102,6 +101,7 @@
                         <th width="20%">Alamat</th>
                         <th width="10%" class="text-center">Sisa Cuti</th>
                         <th width="15%" class="text-center">Status Kerja</th>
+                        <th width="10%" class="text-center">Aksi</th>
                         
                     </tr>
                 </thead>
@@ -132,6 +132,81 @@
                                 </span>
                             @endif
                         </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-1">
+                                <button class="btn btn-sm btn-warning text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $user->id_user }}" title="Edit Data">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+
+                                @php $statusKar = strtolower($user->karyawan->status_karyawan ?? ''); @endphp
+                                @if(in_array($statusKar, ['tidak aktif', 'keluar', 'resign']))
+                                    <form action="{{ route('kabag.karyawan.destroy', $user->id_user) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data karyawan ini secara permanen?')" title="Hapus Permanen">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
+                        </td>
+
+                        <div class="modal fade" id="modalEdit{{ $user->id_user }}" tabindex="-1" aria-hidden="true" style="text-align: left;">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow rounded-4">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title text-primary fw-bold">Edit Biodata Karyawan</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form action="{{ route('kabag.karyawan.update', $user->id_user) }}" method="POST">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Nama Lengkap</label>
+                                                <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Divisi</label>
+                                                <select name="divisi" class="form-select" required>
+                                                    <option value="keuangan" {{ ($user->karyawan->divisi ?? '') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
+                                                    <option value="admin umum" {{ ($user->karyawan->divisi ?? '') == 'admin umum' ? 'selected' : '' }}>Admin Umum</option>
+                                                    <option value="akademik" {{ ($user->karyawan->divisi ?? '') == 'akademik' ? 'selected' : '' }}>Akademik</option>
+                                                    <option value="marketing" {{ ($user->karyawan->divisi ?? '') == 'marketing' ? 'selected' : '' }}>Marketing</option>
+                                                    <option value="office boy" {{ ($user->karyawan->divisi ?? '') == 'office boy' ? 'selected' : '' }}>Office Boy</option>
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Nomor HP</label>
+                                                    <input type="text" name="no_hp" class="form-control" value="{{ $user->karyawan->no_hp ?? '' }}">
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Email</label>
+                                                    <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Alamat Lengkap</label>
+                                                <textarea name="alamat" class="form-control" rows="3">{{ $user->karyawan->alamat ?? '' }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-danger fw-bold">Status Karyawan</label>
+                                                <select name="status_karyawan" class="form-select border-danger" required>
+                                                    <option value="aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                                    <option value="keluar" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'keluar' ? 'selected' : '' }}>Tidak Aktif / Keluar</option>
+                                                </select>
+                                                <small class="text-muted">Jika diubah ke Tidak Aktif, karyawan tidak akan bisa login dan tombol Hapus akan muncul.</small>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         
                     </tr>
                     @empty
@@ -245,6 +320,24 @@
     });
 </script>
 @endif
+
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelectorAll('#tabelKaryawan tbody tr');
+        
+        rows.forEach(row => {
+            if (row.querySelector('td[colspan]')) return; // Abaikan baris "Data Kosong"
+            
+            let text = row.textContent.toLowerCase();
+            if (text.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
