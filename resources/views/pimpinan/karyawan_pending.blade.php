@@ -142,7 +142,6 @@
                 <i class="bi bi-gift"></i> Reward & Recognition
             </a>
         </li>
-        
         <li class="nav-item">
             <a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link {{ Request::is('pimpinan/karyawan-pending*') ? 'active' : '' }}">
                 <i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan
@@ -153,7 +152,6 @@
                 <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
             </a>
         </li>
-        
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
@@ -166,8 +164,8 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold m-0" style="color: #1e293b;">Daftar Karyawan Menunggu Persetujuan</h2>
-            <p class="text-muted m-0">Menampilkan staf baru yang telah diinput Kepala Bagian.</p>
+            <h2 class="fw-bold m-0" style="color: #1e293b;">Persetujuan Karyawan Baru</h2>
+            <p class="text-muted m-0">Meninjau staf baru yang telah diinput Kepala Bagian.</p>
         </div>
     </div>
 
@@ -187,11 +185,12 @@
 
     <div class="card card-custom p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-clock-history d-inline-block me-2 text-warning"></i>Data Menunggu Persetujuan</h5>
+            <h5 class="fw-bold m-0 text-dark">
+                <i class="bi bi-clock-history d-inline-block me-2 text-warning"></i>Data Menunggu Persetujuan
+            </h5>
         </div>
 
         <div class="table-responsive">
-            <!-- MENGGUNAKAN TABLE CUSTOM AGAR LEBIH RAPI -->
             <table class="table table-custom align-middle m-0">
                 <thead>
                     <tr>
@@ -234,9 +233,58 @@
             </table>
         </div>
     </div>
-</div>
+    <div class="card card-custom p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold m-0 text-dark">
+                <i class="bi bi-check-circle-fill d-inline-block me-2 text-success"></i>Riwayat Disetujui
+            </h5>
+        </div>
 
-<!-- Modal Detail Karyawan -->
+        <div class="table-responsive">
+            <table class="table table-custom align-middle m-0">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No</th>
+                        <th width="25%">Nama Lengkap</th>
+                        <th width="20%">Role / Hak Akses</th>
+                        <th width="20%">Divisi</th>
+                        <th width="15%" class="text-center">Status</th>
+                        <th width="15%" class="text-center">Tgl Disetujui</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($approvedUsers as $index => $approved)
+                    <tr>
+                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ $approved->nama_lengkap }}</div>
+                            <small class="text-muted">{{ $approved->username }}</small>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ $approved->role->nama_role ?? '-' }}</span></td>
+                        <td><span class="text-capitalize">{{ $approved->karyawan->divisi ?? '-' }}</span></td>
+                        <td class="text-center">
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fw-bold" style="font-size: 0.85rem;">
+                                <i class="bi bi-check-circle me-1"></i> Aktif
+                            </span>
+                        </td>
+                        <td class="text-center text-muted">
+                            <i class="bi bi-calendar-check me-1"></i> {{ $approved->updated_at->format('d M Y') }}
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-person-check fs-2 d-block mb-2 text-light"></i>
+                            Belum ada riwayat karyawan yang disetujui.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+
 @foreach($users as $user)
 <div class="modal fade" id="modalDetail{{ $user->id_user }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -276,7 +324,6 @@
             </div>
             <div class="modal-footer border-top-0 pt-0 pb-4 px-4 bg-white rounded-bottom-4 d-flex justify-content-between">
                 
-                <!-- TOMBOL TOLAK DITAMBAHKAN KEMBALI DI SINI -->
                 <form action="{{ route('pimpinan.rejectKaryawan', $user->id_user) }}" method="POST" class="m-0">
                     @csrf 
                     @method('DELETE')
@@ -290,7 +337,7 @@
                     
                     <form action="{{ route('pimpinan.approveKaryawan', $user->id_user) }}" method="POST" class="m-0">
                         @csrf
-                        @method('PUT') <!-- Sesuaikan method dengan di web.php -->
+                        @method('PUT')
                         <button type="submit" class="btn btn-success px-4 shadow-sm">
                             <i class="bi bi-check-circle me-1"></i> Setujui & Aktifkan
                         </button>

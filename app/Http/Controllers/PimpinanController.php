@@ -26,10 +26,20 @@ class PimpinanController extends Controller
     
     public function karyawanPending()
     {
+        // Data karyawan yang masih pending
         $users = User::with('role', 'karyawan')
                      ->where('status_akun', 'pending')
                      ->get();
-        return view('pimpinan.karyawan_pending', compact('users'));
+
+        // PERUBAHAN: Tambahkan data karyawan yang sudah disetujui (aktif)
+        $approvedUsers = User::with('role', 'karyawan')
+                     ->where('status_akun', 'aktif')
+                     ->whereHas('karyawan') // Pastikan hanya memanggil yang memiliki data karyawan
+                     ->orderBy('updated_at', 'desc') // Urutkan dari yang terbaru disetujui
+                     ->get();
+
+        // Lempar kedua data ke view
+        return view('pimpinan.karyawan_pending', compact('users', 'approvedUsers'));
     }
 
     public function approveKaryawan($id)
@@ -255,10 +265,12 @@ class PimpinanController extends Controller
         $request->validate([
             'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
             'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'tunjangan_leader'  => 'nullable|numeric|min:0', // TAMBAHAN BARU
             'tunjangan_program' => 'nullable|numeric|min:0',
             'bonus'             => 'nullable|numeric|min:0',
             'lain_lain'         => 'nullable|numeric|min:0',
             'cash_bon'          => 'nullable|numeric|min:0',
+            'cash_bon_2'        => 'nullable|numeric|min:0', // TAMBAHAN BARU
             'potongan_lain'     => 'nullable|numeric|min:0',
         ]);
 
@@ -297,6 +309,7 @@ class PimpinanController extends Controller
         $totalPenerimaan = (float) self::GAJI_POKOK_STANDAR 
             + $uangMakan 
             + (float) self::TUNJ_JABATAN_STANDAR 
+            + (float) ($request->tunjangan_leader ?? 0) // TAMBAHAN BARU
             + $insentifKinerja 
             + (float) ($request->tunjangan_program ?? 0)
             + (float) self::TUNJ_BPJS_STANDAR 
@@ -305,7 +318,8 @@ class PimpinanController extends Controller
 
         $totalPotongan = $potonganAbsen 
             + (float) ($request->cash_bon ?? 0)
-            + (float) self::TUNJ_BPJS_STANDAR // Potongan BPJS sama dengan Tunjangan BPJS
+            + (float) ($request->cash_bon_2 ?? 0) // TAMBAHAN BARU
+            + (float) self::TUNJ_BPJS_STANDAR 
             + (float) ($request->potongan_lain ?? 0);
 
         $totalGaji = $totalPenerimaan - $totalPotongan;
@@ -317,6 +331,7 @@ class PimpinanController extends Controller
             'gaji_pokok'        => self::GAJI_POKOK_STANDAR,
             'uang_makan'        => $uangMakan,
             'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
+            'tunjangan_leader'  => $request->tunjangan_leader ?? 0, // TAMBAHAN BARU
             'insentif_kinerja'  => $insentifKinerja, 
             'tunjangan_program' => $request->tunjangan_program ?? 0,
             'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
@@ -325,8 +340,10 @@ class PimpinanController extends Controller
             'total_penerimaan'  => $totalPenerimaan,
             'potongan_absen'    => $potonganAbsen,
             'cash_bon'          => $request->cash_bon ?? 0,
+            'cash_bon_2'        => $request->cash_bon_2 ?? 0, // TAMBAHAN BARU
             'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR,
             'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_potongan'    => $totalPotongan, // TAMBAHAN BARU
             'total_gaji'        => $totalGaji,
             'tanggal_dibuat'    => now()->toDateString(),
             'status_slip'       => $request->input('status_slip', 'draft'),
@@ -352,20 +369,22 @@ class PimpinanController extends Controller
             'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
             'uang_makan'        => 'nullable|numeric|min:0', 
             'insentif_kinerja'  => 'nullable|numeric|min:0', 
+            'tunjangan_leader'  => 'nullable|numeric|min:0', // TAMBAHAN BARU
             'tunjangan_program' => 'nullable|numeric|min:0',
             'bonus'             => 'nullable|numeric|min:0',
             'lain_lain'         => 'nullable|numeric|min:0',
             'potongan_absen'    => 'nullable|numeric|min:0', 
             'cash_bon'          => 'nullable|numeric|min:0',
+            'cash_bon_2'        => 'nullable|numeric|min:0', // TAMBAHAN BARU
             'potongan_lain'     => 'nullable|numeric|min:0',
         ]);
 
         [$tahun, $bulan] = $this->parsePeriode($request->periode);
 
-        // MENGGUNAKAN NOMINAL STANDAR DARI CONSTANT DI ATAS
         $totalPenerimaan = (float) self::GAJI_POKOK_STANDAR 
             + (float) ($request->uang_makan ?? 0)
             + (float) self::TUNJ_JABATAN_STANDAR 
+            + (float) ($request->tunjangan_leader ?? 0) // TAMBAHAN BARU
             + (float) ($request->insentif_kinerja ?? 0)
             + (float) ($request->tunjangan_program ?? 0)
             + (float) self::TUNJ_BPJS_STANDAR 
@@ -374,6 +393,7 @@ class PimpinanController extends Controller
 
         $totalPotongan = (float) ($request->potongan_absen ?? 0)
             + (float) ($request->cash_bon ?? 0)
+            + (float) ($request->cash_bon_2 ?? 0) // TAMBAHAN BARU
             + (float) self::TUNJ_BPJS_STANDAR 
             + (float) ($request->potongan_lain ?? 0);
 
@@ -386,6 +406,7 @@ class PimpinanController extends Controller
             'gaji_pokok'        => self::GAJI_POKOK_STANDAR,
             'uang_makan'        => $request->uang_makan ?? 0,
             'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
+            'tunjangan_leader'  => $request->tunjangan_leader ?? 0, // TAMBAHAN BARU
             'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
             'tunjangan_program' => $request->tunjangan_program ?? 0,
             'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
@@ -394,8 +415,10 @@ class PimpinanController extends Controller
             'total_penerimaan'  => $totalPenerimaan,
             'potongan_absen'    => $request->potongan_absen ?? 0,
             'cash_bon'          => $request->cash_bon ?? 0,
+            'cash_bon_2'        => $request->cash_bon_2 ?? 0, // TAMBAHAN BARU
             'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR,
             'potongan_lain'     => $request->potongan_lain ?? 0,
+            'total_potongan'    => $totalPotongan, // TAMBAHAN BARU
             'total_gaji'        => $totalGaji,
             'status_slip'       => $request->input('status_slip', $gaji->status_slip),
         ]);

@@ -197,10 +197,19 @@
                     
                     <!-- DATA MASTER: READONLY -->
                     <div class="mb-3">
-                        <label class="form-label text-secondary">Tunjangan Leader (Otomatis dari Master)</label>
+                        <label class="form-label text-secondary">Tunjangan Jabatan (Otomatis dari Master)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted">Rp</span>
                             <input type="number" class="form-control calc-penerimaan bg-light text-muted" name="tunjangan_jabatan" id="tunjangan_jabatan" value="{{ $gaji->tunjangan_jabatan ?? 0 }}" readonly>
+                        </div>
+                    </div>
+
+                    <!-- Tunjangan Leader (Bisa di-edit manual) -->
+                    <div class="mb-3">
+                        <label class="form-label">Tunjangan Leader Kursus</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control calc-penerimaan" name="tunjangan_leader" value="{{ $gaji->tunjangan_leader ?? 0 }}">
                         </div>
                     </div>
                     
@@ -257,10 +266,18 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Cash Bon (Input Manual)</label>
+                        <label class="form-label">Cash Bon Pertama</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
                             <input type="number" class="form-control calc-potongan" name="cash_bon" value="{{ $gaji->cash_bon ?? 0 }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cash Bon Kedua</label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control calc-potongan" name="cash_bon_2" value="{{ $gaji->cash_bon_2 ?? 0 }}">
                         </div>
                     </div>
                     
@@ -363,7 +380,7 @@
                     inputTunjBpjs.value = 0;
                     
                     // Ambil data ke server
-                    const url = `{{ url('/pimpinan/karyawan') }}/${idKaryawan}/finansial`;
+                    const url = `/pimpinan/karyawan/${idKaryawan}/finansial`;
                     fetch(url)
                         .then(response => {
                             if (!response.ok) throw new Error('Network error');

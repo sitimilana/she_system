@@ -112,6 +112,13 @@
                         </div>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Tunjangan Leader Kursus (Input Manual)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">Rp</span>
+                            <input type="number" name="tunjangan_leader" class="form-control" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Tunjangan Program / Lainnya (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
@@ -139,10 +146,17 @@
                     <h5 class="text-danger fw-bold border-bottom pb-2 mb-3"><i class="bi bi-dash-circle me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label">Cash Bon / Pinjaman (Input Manual)</label>
+                        <label class="form-label">Cash Bon Pertama (Input Manual)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="cash_bon" class="form-control" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cash Bon Kedua (Input Manual)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">Rp</span>
+                            <input type="number" name="cash_bon_2" class="form-control" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -187,7 +201,7 @@
                 inputTunjBpjs.value = 0;
                 
                 // Ambil data ke server
-                const url = `{{ url('/pimpinan/karyawan') }}/${idKaryawan}/finansial`;
+                const url = `/pimpinan/karyawan/${idKaryawan}/finansial`;
                 fetch(url)
                     .then(response => {
                         if (!response.ok) throw new Error('Network response was not ok');

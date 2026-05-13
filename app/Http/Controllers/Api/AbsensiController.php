@@ -51,17 +51,18 @@ class AbsensiController extends Controller
             $officeSetting = DB::table('pengaturan_kantor')->first(); 
             
             if ($officeSetting) {
-                $distance = $this->calculateDistance(
+                $distanceKm = $this->calculateDistance(
                     $officeSetting->latitude, 
                     $officeSetting->longitude, 
                     $request->latitude, 
                     $request->longitude
                 );
+                $distanceInMeters = $distanceKm * 1000;
 
-                if ($distance > $officeSetting->radius) {
+                if ($distanceInMeters > $officeSetting->radius) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Absensi ditolak! Jarak Anda terlalu jauh dari kantor (' . round($distance) . ' km).'
+                        'message' => 'Absensi ditolak! Jarak Anda ' . round($distanceInMeters) . ' meter dari kantor (Maks ' . $officeSetting->radius . ' meter).'
                     ], 403);
                 }
             }

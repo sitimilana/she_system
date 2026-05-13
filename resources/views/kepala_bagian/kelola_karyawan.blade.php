@@ -27,6 +27,39 @@
         /* TABLE STYLES */
         .table-custom th { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
         .table-custom td { vertical-align: middle; border-bottom: 1px solid #e2e8f0; }
+
+        /* FORM AESTHETIC STYLES */
+        .form-control, .form-select {
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            border-color: #e2e8f0;
+            font-size: 0.95rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #8f9fc4;
+            box-shadow: 0 0 0 3px rgba(143, 159, 196, 0.15);
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #475569;
+            margin-bottom: 0.4rem;
+        }
+        .modal-section {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #f1f5f9;
+            height: 100%;
+        }
+        .modal-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
     </style>
 </head>
 
@@ -82,8 +115,10 @@
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                 <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, divisi, atau status...">
             </div>
+        
             
             <div class="d-flex gap-2">
+                <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
                 <button class="btn btn-outline-secondary shadow-sm"><i class="bi bi-printer me-2"></i>Cetak</button>
                 
                 <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
@@ -151,57 +186,69 @@
                             </div>
                         </td>
 
-                        <div class="modal fade" id="modalEdit{{ $user->id_user }}" tabindex="-1" aria-hidden="true" style="text-align: left;">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow rounded-4">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title text-primary fw-bold">Edit Biodata Karyawan</h5>
+                        <div class="modal fade" id="modalEdit{{ $user->id_user }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header bg-light border-bottom px-4 py-3">
+                                        <h5 class="modal-title text-primary fw-bold">
+                                            <i class="bi bi-pencil-square me-2"></i>Edit Biodata Karyawan
+                                        </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <form action="{{ route('kabag.karyawan.update', $user->id_user) }}" method="POST">
                                         @csrf
                                         @method('PUT')
-                                        <div class="modal-body">
-                                            <div class="mb-3">
-                                                <label class="form-label">Nama Lengkap</label>
-                                                <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Divisi</label>
-                                                <select name="divisi" class="form-select" required>
-                                                    <option value="keuangan" {{ ($user->karyawan->divisi ?? '') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
-                                                    <option value="admin umum" {{ ($user->karyawan->divisi ?? '') == 'admin umum' ? 'selected' : '' }}>Admin Umum</option>
-                                                    <option value="akademik" {{ ($user->karyawan->divisi ?? '') == 'akademik' ? 'selected' : '' }}>Akademik</option>
-                                                    <option value="marketing" {{ ($user->karyawan->divisi ?? '') == 'marketing' ? 'selected' : '' }}>Marketing</option>
-                                                    <option value="office boy" {{ ($user->karyawan->divisi ?? '') == 'office boy' ? 'selected' : '' }}>Office Boy</option>
-                                                </select>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Nomor HP</label>
-                                                    <input type="text" name="no_hp" class="form-control" value="{{ $user->karyawan->no_hp ?? '' }}">
+                                        <div class="modal-body px-4 py-4">
+                                            <div class="row g-4">
+                                                <div class="col-md-6">
+                                                    <div class="modal-section">
+                                                        <div class="modal-section-title"><i class="bi bi-person-badge me-2"></i>Informasi Biodata</div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Nama Lengkap</label>
+                                                            <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Divisi</label>
+                                                            <select name="divisi" class="form-select" required>
+                                                                <option value="keuangan" {{ ($user->karyawan->divisi ?? '') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
+                                                                <option value="admin umum" {{ ($user->karyawan->divisi ?? '') == 'admin umum' ? 'selected' : '' }}>Admin Umum</option>
+                                                                <option value="akademik" {{ ($user->karyawan->divisi ?? '') == 'akademik' ? 'selected' : '' }}>Akademik</option>
+                                                                <option value="marketing" {{ ($user->karyawan->divisi ?? '') == 'marketing' ? 'selected' : '' }}>Marketing</option>
+                                                                <option value="office boy" {{ ($user->karyawan->divisi ?? '') == 'office boy' ? 'selected' : '' }}>Office Boy</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Alamat Lengkap</label>
+                                                            <textarea name="alamat" class="form-control" rows="3">{{ $user->karyawan->alamat ?? '' }}</textarea>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Email</label>
-                                                    <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
+                                                <div class="col-md-6">
+                                                    <div class="modal-section">
+                                                        <div class="modal-section-title"><i class="bi bi-telephone me-2"></i>Kontak & Status</div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Nomor HP</label>
+                                                            <input type="text" name="no_hp" class="form-control" value="{{ $user->karyawan->no_hp ?? '' }}">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Email</label>
+                                                            <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
+                                                        </div>
+                                                        <div class="mb-3 mt-4 pt-3 border-top">
+                                                            <label class="form-label text-danger fw-bold"><i class="bi bi-shield-exclamation me-1"></i>Status Karyawan</label>
+                                                            <select name="status_karyawan" class="form-select border-danger bg-white" required>
+                                                                <option value="aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                                                <option value="tidak aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'tidak aktif' ? 'selected' : '' }}>Tidak Aktif / Keluar</option>
+                                                            </select>
+                                                            <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Ubah ke "Tidak Aktif" agar karyawan tidak bisa login dan dapat dihapus.</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Alamat Lengkap</label>
-                                                <textarea name="alamat" class="form-control" rows="3">{{ $user->karyawan->alamat ?? '' }}</textarea>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label text-danger fw-bold">Status Karyawan</label>
-                                                <select name="status_karyawan" class="form-select border-danger" required>
-                                                    <option value="aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                                    <option value="keluar" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'keluar' ? 'selected' : '' }}>Tidak Aktif / Keluar</option>
-                                                </select>
-                                                <small class="text-muted">Jika diubah ke Tidak Aktif, karyawan tidak akan bisa login dan tombol Hapus akan muncul.</small>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                        <div class="modal-footer bg-light px-4 py-3 border-top">
+                                            <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm"><i class="bi bi-save me-2"></i>Simpan Perubahan</button>
                                         </div>
                                     </form>
                                 </div>
@@ -211,7 +258,10 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">Tidak ada data karyawan di departemen ini.</td>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
+                            Tidak ada data karyawan di departemen ini.
+                        </td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -220,7 +270,7 @@
 
         <div class="d-flex justify-content-center mt-4">
             <nav>
-                <ul class="pagination pagination-sm m-0">
+                <ul class="pagination pagination-sm m-0 shadow-sm">
                     <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
                     <li class="page-item active"><a class="page-link" href="#">1</a></li>
                     <li class="page-item"><a class="page-link" href="#">2</a></li>
@@ -231,80 +281,103 @@
         </div>
 
     </div>
+    
 </div>
 
-<div class="modal fade" id="modalTambahBaru" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow rounded-4">
-
+<div class="modal fade" id="modalTambahBaru" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-light border-bottom px-4 py-3">
+                <h5 class="modal-title text-primary fw-bold">
+                    <i class="bi bi-person-plus-fill me-2"></i>Daftarkan Karyawan Baru
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
             <form action="{{ route('kabag.karyawan.store') }}" method="POST">
-    @csrf
-    <div class="row">
-        <div class="col-md-6 border-end">
-            <h5 class="mb-3 text-primary">Informasi Akun (Login)</h5>
-            <div class="mb-3">
-                <label class="form-label">Username <span class="text-danger">*</span></label>
-                <input type="text" name="username" class="form-control" placeholder="Masukkan username" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Password <span class="text-danger">*</span></label>
-                <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Role Akses <span class="text-danger">*</span></label>
-                <select name="role_id" class="form-select" required>
-                    <option value="" disabled selected>Pilih Role...</option>
-                    @foreach($roles as $r)
-                        @if(strtolower($r->nama_role) != 'pimpinan')
-                             <option value="{{ $r->role_id }}">{{ $r->nama_role }}</option>
-                        @endif
-                    @endforeach
-                </select>
-            </div>
-        </div>
+                @csrf
+                <div class="modal-body px-4 py-4">
+                    <div class="row g-4">
+                        <div class="col-md-5">
+                            <div class="modal-section shadow-sm">
+                                <div class="modal-section-title"><i class="bi bi-shield-lock me-2"></i>Akses Login</div>
+                                <div class="mb-3">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-person text-muted"></i></span>
+                                        <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Buat username" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
+                                        <input type="password" id="inputPasswordBaru" name="password" class="form-control border-start-0 border-end-0 ps-0" placeholder="Minimal 6 karakter" required>
+                                        <span class="input-group-text bg-white border-start-0" id="togglePasswordIcon" style="cursor: pointer;" title="Tampilkan Password">
+                                            <i class="bi bi-eye text-muted" id="eyeIcon"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Role Akses <span class="text-danger">*</span></label>
+                                    <select name="role_id" class="form-select" required>
+                                        <option value="" disabled selected>Pilih Hak Akses...</option>
+                                        @foreach($roles as $r)
+                                            @if(strtolower($r->nama_role) != 'pimpinan')
+                                                 <option value="{{ $r->role_id }}">{{ $r->nama_role }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
 
-        <div class="col-md-6">
-            <h5 class="mb-3 text-primary">Biodata Karyawan</h5>
-            <div class="mb-3">
-                <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                <input type="text" name="nama_lengkap" class="form-control" placeholder="Nama lengkap sesuai KTP" required>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Divisi <span class="text-danger">*</span></label>
-                <select name="divisi" class="form-select" required>
-                    <option value="" disabled selected>Pilih Divisi...</option>
-                    <option value="keuangan">Keuangan</option>
-                    <option value="admin umum">Admin Umum</option>
-                    <option value="akademik">Akademik</option>
-                    <option value="marketing">Marketing</option>
-                    <option value="office boy">Office Boy</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Nomor HP</label>
-                    <input type="text" name="no_hp" class="form-control" placeholder="08xxxxxxx">
+                        <div class="col-md-7">
+                            <div class="modal-section shadow-sm">
+                                <div class="modal-section-title"><i class="bi bi-card-text me-2"></i>Biodata Karyawan</div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                                    <input type="text" name="nama_lengkap" class="form-control" placeholder="Sesuai KTP" required>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Divisi <span class="text-danger">*</span></label>
+                                        <select name="divisi" class="form-select" required>
+                                            <option value="" disabled selected>Pilih...</option>
+                                            <option value="keuangan">Keuangan</option>
+                                            <option value="admin umum">Admin Umum</option>
+                                            <option value="akademik">Akademik</option>
+                                            <option value="marketing">Marketing</option>
+                                            <option value="office boy">Office Boy</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Nomor HP</label>
+                                        <input type="text" name="no_hp" class="form-control" placeholder="08xxxx">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" placeholder="email@contoh.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea name="alamat" class="form-control" rows="2" placeholder="Domisili saat ini"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="email@contoh.com">
+                
+                <div class="modal-footer bg-light px-4 py-3 border-top">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm">
+                        <i class="bi bi-send-check me-2"></i>Daftarkan Karyawan
+                    </button>
                 </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Alamat Lengkap</label>
-                <textarea name="alamat" class="form-control" rows="3" placeholder="Alamat domisili saat ini"></textarea>
-            </div>
-        </div>
-    </div>
-    
-    <hr class="my-4">
-    
-    <div class="text-end">
-        <button type="submit" class="btn btn-primary px-4">
-            <i class="bi bi-person-plus-fill me-2"></i> Daftarkan Karyawan Baru
-        </button>
-    </div>
-</form>
+            </form>
         </div>
     </div>
 </div>
@@ -327,7 +400,7 @@
         let rows = document.querySelectorAll('#tabelKaryawan tbody tr');
         
         rows.forEach(row => {
-            if (row.querySelector('td[colspan]')) return; // Abaikan baris "Data Kosong"
+            if (row.querySelector('td[colspan]')) return; 
             
             let text = row.textContent.toLowerCase();
             if (text.includes(filter)) {
@@ -336,6 +409,26 @@
                 row.style.display = 'none';
             }
         });
+    });
+
+    // SCRIPT TAMBAHAN: Untuk Toggle Show/Hide Password
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+    const inputPasswordBaru = document.getElementById('inputPasswordBaru');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    togglePasswordIcon.addEventListener('click', function () {
+        // Toggle attribute type (password ke text atau sebaliknya)
+        const type = inputPasswordBaru.getAttribute('type') === 'password' ? 'text' : 'password';
+        inputPasswordBaru.setAttribute('type', type);
+        
+        // Toggle icon mata
+        if (type === 'text') {
+            eyeIcon.classList.remove('bi-eye');
+            eyeIcon.classList.add('bi-eye-slash');
+        } else {
+            eyeIcon.classList.remove('bi-eye-slash');
+            eyeIcon.classList.add('bi-eye');
+        }
     });
 </script>
 

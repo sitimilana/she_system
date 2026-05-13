@@ -223,9 +223,6 @@ class KepalaBagianController extends Controller
             ->with('success', 'Pengajuan cuti telah ditolak.');
     }
 
-    // ==========================================================
-    // PERUBAHAN: Tambahkan fungsi Edit dan Hapus Karyawan
-    // ==========================================================
     public function updateKaryawan(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -239,11 +236,17 @@ class KepalaBagianController extends Controller
             'status_karyawan' => 'required|string'
         ]);
 
+        // CEGAH ERROR DATABASE: Ubah 'tidak aktif' dari form HTML menjadi 'keluar'
+        $statusDB = strtolower($request->status_karyawan);
+        if ($statusDB === 'tidak aktif') {
+            $statusDB = 'keluar';
+        }
+
         // Update data login User
         $user->update([
             'nama_lengkap' => $request->nama_lengkap,
-            // Matikan akses login jika diubah menjadi tidak aktif
-            'status_akun'  => $request->status_karyawan == 'keluar' ? 'nonaktif' : $user->status_akun,
+            // Matikan akses login jika diubah menjadi 'keluar'
+            'status_akun'  => $statusDB === 'keluar' ? 'nonaktif' : $user->status_akun,
         ]);
 
         // Update data biodata Karyawan
@@ -254,7 +257,8 @@ class KepalaBagianController extends Controller
                 'no_hp'           => $request->no_hp ?? '-',
                 'email'           => $request->email ?? '-',
                 'alamat'          => $request->alamat ?? '-',
-                'status_karyawan' => $request->status_karyawan,
+                // Gunakan $statusDB yang sudah aman dari error ENUM
+                'status_karyawan' => $statusDB,
             ]);
         }
 

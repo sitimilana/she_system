@@ -189,8 +189,17 @@
             <tbody>
                 @forelse($dataGaji as $index => $gaji)
                 @php
-                    $totalPotongan = ($gaji->potongan_absen ?? 0) + ($gaji->cash_bon ?? 0)
-                        + ($gaji->potongan_bpjs ?? 0) + ($gaji->potongan_lain ?? 0);
+                    // Gunakan kolom total_potongan dari database. 
+                    // Jika data lama belum ada, gunakan fallback penjumlahan manual termasuk cash_bon_2
+                    $totalPotongan = $gaji->total_potongan ?? (
+                        ($gaji->potongan_absen ?? 0) + 
+                        ($gaji->cash_bon ?? 0) + 
+                        ($gaji->cash_bon_2 ?? 0) + 
+                        ($gaji->potongan_bpjs ?? 0) + 
+                        ($gaji->potongan_lain ?? 0)
+                    );
+
+                    // Gunakan kolom total_penerimaan dari database.
                     $totalPenerimaan = $gaji->total_penerimaan ?? (($gaji->total_gaji ?? 0) + $totalPotongan);
                 @endphp
                 <tr>
