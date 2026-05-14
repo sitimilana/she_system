@@ -144,7 +144,7 @@ class KepalaBagianController extends Controller
             'nama_lengkap' => 'required|string|max:255',
             'username'     => 'required|unique:user,username',
             'password'     => 'required|min:6',
-            'role_id'      => 'required|exists:role,role_id', // Pastikan nama tabel role sesuai
+            'role_id'      => 'required|exists:roles,role_id', // Pastikan nama tabel role sesuai
             'no_hp'        => 'nullable|string|max:20',
             'email'        => 'nullable|email|max:255',
             'alamat'       => 'nullable|string',
@@ -169,15 +169,6 @@ class KepalaBagianController extends Controller
             'status_karyawan' => 'pending',
             'divisi'          => $request->divisi, 
         ]);
-
-        // Opsional: Jika Anda memakai fitur email yang sebelumnya kita bahas
-        if ($request->email) {
-            try {
-                Mail::to($request->email)->send(new KaryawanBaruMail($user, $request->password));
-            } catch (\Exception $e) {
-                // Abaikan error email jika gagal
-            }
-        }
 
         return redirect()->route('kabag.karyawan')
          ->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan Pimpinan.');

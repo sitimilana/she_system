@@ -295,7 +295,7 @@
                 </div>
 
                 <div class="radius-box">
-                    <label class="form-label text-danger fs-6"><i class="bi bi-bullseye me-1"></i> Jangkauan Radius Presensi (Kilometer)</label>
+                    <label class="form-label text-danger fs-6"><i class="bi bi-bullseye me-1"></i> Jangkauan Radius Presensi (Meter)</label>
                     <input type="number" step="0.001" min="0.001" name="radius" class="form-control form-control-lg border-secondary" value="{{ old('radius', $pengaturan->radius ?? 0.1) }}" required>
                     <div class="form-text text-muted mt-2" style="font-size: 13px;">
                         Masukkan jarak dalam hitungan Kilometer (km). <br>

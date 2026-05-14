@@ -257,5 +257,20 @@ class AbsensiController extends Controller
             'message' => 'Berhasil mengambil riwayat absensi',
             'data'    => $riwayat
         ]);
+        
+    }
+    public function getConfigPresensi()
+    {
+        $config = DB::table('pengaturan_kantor')->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Konfigurasi berhasil dimuat',
+            'data' => [
+                'office_lat' => (double) $config->latitude,
+                'office_lon' => (double) $config->longitude,
+                'max_radius' => (double) $config->radius,
+            ]
+        ]);
     }
 }

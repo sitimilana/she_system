@@ -19,6 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/config-presensi', [ConfigPresensiController::class, '__invoke']); 
 Route::post('/absensi', [AbsensiController::class, 'store']);
 Route::post('/absensi/riwayat', [AbsensiController::class, 'riwayatAbsensi']);
+Route::get('/config-presensi', [AbsensiController::class, 'getConfigPresensi']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Cuti
