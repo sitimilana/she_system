@@ -15,30 +15,42 @@ use App\Models\Penilaian;
 use App\Models\Absensi;
 use Carbon\Carbon;
 
-
 class PimpinanController extends Controller
 {
-    
-    // PENGATURAN NOMINAL GAJI STANDAR (UBAH ANGKA DI SINI JIKA ADA PERUBAHAN)
-    private const GAJI_POKOK_STANDAR = 3000000; //  3 Juta
-    private const TUNJ_JABATAN_STANDAR = 0;  // Tidak ada info baru, dibuat 0 atau biarkan jika diperlukan
-    private const TUNJ_BPJS_STANDAR = 50000;     // Potongan 50 Ribu
-    
+    private const TUNJ_JABATAN_STANDAR = 0;  
+    private const TUNJ_BPJS_STANDAR = 25000; 
+    private function getGajiPokok($karyawan)
+    {
+        $gajiPokok = 2000000; // Default Dasar
+        if ($karyawan && $karyawan->user && $karyawan->user->role) {
+            $roleName = strtolower($karyawan->user->role->nama_role);
+            if ($roleName == 'pimpinan') {
+                $gajiPokok = 3500000;
+            } elseif (in_array($roleName, ['kepala bagian', 'kabag'])) {
+                $gajiPokok = 2800000;
+            } else {
+                $divisi = strtolower($karyawan->divisi);
+                if ($divisi == 'keuangan') {
+                    $gajiPokok = 2500000;
+                } elseif (in_array($divisi, ['admin umum', 'akademik', 'marketing'])) {
+                    $gajiPokok = 2415000; // Standar UMK Kediri
+                } elseif ($divisi == 'office boy') {
+                    $gajiPokok = 2000000;
+                }
+            }
+        }
+        return $gajiPokok;
+    }
+
     public function karyawanPending()
     {
-        // Data karyawan yang masih pending
-        $users = User::with('role', 'karyawan')
-                     ->where('status_akun', 'pending')
-                     ->get();
-
-        // PERUBAHAN: Tambahkan data karyawan yang sudah disetujui (aktif)
+        $users = User::with('role', 'karyawan')->where('status_akun', 'pending')->get();
         $approvedUsers = User::with('role', 'karyawan')
                      ->where('status_akun', 'aktif')
-                     ->whereHas('karyawan') // Pastikan hanya memanggil yang memiliki data karyawan
-                     ->orderBy('updated_at', 'desc') // Urutkan dari yang terbaru disetujui
+                     ->whereHas('karyawan')
+                     ->orderBy('updated_at', 'desc')
                      ->get();
 
-        // Lempar kedua data ke view
         return view('pimpinan.karyawan_pending', compact('users', 'approvedUsers'));
     }
 
@@ -54,36 +66,27 @@ class PimpinanController extends Controller
             if($user->karyawan->email && $user->karyawan->email != '-') {
                 try {
                     Mail::to($user->karyawan->email)->send(new KaryawanApproveMail($user));
-                } catch (\Exception $e) {
-                    // Abaikan jika error
-                }
+                } catch (\Exception $e) {}
             }
         }
         
         $user->password_sementara = null;
         $user->save();
 
-        return redirect()->route('pimpinan.karyawan_pending')->with('success', 'Akun & Profil karyawan berhasil diaktifkan dan dikirimkan email kredensial.');
+        return redirect()->route('pimpinan.karyawan_pending')->with('success', 'Akun & Profil karyawan berhasil diaktifkan.');
     }
 
-    // Jangan lupa tambahkan 'Request $request' di dalam parameter fungsi index
     public function index(Request $request)
     {
         $totalKaryawan = Karyawan::where('status_karyawan', 'aktif')->count();
         
-        // Menghitung Cuti yang sedang berjalan hari ini dari tabel Cuti
         $karyawanCutiHariIni = Cuti::where('status', 'approved')
             ->whereDate('tanggal_mulai', '<=', Carbon::today())
             ->whereDate('tanggal_selesai', '>=', Carbon::today())
             ->count();
         
-        $karyawanTanpaCuti = Karyawan::where('sisa_cuti', 0)
-            ->where('status_karyawan', 'aktif') // Pastikan hanya menghitung yang aktif
-            ->count();
-
-        $totalSaldoCutiPerusahaan = Karyawan::where('status_karyawan', 'aktif')
-            ->sum('sisa_cuti');
-
+        $karyawanTanpaCuti = Karyawan::where('sisa_cuti', 0)->where('status_karyawan', 'aktif')->count();
+        $totalSaldoCutiPerusahaan = Karyawan::where('status_karyawan', 'aktif')->sum('sisa_cuti');
 
         $filterKehadiran = $request->input('filter_kehadiran', 'hari_ini');
         $queryAbsensi = Absensi::query();
@@ -93,55 +96,37 @@ class PimpinanController extends Controller
         } elseif ($filterKehadiran == 'minggu_ini') {
             $queryAbsensi->whereBetween('tanggal', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
         } elseif ($filterKehadiran == 'bulan_ini') {
-            $queryAbsensi->whereMonth('tanggal', Carbon::now()->month)
-                         ->whereYear('tanggal', Carbon::now()->year);
+            $queryAbsensi->whereMonth('tanggal', Carbon::now()->month)->whereYear('tanggal', Carbon::now()->year);
         }
 
-        // Klon query agar bisa mengeksekusi multiple count() tanpa menimpa satu sama lain
         $jmlHadir = (clone $queryAbsensi)->where('status', 'hadir')->count();
         $jmlTerlambat = (clone $queryAbsensi)->where('status', 'terlambat')->count();
         $jmlAlpha = (clone $queryAbsensi)->whereIn('status', ['alfa', 'alpha'])->count(); 
         $jmlCuti = (clone $queryAbsensi)->whereIn('status', ['cuti', 'izin', 'sakit'])->count();
-
-        // ==================================================
 
         $totalBebanGaji = Penggajian::whereMonth('tanggal_dibuat', now()->month)
             ->whereYear('tanggal_dibuat', now()->year)
             ->sum('total_gaji');
         $totalBebanGaji = number_format($totalBebanGaji ?: 150000000, 0, ',', '.');
 
-        $cutiTerbaru = []; // (Biarkan kosong seperti aslinya, atau isi dengan query cuti)
-        $topKaryawan = []; // (Biarkan kosong seperti aslinya, atau isi dengan query penilaian)
+        $cutiTerbaru = []; 
+        $topKaryawan = []; 
 
         return view('pimpinan.dashboard', compact(
-            'totalKaryawan',
-            'karyawanCutiHariIni',
-            'totalBebanGaji',
-            'cutiTerbaru',
-            'topKaryawan',
-            'jmlHadir',
-            'jmlTerlambat',
-            'jmlAlpha',
-            'jmlCuti',
-            'filterKehadiran',
-            'karyawanTanpaCuti',
-            'totalSaldoCutiPerusahaan'
+            'totalKaryawan', 'karyawanCutiHariIni', 'totalBebanGaji', 'cutiTerbaru', 'topKaryawan',
+            'jmlHadir', 'jmlTerlambat', 'jmlAlpha', 'jmlCuti', 'filterKehadiran', 'karyawanTanpaCuti', 'totalSaldoCutiPerusahaan'
         ));
     }
 
     public function cuti(Request $request)
     {
-        $query = Cuti::with('karyawan')
-            ->where('status', 'pending_pimpinan');
-
-        $queryRiwayat = Cuti::with('karyawan')
-            ->whereIn('status', ['approved', 'rejected']);
+        $query = Cuti::with('karyawan')->where('status', 'pending_pimpinan');
+        $queryRiwayat = Cuti::with('karyawan')->whereIn('status', ['approved', 'rejected']);
 
         if ($request->filled('search')) {
             $search = $request->search;
             $karyawanFilter = function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('divisi', 'like', "%{$search}%");
+                $q->where('nama', 'like', "%{$search}%")->orWhere('divisi', 'like', "%{$search}%");
             };
             $query->whereHas('karyawan', $karyawanFilter);
             $queryRiwayat->whereHas('karyawan', $karyawanFilter);
@@ -152,23 +137,15 @@ class PimpinanController extends Controller
             $queryRiwayat->where('jenis_cuti', $request->jenis_cuti);
         }
 
-        $dataCuti = $query->orderByDesc('tanggal_pengajuan')
-            ->paginate(10, ['*'], 'page')
-            ->withQueryString();
-
-        $riwayatCuti = $queryRiwayat->orderByDesc('updated_at')
-            ->paginate(10, ['*'], 'riwayat_page')
-            ->withQueryString();
+        $dataCuti = $query->orderByDesc('tanggal_pengajuan')->paginate(10, ['*'], 'page')->withQueryString();
+        $riwayatCuti = $queryRiwayat->orderByDesc('updated_at')->paginate(10, ['*'], 'riwayat_page')->withQueryString();
 
         return view('pimpinan.manajemen_cuti', compact('dataCuti', 'riwayatCuti'));
     }
 
     public function approveCuti($id)
     {
-        $cuti = Cuti::with('karyawan')
-            ->where('id_cuti', $id)
-            ->where('status', 'pending_pimpinan')
-            ->firstOrFail();
+        $cuti = Cuti::with('karyawan')->where('id_cuti', $id)->where('status', 'pending_pimpinan')->firstOrFail();
 
         $mulai      = \Carbon\Carbon::parse($cuti->tanggal_mulai);
         $selesai    = \Carbon\Carbon::parse($cuti->tanggal_selesai);
@@ -177,43 +154,27 @@ class PimpinanController extends Controller
         try {
             DB::transaction(function () use ($cuti, $jumlahHari) {
                 $karyawan = Karyawan::lockForUpdate()->findOrFail($cuti->id_karyawan);
-
                 if ($karyawan->sisa_cuti < $jumlahHari) {
                     throw new \RuntimeException('insufficient_quota');
                 }
-
                 $karyawan->update(['sisa_cuti' => $karyawan->sisa_cuti - $jumlahHari]);
-
-                $cuti->update([
-                    'status'        => 'approved',
-                    'disetujui_oleh'=> auth()->id(),
-                ]);
+                $cuti->update(['status' => 'approved', 'disetujui_oleh'=> auth()->id()]);
             });
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'insufficient_quota') {
-                return redirect()->route('pimpinan.cuti')
-                    ->with('error', 'Saldo cuti karyawan tidak mencukupi untuk pengajuan ini.');
+                return redirect()->route('pimpinan.cuti')->with('error', 'Saldo cuti karyawan tidak mencukupi.');
             }
             throw $e;
         }
 
-        return redirect()->route('pimpinan.cuti')
-            ->with('success', 'Pengajuan cuti disetujui dan saldo cuti karyawan telah dipotong.');
+        return redirect()->route('pimpinan.cuti')->with('success', 'Pengajuan cuti disetujui.');
     }
 
     public function rejectCuti($id)
     {
-        $cuti = Cuti::where('id_cuti', $id)
-            ->where('status', 'pending_pimpinan')
-            ->firstOrFail();
-
-        $cuti->update([
-            'status'        => 'rejected',
-            'disetujui_oleh'=> auth()->id(),
-        ]);
-
-        return redirect()->route('pimpinan.cuti')
-            ->with('success', 'Pengajuan cuti telah ditolak.');
+        $cuti = Cuti::where('id_cuti', $id)->where('status', 'pending_pimpinan')->firstOrFail();
+        $cuti->update(['status' => 'rejected', 'disetujui_oleh'=> auth()->id()]);
+        return redirect()->route('pimpinan.cuti')->with('success', 'Pengajuan cuti ditolak.');
     }
 
     public function gaji(Request $request)
@@ -222,10 +183,7 @@ class PimpinanController extends Controller
         $tahun = $request->input('tahun', now()->year);
         $search = $request->input('search');
 
-        $query = Penggajian::with('karyawan')
-            ->where('bulan', $bulan)
-            ->where('tahun', $tahun);
-
+        $query = Penggajian::with('karyawan')->where('bulan', $bulan)->where('tahun', $tahun);
         if ($search) {
             $query->whereHas('karyawan', function($q) use ($search) {
                 $q->where('nama', 'like', '%' . $search . '%');
@@ -233,13 +191,11 @@ class PimpinanController extends Controller
         }
 
         $dataGaji = $query->get();
-
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
-
         $tahunList = range(now()->year, now()->year - 4);
 
         return view('pimpinan.manajemen_gaji', compact('dataGaji', 'bulan', 'tahun', 'bulanList', 'tahunList'));
@@ -265,10 +221,13 @@ class PimpinanController extends Controller
         $request->validate([
             'id_karyawan'       => 'required|exists:karyawan,id_karyawan',
             'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
-            'tunjangan_leader'  => 'nullable|numeric|min:0', 
+            'tunjangan_jabatan' => 'nullable|numeric|min:0', 
             'tunjangan_program' => 'nullable|numeric|min:0',
             'bonus'             => 'nullable|numeric|min:0',
             'lain_lain'         => 'nullable|numeric|min:0',
+            'uang_makan'        => 'nullable|numeric|min:0', 
+            'insentif_kinerja'  => 'nullable|numeric|min:0',
+            'potongan_absen'    => 'nullable|numeric|min:0', 
             'cash_bon'          => 'nullable|numeric|min:0',
             'cash_bon_2'        => 'nullable|numeric|min:0', 
             'potongan_lain'     => 'nullable|numeric|min:0',
@@ -276,118 +235,20 @@ class PimpinanController extends Controller
 
         [$tahun, $bulan] = explode('-', $request->periode);
 
-        $penilaian = Penilaian::where('id_karyawan', $request->id_karyawan)
-                              ->where('bulan', $bulan)
-                              ->where('tahun', $tahun)
-                              ->first();
-
-        $insentifKinerja = 0;
-        if ($penilaian) {
-            if ($penilaian->total_skor >= 90) {
-                $insentifKinerja = 150000;
-            } elseif ($penilaian->total_skor >= 80) {
-                $insentifKinerja = 100000;
-            }
-        }
-
-        $totalHadir = Absensi::where('id_karyawan', $request->id_karyawan)
-                             ->whereMonth('tanggal', $bulan)
-                             ->whereYear('tanggal', $tahun)
-                             ->where('status', 'hadir')
-                             ->count();
-                             
-        $totalAlpha = Absensi::where('id_karyawan', $request->id_karyawan)
-                             ->whereMonth('tanggal', $bulan)
-                             ->whereYear('tanggal', $tahun)
-                             ->whereIn('status', ['alfa', 'alpha'])
-                             ->count();
-                             
-        $totalIzinCuti = Absensi::where('id_karyawan', $request->id_karyawan)
-                             ->whereMonth('tanggal', $bulan)
-                             ->whereYear('tanggal', $tahun)
-                             ->whereIn('status', ['izin', 'cuti'])
-                             ->count();
-
-        // Bonus Rank 1 Logika
-        $bonusRank1 = 0;
-        $isRank1 = false;
-        
-        $topScore = Penilaian::where('bulan', $bulan)
-                             ->where('tahun', $tahun)
-                             ->max('total_skor');
-        
-        if ($topScore !== null && $penilaian && $penilaian->total_skor == $topScore) {
-            // Check for ties in score, tiebreaker is highest hadir
-            $topKaryawans = Penilaian::where('bulan', $bulan)
-                                     ->where('tahun', $tahun)
-                                     ->where('total_skor', $topScore)
-                                     ->pluck('id_karyawan')
-                                     ->toArray();
-                                     
-            $maxHadir = -1;
-            $bestKaryawanId = null;
-            
-            foreach ($topKaryawans as $kid) {
-                $hadirCount = Absensi::where('id_karyawan', $kid)
-                                     ->whereMonth('tanggal', $bulan)
-                                     ->whereYear('tanggal', $tahun)
-                                     ->where('status', 'hadir')
-                                     ->count();
-                if ($hadirCount > $maxHadir) {
-                    $maxHadir = $hadirCount;
-                    $bestKaryawanId = $kid;
-                }
-            }
-            if ($bestKaryawanId == $request->id_karyawan) {
-                $isRank1 = true;
-                $bonusRank1 = 50000;
-            }
-        }
-
-        $uangMakan = $totalHadir * 20000;
-        
-        // Logika Potongan Absen
-        $hariPotong = $totalAlpha; // Alfa langsung potong
-        if ($totalIzinCuti > 1) {
-            $hariPotong += ($totalIzinCuti - 1);
-        }
-        $potonganAbsen = $hariPotong * 70000;
-
-        // Ambil Data Karyawan (Untuk Gaji Pokok)
         $karyawan = Karyawan::with('user.role')->find($request->id_karyawan);
-        $gajiPokok = 1500000;
-        
-        if ($karyawan && $karyawan->user && $karyawan->user->role) {
-            $roleName = strtolower($karyawan->user->role->nama_role);
-            if ($roleName == 'pimpinan') {
-                $gajiPokok = 3500000;
-            } elseif ($roleName == 'kepala bagian' || $roleName == 'kabag') {
-                $gajiPokok = 2400000;
-            } else {
-                $divisi = strtolower($karyawan->divisi);
-                if ($divisi == 'keuangan') {
-                    $gajiPokok = 2000000;
-                } elseif (in_array($divisi, ['admin umum', 'akademik', 'marketing'])) {
-                    $gajiPokok = 1800000;
-                } elseif ($divisi == 'office boy') {
-                    $gajiPokok = 1500000;
-                }
-            }
-        }
-        
-        $bonusTotal = (float)($request->bonus ?? 0) + $bonusRank1;
+        $gajiPokok = $this->getGajiPokok($karyawan);
 
+        // PENERIMAAN (Semua Menggunakan Input Form)
         $totalPenerimaan = $gajiPokok
-            + $uangMakan 
-            + (float) self::TUNJ_JABATAN_STANDAR 
-            + (float) ($request->tunjangan_leader ?? 0) 
-            + $insentifKinerja 
+            + (float) ($request->uang_makan ?? 0)
+            + (float) ($request->tunjangan_jabatan ?? 0)
+            + (float) ($request->insentif_kinerja ?? 0)
             + (float) ($request->tunjangan_program ?? 0)
-            + (float) self::TUNJ_BPJS_STANDAR 
-            + $bonusTotal
+            + (float) ($request->bonus ?? 0)
             + (float) ($request->lain_lain ?? 0);
 
-        $totalPotongan = $potonganAbsen 
+        // POTONGAN (Termasuk Konstanta BPJS)
+        $totalPotongan = (float) ($request->potongan_absen ?? 0)
             + (float) ($request->cash_bon ?? 0)
             + (float) ($request->cash_bon_2 ?? 0) 
             + (float) self::TUNJ_BPJS_STANDAR 
@@ -400,19 +261,18 @@ class PimpinanController extends Controller
             'bulan'             => $bulan,
             'tahun'             => $tahun,
             'gaji_pokok'        => $gajiPokok,
-            'uang_makan'        => $uangMakan,
-            'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
-            'tunjangan_leader'  => $request->tunjangan_leader ?? 0, 
-            'insentif_kinerja'  => $insentifKinerja, 
+            'uang_makan'        => $request->uang_makan ?? 0,
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
+            'insentif_kinerja'  => $request->insentif_kinerja ?? 0, 
             'tunjangan_program' => $request->tunjangan_program ?? 0,
-            'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
-            'bonus'             => $bonusTotal,
+            'tunjangan_bpjs'    => 0, // 0 Karena Murni Potongan
+            'bonus'             => $request->bonus ?? 0,
             'lain_lain'         => $request->lain_lain ?? 0,
             'total_penerimaan'  => $totalPenerimaan,
-            'potongan_absen'    => $potonganAbsen,
+            'potongan_absen'    => $request->potongan_absen ?? 0,
             'cash_bon'          => $request->cash_bon ?? 0,
             'cash_bon_2'        => $request->cash_bon_2 ?? 0, 
-            'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR,
+            'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR, 
             'potongan_lain'     => $request->potongan_lain ?? 0,
             'total_potongan'    => $totalPotongan, 
             'total_gaji'        => $totalGaji,
@@ -421,7 +281,7 @@ class PimpinanController extends Controller
         ]);
 
         return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
-            ->with('success', 'Slip gaji berhasil disimpan. Insentif, Potongan, dan Bonus Rank 1 telah dihitung otomatis!');
+            ->with('success', 'Slip gaji berhasil disimpan.');
     }
 
     public function editGaji($id)
@@ -440,7 +300,7 @@ class PimpinanController extends Controller
             'periode'           => ['required', 'regex:/^\d{4}-\d{2}$/'],
             'uang_makan'        => 'nullable|numeric|min:0', 
             'insentif_kinerja'  => 'nullable|numeric|min:0', 
-            'tunjangan_leader'  => 'nullable|numeric|min:0', 
+            'tunjangan_jabatan' => 'nullable|numeric|min:0', 
             'tunjangan_program' => 'nullable|numeric|min:0',
             'bonus'             => 'nullable|numeric|min:0',
             'lain_lain'         => 'nullable|numeric|min:0',
@@ -452,35 +312,14 @@ class PimpinanController extends Controller
 
         [$tahun, $bulan] = $this->parsePeriode($request->periode);
 
-        // Ambil Data Karyawan (Untuk Gaji Pokok jika mungkin berubah, atau mengikuti db sebelumnya)
         $karyawan = Karyawan::with('user.role')->find($request->id_karyawan);
-        $gajiPokok = 1500000;
-        
-        if ($karyawan && $karyawan->user && $karyawan->user->role) {
-            $roleName = strtolower($karyawan->user->role->nama_role);
-            if ($roleName == 'pimpinan') {
-                $gajiPokok = 3500000;
-            } elseif ($roleName == 'kepala bagian' || $roleName == 'kabag') {
-                $gajiPokok = 2400000;
-            } else {
-                $divisi = strtolower($karyawan->divisi);
-                if ($divisi == 'keuangan') {
-                    $gajiPokok = 2000000;
-                } elseif (in_array($divisi, ['admin umum', 'akademik', 'marketing'])) {
-                    $gajiPokok = 1800000;
-                } elseif ($divisi == 'office boy') {
-                    $gajiPokok = 1500000;
-                }
-            }
-        }
+        $gajiPokok = $this->getGajiPokok($karyawan);
 
         $totalPenerimaan = (float) $gajiPokok 
             + (float) ($request->uang_makan ?? 0)
-            + (float) self::TUNJ_JABATAN_STANDAR 
-            + (float) ($request->tunjangan_leader ?? 0) 
+            + (float) ($request->tunjangan_jabatan ?? 0)
             + (float) ($request->insentif_kinerja ?? 0)
             + (float) ($request->tunjangan_program ?? 0)
-            + (float) self::TUNJ_BPJS_STANDAR 
             + (float) ($request->bonus ?? 0)
             + (float) ($request->lain_lain ?? 0);
 
@@ -498,11 +337,10 @@ class PimpinanController extends Controller
             'tahun'             => $tahun,
             'gaji_pokok'        => $gajiPokok,
             'uang_makan'        => $request->uang_makan ?? 0,
-            'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
-            'tunjangan_leader'  => $request->tunjangan_leader ?? 0, 
+            'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
             'insentif_kinerja'  => $request->insentif_kinerja ?? 0,
             'tunjangan_program' => $request->tunjangan_program ?? 0,
-            'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
+            'tunjangan_bpjs'    => 0,
             'bonus'             => $request->bonus ?? 0,
             'lain_lain'         => $request->lain_lain ?? 0,
             'total_penerimaan'  => $totalPenerimaan,
@@ -517,40 +355,31 @@ class PimpinanController extends Controller
         ]);
 
         return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
-            ->with('success', 'Slip gaji berhasil diperbarui dengan standar terbaru.');
+            ->with('success', 'Slip gaji berhasil diperbarui.');
     }
 
     public function finalizeGaji($id)
     {
         $gaji = Penggajian::findOrFail($id);
         $gaji->update(['status_slip' => 'final']);
-
         return redirect()->route('pimpinan.gaji', ['bulan' => $gaji->bulan, 'tahun' => $gaji->tahun])
-            ->with('success', 'Slip gaji berhasil difinalisasi dan dikirim ke karyawan.');
+            ->with('success', 'Slip gaji berhasil difinalisasi.');
     }
-
     public function destroyGaji($id)
     {
         $gaji = Penggajian::findOrFail($id);
-        $bulan = $gaji->bulan;
-        $tahun = $gaji->tahun;
         $gaji->delete();
-
-        return redirect()->route('pimpinan.gaji', ['bulan' => $bulan, 'tahun' => $tahun])
+        return redirect()->route('pimpinan.gaji', ['bulan' => $gaji->bulan, 'tahun' => $gaji->tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
 
     public function destroyKaryawan($id_user)
     {
         $karyawan = Karyawan::where('id_user', $id_user)->first();
-        if ($karyawan) {
-            $karyawan->delete();
-        }
+        if ($karyawan) $karyawan->delete();
         $user = User::find($id_user);
-        if ($user) {
-            $user->delete();
-        }
-        return back()->with('success', 'Akun Karyawan berhasil dihapus secara permanen tanpa merusak Role Master!');
+        if ($user) $user->delete();
+        return back()->with('success', 'Akun Karyawan berhasil dihapus!');
     }
 
     public function pengaturanLokasi()
@@ -566,73 +395,126 @@ class PimpinanController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
             'radius' => 'required|numeric|min:0.001',
         ]);
-
         $pengaturan = PengaturanKantor::latest('id_pengaturan')->first();
-        if ($pengaturan) {
-            $pengaturan->update($validated);
-        } else {
-            PengaturanKantor::create($validated);
-        }
+        if ($pengaturan) $pengaturan->update($validated);
+        else PengaturanKantor::create($validated);
 
-        return redirect()->route('pimpinan.pengaturan-lokasi')
-            ->with('success', 'Pengaturan lokasi kantor berhasil diperbarui.');
+        return redirect()->route('pimpinan.pengaturan-lokasi')->with('success', 'Pengaturan lokasi berhasil diperbarui.');
     }
 
     public function rejectKaryawan($id)
     {
         $user = User::with('karyawan')->findOrFail($id);
-        if ($user->karyawan) {
-            $user->karyawan->delete();
-        }
+        if ($user->karyawan) $user->karyawan->delete();
         $user->delete();
-        return redirect()->route('pimpinan.karyawan_pending')->with('error', 'Pengajuan karyawan baru telah ditolak dan dihapus.');
+        return redirect()->route('pimpinan.karyawan_pending')->with('error', 'Pengajuan karyawan ditolak.');
     }
-
-    // FUNGSI AJAX AUTOFILL DI FORM HTML
-    public function getKaryawanFinansial($id)
+    public function getKaryawanFinansial(Request $request, $id)
     {
         $karyawan = Karyawan::with('user.role')->find($id);
+        $bulan = $request->query('bulan', now()->month);
+        $tahun = $request->query('tahun', now()->year);
         
-        $gajiPokok = 1500000;
-        
-        if ($karyawan && $karyawan->user && $karyawan->user->role) {
-            $roleName = strtolower($karyawan->user->role->nama_role);
-            if ($roleName == 'pimpinan') {
-                $gajiPokok = 3500000;
-            } elseif ($roleName == 'kepala bagian' || $roleName == 'kabag') {
-                $gajiPokok = 2400000;
-            } else {
-                $divisi = strtolower($karyawan->divisi);
-                if ($divisi == 'keuangan') {
-                    $gajiPokok = 2000000;
-                } elseif (in_array($divisi, ['admin umum', 'akademik', 'marketing'])) {
-                    $gajiPokok = 1800000;
-                } elseif ($divisi == 'office boy') {
-                    $gajiPokok = 1500000;
-                }
+        $gajiPokok = $this->getGajiPokok($karyawan);
+
+        // 1. Tunjangan Kinerja (Dari Nilai Kinerja)
+        $penilaian = Penilaian::where('id_karyawan', $id)->where('bulan', $bulan)->where('tahun', $tahun)->first();
+        $insentifKinerja = 0;
+        if ($penilaian) {
+            if ($penilaian->total_skor >= 90) {
+                $insentifKinerja = 150000;
+            } elseif ($penilaian->total_skor >= 80) {
+                $insentifKinerja = 100000;
             }
         }
+
+        // 2. Bonus Rank 1 (Tertinggi bulan ini = Rp 100.000)
+        $bonus = 0;
+        $topScore = Penilaian::where('bulan', $bulan)->where('tahun', $tahun)->max('total_skor');
+        if ($topScore !== null && $penilaian && $penilaian->total_skor == $topScore) {
+            // Pencarian tie-breaker (Jika skor sama, cari yang hadirnya terbanyak)
+            $topKaryawans = Penilaian::where('bulan', $bulan)->where('tahun', $tahun)->where('total_skor', $topScore)->pluck('id_karyawan')->toArray();
+            $maxHadir = -1;
+            $bestKaryawanId = null;
+            
+            foreach ($topKaryawans as $kid) {
+                $hadirCount = Absensi::where('id_karyawan', $kid)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'hadir')->count();
+                if ($hadirCount > $maxHadir) {
+                    $maxHadir = $hadirCount;
+                    $bestKaryawanId = $kid;
+                }
+            }
+            if ($bestKaryawanId == $id) {
+                $bonus = 100000; // Bonus Karyawan Terbaik Rp 100.000
+            }
+        }
+
+        // 3. Perhitungan Absensi
+        $hadir = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'hadir')->count();
+        $alpha = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->whereIn('status', ['alfa', 'alpha'])->count();
+        $izin = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'izin')->count();
+        $cuti = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'cuti')->count();
+
+        // Uang Makan: 20rb x Hari Hadir
+        $uangMakan = $hadir * 20000;
+        
+        // Logika Potongan Absen (Rp 70.000 per hari mbolos)
+        // Alpha & Izin = potong. Cuti = hari 1 gratis, hari 2 dst dipotong. Sakit = Gratis.
+        $hariPotong = $alpha + $izin; 
+        if ($cuti > 1) {
+            $hariPotong += ($cuti - 1);
+        }
+        $potonganAbsen = $hariPotong * 70000;
 
         return response()->json([
             'gaji_pokok'        => $gajiPokok,
             'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
-            'tunjangan_bpjs'    => self::TUNJ_BPJS_STANDAR,
+            'insentif_kinerja'  => $insentifKinerja,
+            'uang_makan'        => $uangMakan,
+            'potongan_absen'    => $potonganAbsen,
+            'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR,
+            'bonus'             => $bonus, // Dikirim otomatis ke kolom bonus
         ]);
     }
+
     public function tambahJatahBulanan()
     {
-        // Ambil semua karyawan aktif
         $karyawans = \App\Models\Karyawan::where('status_karyawan', 'aktif')->get();
-        
         $jumlahDiupdate = 0;
         foreach ($karyawans as $karyawan) {
-            // Batas maksimal celengan adalah 12
             if ($karyawan->sisa_cuti < 12) {
                 $karyawan->increment('sisa_cuti', 1);
                 $jumlahDiupdate++;
             }
         }
+        return redirect()->back()->with('success', "Jatah cuti bulanan (+1) berhasil dibagikan.");
+    }
+    
+    public function hariLibur()
+    {
+        $hariLibur = DB::table('hari_libur')->orderBy('tanggal', 'desc')->get();
+        return view('pimpinan.hari_libur', compact('hariLibur'));
+    }
 
-        return redirect()->back()->with('success', "Jatah cuti bulanan (+1) berhasil dibagikan ke $jumlahDiupdate karyawan aktif.");
+    public function storeHariLibur(Request $request)
+    {
+        $request->validate([
+            'tanggal'    => 'required|date|unique:hari_libur,tanggal',
+            'keterangan' => 'required|string|max:255',
+        ], ['tanggal.unique' => 'Tanggal ini sudah didaftarkan sebagai hari libur.']);
+
+        DB::table('hari_libur')->insert([
+            'tanggal'    => $request->tanggal,
+            'keterangan' => $request->keterangan,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        return redirect()->route('pimpinan.hari_libur')->with('success', 'Hari libur berhasil ditambahkan.');
+    }
+
+    public function destroyHariLibur($id)
+    {
+        DB::table('hari_libur')->where('id_libur', $id)->delete();
+        return redirect()->route('pimpinan.hari_libur')->with('success', 'Hari libur berhasil dihapus.');
     }
 }

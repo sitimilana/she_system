@@ -15,12 +15,6 @@ class SlipGajiController extends Controller
         9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
     ];
 
-    /**
-     * Get list of salary slips for the authenticated employee (mobile).
-     */
-    /**
-     * Get list of salary slips for the authenticated employee (mobile).
-     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -36,7 +30,7 @@ class SlipGajiController extends Controller
         }
 
         $slipGaji = Penggajian::where('id_karyawan', $karyawan->id_karyawan)
-            ->where('status_slip', 'final')
+            ->where('status_slip', 'final') // Memastikan mencari status final
             ->orderByDesc('tahun')
             ->orderByDesc('bulan')
             ->get();
@@ -44,22 +38,34 @@ class SlipGajiController extends Controller
         if ($slipGaji->isEmpty()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Belum ada data slip gaji yang difinalisasi.',
+                // TAMBAHAN DEBUGGING: Sistem akan memberitahu ID Karyawan yang sedang login
+                'message' => 'Belum ada data slip gaji final untuk id_karyawan: ' . $karyawan->id_karyawan,
                 'data'    => []
             ], 200);
         }
 
-        // Kembalikan JSON dengan format success, message, dan data
+        // TAMBAHAN FORMATTING: Kita ubah output datanya agar persis dengan yang diharapkan Android
+        $formattedData = $slipGaji->map(function($gaji) {
+            return [
+                'id_gaji'        => $gaji->id_gaji,
+                'bulan'          => $gaji->bulan,
+                'tahun'          => $gaji->tahun,
+                // Menggabungkan bulan dan tahun langsung dari server
+                'periode'        => (self::BULAN_LIST[$gaji->bulan] ?? $gaji->bulan) . ' ' . $gaji->tahun,
+                'status'         => $gaji->status_slip,
+                'status_slip'    => $gaji->status_slip,
+                'total_gaji'     => (int) $gaji->total_gaji,
+                'tanggal_dibuat' => $gaji->tanggal_dibuat,
+            ];
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Berhasil mengambil riwayat slip gaji',
-            'data'    => $slipGaji,
+            'data'    => $formattedData,
         ], 200);
     }
 
-    /**
-     * Get salary slip detail for the authenticated employee (mobile).
-     */
     public function show(Request $request, $id)
     {
         $user = $request->user();
@@ -103,6 +109,7 @@ class SlipGajiController extends Controller
             'potongan'       => [
                 'potongan_absen' => (int) $slip->potongan_absen,
                 'cash_bon'       => (int) $slip->cash_bon,
+                'cash_bon_2'     => (int) $slip->cash_bon_2,
                 'potongan_bpjs'  => (int) $slip->potongan_bpjs,
                 'potongan_lain'  => (int) $slip->potongan_lain,
             ],

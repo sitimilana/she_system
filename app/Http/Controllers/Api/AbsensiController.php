@@ -31,6 +31,7 @@ class AbsensiController extends Controller
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
     }
+
     public function store(Request $request)
     {
         // 1. Validasi Input dari Android
@@ -48,8 +49,32 @@ class AbsensiController extends Controller
             if (!$karyawan) {
                 return response()->json(['success' => false, 'message' => 'Data Karyawan tidak ditemukan!'], 404);
             }
+
+            $tanggalHariIni = now()->toDateString(); // YYYY-MM-DD
+            $waktuSekarang = now()->toTimeString();  // HH:MM:SS
+
+            // ==========================================
+            // CEK HARI LIBUR NASIONAL / WEEKEND
+            // ==========================================
+            $isLibur = DB::table('hari_libur')->where('tanggal', $tanggalHariIni)->first();
+            if ($isLibur) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hari ini adalah hari libur (' . $isLibur->keterangan . '). Absensi dinonaktifkan.'
+                ], 403);
+            }
+
+            if (now()->isWeekend()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Absensi tidak tersedia di hari libur akhir pekan.'
+                ], 403);
+            }
+
+            // ==========================================
+            // CEK RADIUS KANTOR
+            // ==========================================
             $officeSetting = DB::table('pengaturan_kantor')->first(); 
-            
             if ($officeSetting) {
                 $distanceKm = $this->calculateDistance(
                     $officeSetting->latitude, 
@@ -68,14 +93,12 @@ class AbsensiController extends Controller
             }
 
             $id_karyawan = $karyawan->id_karyawan;
-            $tanggalHariIni = now()->toDateString(); // YYYY-MM-DD
-            $waktuSekarang = now()->toTimeString();  // HH:MM:SS
 
             // ==========================================
             // CEK APAKAH KARYAWAN SEDANG CUTI HARI INI
             // ==========================================
             $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
-                ->where('status', 'approved') // <-- SUDAH DIPERBAIKI SESUAI ENUM DATABASE
+                ->where('status', 'approved')
                 ->where('tanggal_mulai', '<=', $tanggalHariIni)
                 ->where('tanggal_selesai', '>=', $tanggalHariIni)
                 ->first();
@@ -203,43 +226,46 @@ class AbsensiController extends Controller
         while ($startDate->lte($endDate)) {
             $tanggalCek = $startDate->toDateString();
 
-            // Mencegah insert dobel: Cek apakah karyawan sudah punya record absen di tanggalCek?
-            $sudahAdaAbsen = Absensi::where('id_karyawan', $id_karyawan)
-                                    ->where('tanggal', $tanggalCek)
-                                    ->exists();
+            // SKIP HARI LIBUR & WEEKEND
+            $isLibur = DB::table('hari_libur')->where('tanggal', $tanggalCek)->exists();
+            $isWeekend = ($startDate->isSaturday() || $startDate->isSunday());
 
-            if (!$sudahAdaAbsen) {
-                // Cek apakah karyawan sedang memiliki pengajuan (Cuti/Izin/Sakit) yang ACC di tanggalCek?
-                $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
-                    ->where('status', 'approved') // <-- SUDAH DIPERBAIKI SESUAI ENUM DATABASE
-                    ->where('tanggal_mulai', '<=', $tanggalCek)
-                    ->where('tanggal_selesai', '>=', $tanggalCek)
-                    ->first(); 
+            if (!$isLibur && !$isWeekend) {
+                // Mencegah insert dobel
+                $sudahAdaAbsen = Absensi::where('id_karyawan', $id_karyawan)
+                                        ->where('tanggal', $tanggalCek)
+                                        ->exists();
 
-                if ($sedangCuti) {
-                    // Deteksi status berdasarkan jenis_cuti
-                    $jenisPengajuan = strtolower($sedangCuti->jenis_cuti);
-                    $statusAbsen = 'cuti'; // Default
+                if (!$sudahAdaAbsen) {
+                    $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
+                        ->where('status', 'approved')
+                        ->where('tanggal_mulai', '<=', $tanggalCek)
+                        ->where('tanggal_selesai', '>=', $tanggalCek)
+                        ->first(); 
 
-                    if (str_contains($jenisPengajuan, 'sakit')) {
-                        $statusAbsen = 'sakit';
-                    } elseif (str_contains($jenisPengajuan, 'izin')) {
-                        $statusAbsen = 'izin';
+                    if ($sedangCuti) {
+                        $jenisPengajuan = strtolower($sedangCuti->jenis_cuti);
+                        $statusAbsen = 'cuti'; // Default
+
+                        if (str_contains($jenisPengajuan, 'sakit')) {
+                            $statusAbsen = 'sakit';
+                        } elseif (str_contains($jenisPengajuan, 'izin')) {
+                            $statusAbsen = 'izin';
+                        }
+
+                        Absensi::create([
+                            'id_karyawan' => $id_karyawan,
+                            'tanggal'     => $tanggalCek,
+                            'status'      => $statusAbsen
+                        ]);
+                    } else {
+                        // Jika tidak ada pengajuan apa-apa & bukan hari libur, simpan secara Alfa otomatis
+                        Absensi::create([
+                            'id_karyawan' => $id_karyawan,
+                            'tanggal'     => $tanggalCek,
+                            'status'      => 'alfa'
+                        ]);
                     }
-
-                    // Simpan status sesuai jenis pengajuannya
-                    Absensi::create([
-                        'id_karyawan' => $id_karyawan,
-                        'tanggal'     => $tanggalCek,
-                        'status'      => $statusAbsen
-                    ]);
-                } else {
-                    // Jika tidak ada pengajuan apa-apa & tidak ada rekam absen, simpan secara Alfa otomatis
-                    Absensi::create([
-                        'id_karyawan' => $id_karyawan,
-                        'tanggal'     => $tanggalCek,
-                        'status'      => 'alfa'
-                    ]);
                 }
             }
             $startDate->addDay();
@@ -257,19 +283,35 @@ class AbsensiController extends Controller
             'message' => 'Berhasil mengambil riwayat absensi',
             'data'    => $riwayat
         ]);
-        
     }
+
     public function getConfigPresensi()
     {
         $config = DB::table('pengaturan_kantor')->first();
+        $tanggalHariIni = \Carbon\Carbon::now('Asia/Jakarta')->toDateString();
+        $isLibur = DB::table('hari_libur')->where('tanggal', $tanggalHariIni)->first();
+        $isWeekend = \Carbon\Carbon::now('Asia/Jakarta')->isWeekend();
+
+        $statusLibur = false;
+        $pesanLibur = '';
+
+        if ($isLibur) {
+            $statusLibur = true;
+            $pesanLibur = 'Hari ini adalah hari libur (' . $isLibur->keterangan . '). Presensi dinonaktifkan.';
+        } elseif ($isWeekend) {
+            $statusLibur = true;
+            $pesanLibur = 'Presensi tidak tersedia di hari libur akhir pekan.';
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Konfigurasi berhasil dimuat',
             'data' => [
-                'office_lat' => (double) $config->latitude,
-                'office_lon' => (double) $config->longitude,
-                'max_radius' => (double) $config->radius,
+                'office_lat' => $config ? (double) $config->latitude : 0,
+                'office_lon' => $config ? (double) $config->longitude : 0,
+                'max_radius' => $config ? (double) $config->radius : 0,
+                'is_libur'   => $statusLibur,   // <-- Sekarang data ini ikut terkirim!
+                'pesan_libur'=> $pesanLibur     // <-- Pesannya juga terkirim
             ]
         ]);
     }

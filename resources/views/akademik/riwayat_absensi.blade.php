@@ -34,6 +34,26 @@
         
         /* LAT LONG TEXT */
         .coord-text { font-size: 0.75rem; color: #64748b; font-family: monospace;}
+        
+        /* PAGINATION COMPACT STYLE */
+        .pagination { margin-bottom: 0; }
+        .pagination .page-link {
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+            border: 1px solid #dee2e6 !important;
+        }
+        .pagination .page-link:hover {
+            background-color: #f1f5f9 !important;
+            border-color: #8f9fc4 !important;
+        }
+        .pagination .active .page-link {
+            background-color: #8f9fc4 !important;
+            border-color: #8f9fc4 !important;
+        }
+        .pagination .disabled .page-link {
+            color: #6c757d !important;
+        }
     </style>
 </head>
 
@@ -127,7 +147,7 @@
                 <tbody>
                     @forelse($dataAbsensi as $index => $absen)
                     <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td class="text-center">{{ $dataAbsensi->firstItem() + $index }}</td>
                         <td class="fw-bold text-dark">{{ $absen->karyawan->nama ?? ($absen->karyawan->user->nama_lengkap ?? 'Unknown') }}</td>
                         <td>{{ \Carbon\Carbon::parse($absen->tanggal)->format('d M Y') }}</td>
                         
@@ -191,6 +211,10 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <div class="mt-3 d-flex justify-content-center" style="padding: 0;">
+            {{ $dataAbsensi->links('pagination::bootstrap-4') }}
         </div>
     </div>
 </div>

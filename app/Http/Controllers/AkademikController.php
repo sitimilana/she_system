@@ -99,7 +99,9 @@ class AkademikController extends Controller
             $query->where('status', $request->status);
         }
 
-        $dataAbsensi = $query->orderBy('tanggal', 'desc')->get();
+        $dataAbsensi = $query->orderBy('tanggal', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('akademik.riwayat_absensi', compact('dataAbsensi'));
     }

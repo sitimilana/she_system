@@ -43,6 +43,11 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/pimpinan/karyawan-pending/{id}/reject', [PimpinanController::class, 'rejectKaryawan'])->name('pimpinan.rejectKaryawan');
     Route::put('/pimpinan/karyawan-pending/{id}/approve', [PimpinanController::class, 'approveKaryawan'])->name('pimpinan.approveKaryawan');
     Route::get('/pimpinan/karyawan/{id}/finansial', [App\Http\Controllers\PimpinanController::class, 'getKaryawanFinansial']);
+
+    // Hari Libur
+    Route::get('/pimpinan/hari-libur', [PimpinanController::class, 'hariLibur'])->name('pimpinan.hari_libur');
+    Route::post('/pimpinan/hari-libur', [PimpinanController::class, 'storeHariLibur'])->name('pimpinan.hari_libur.store');
+    Route::delete('/pimpinan/hari-libur/{id}', [PimpinanController::class, 'destroyHariLibur'])->name('pimpinan.hari_libur.destroy');
 });
 
 # KEPALA BAGIAN DASHBOARD

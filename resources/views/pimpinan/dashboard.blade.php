@@ -112,7 +112,11 @@
                 <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
             </a>
         </li>
-        
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.hari_libur') }}" class="nav-link {{ Request::is('pimpinan/hari-libur*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Hari Libur
+            </a>
+        </li>
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout

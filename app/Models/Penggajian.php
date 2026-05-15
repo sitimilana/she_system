@@ -24,8 +24,10 @@ class Penggajian extends Model
         'total_penerimaan',
         'potongan_absen',
         'cash_bon',
+        'cash_bon_2',
         'potongan_bpjs',
         'potongan_lain',
+        'total_potongan',
         'total_gaji',
         'tanggal_dibuat',
         'status_slip'
