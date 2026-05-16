@@ -67,31 +67,52 @@ class KepalaBagianController extends Controller
             });
         }
 
-        $dataKaryawan = $query->get();
+        $dataKaryawan = $query->paginate(15)->withQueryString();
         $roles = \App\Models\Role::all();
 
         return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan', 'roles'));
     }
 
-    public function penilaian()
+    // YANG DIUBAH: Menambahkan Request $request serta logika filter nama, bulan, & tahun
+    public function penilaian(Request $request)
     {
-        $karyawan = Karyawan::where('status_karyawan', 'Aktif')->get();
-        $riwayatPenilaian = Penilaian::with('karyawan')->orderBy('tahun', 'desc')->orderBy('bulan', 'desc')->get();
-
         $karyawan = Karyawan::where('status_karyawan', 'aktif')
             ->select('id_karyawan', 'nama')
             ->orderBy('nama')
             ->get();
 
+        $query = Penilaian::with('karyawan');
+
+        // 1. Filter Pencarian Nama Karyawan
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            });
+        }
+
+        // 2. Filter Berdasarkan Bulan & Tahun Pengajuan (format dari input month: YYYY-MM)
+        if ($request->filled('periode')) {
+            $periode = explode('-', $request->periode);
+            if (count($periode) == 2) {
+                $query->where('tahun', $periode[0])
+                      ->where('bulan', (int)$periode[1]);
+            }
+        }
+
+        $riwayatPenilaian = $query->orderBy('tahun', 'desc')
+            ->orderBy('bulan', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
         return view('kepala_bagian.penilaian_kinerja', compact('karyawan', 'riwayatPenilaian'));
     }
 
-    // INI ADALAH FUNGSI PENILAIAN YANG BARU (Hanya 1 fungsi saja)
     public function storePenilaian(Request $request)
     {
         $validated = $request->validate([
             'id_karyawan' => 'required|exists:karyawan,id_karyawan',
-            'periode'     => ['required', 'regex:/^\d{4}-\d{2}$/'], // Menangkap bulan & tahun dari form
+            'periode'     => ['required', 'regex:/^\d{4}-\d{2}$/'],
             'disiplin'    => 'required|integer|min:1|max:5',
             'produktivitas' => 'required|integer|min:1|max:5',
             'tanggung_jawab' => 'required|integer|min:1|max:5',
@@ -100,10 +121,8 @@ class KepalaBagianController extends Controller
             'catatan_evaluasi' => 'nullable|string',
         ]);
 
-        // Pecah periode menjadi tahun dan bulan
         [$tahun, $bulan] = explode('-', $validated['periode']);
 
-        // Pembobotan persentase
         $bobot = [
             'disiplin' => 0.20,
             'produktivitas' => 0.30,
@@ -112,13 +131,11 @@ class KepalaBagianController extends Controller
             'loyalitas' => 0.15,
         ];
 
-        // Hitung skor dari skala 1-5
         $skorTertimbang = 0;
         foreach ($bobot as $indikator => $persentase) {
             $skorTertimbang += ((int)$validated[$indikator]) * $persentase;
         }
         
-        // Skor tertimbang maksimal adalah 5. Kita kalikan 20 agar skalanya jadi 1-100
         $skorAkhir = (int) round($skorTertimbang * 20);
 
         Penilaian::create([
@@ -130,7 +147,7 @@ class KepalaBagianController extends Controller
             'tanggung_jawab' => $validated['tanggung_jawab'],
             'sikap_kerja' => $validated['sikap_kerja'],
             'loyalitas' => $validated['loyalitas'],
-            'total_skor' => $skorAkhir, // Menyimpan nilai 1-100
+            'total_skor' => $skorAkhir,
             'catatan_evaluasi' => $validated['catatan_evaluasi'] ?? null,
             'dinilai_oleh' => auth()->user()->id_user,
         ]);
@@ -144,7 +161,7 @@ class KepalaBagianController extends Controller
             'nama_lengkap' => 'required|string|max:255',
             'username'     => 'required|unique:user,username',
             'password'     => 'required|min:6',
-            'role_id'      => 'required|exists:roles,role_id', // Pastikan nama tabel role sesuai
+            'role_id'      => 'required|exists:roles,role_id',
             'no_hp'        => 'nullable|string|max:20',
             'email'        => 'nullable|email|max:255',
             'alamat'       => 'nullable|string',
@@ -196,7 +213,7 @@ class KepalaBagianController extends Controller
         ]);
 
         return redirect()->route('kabag.cuti')
-            ->with('success', 'Pengajuan cuti disetujui dan diteruskan ke Pimpinan.');
+            ->with('success', 'Pengajuan cuti disetujui and diteruskan ke Pimpinan.');
     }
 
     public function rejectCuti($id)
@@ -227,20 +244,16 @@ class KepalaBagianController extends Controller
             'status_karyawan' => 'required|string'
         ]);
 
-        // CEGAH ERROR DATABASE: Ubah 'tidak aktif' dari form HTML menjadi 'keluar'
         $statusDB = strtolower($request->status_karyawan);
         if ($statusDB === 'tidak aktif') {
             $statusDB = 'keluar';
         }
 
-        // Update data login User
         $user->update([
             'nama_lengkap' => $request->nama_lengkap,
-            // Matikan akses login jika diubah menjadi 'keluar'
             'status_akun'  => $statusDB === 'keluar' ? 'nonaktif' : $user->status_akun,
         ]);
 
-        // Update data biodata Karyawan
         if ($user->karyawan) {
             $user->karyawan->update([
                 'nama'            => $request->nama_lengkap,
@@ -248,7 +261,6 @@ class KepalaBagianController extends Controller
                 'no_hp'           => $request->no_hp ?? '-',
                 'email'           => $request->email ?? '-',
                 'alamat'          => $request->alamat ?? '-',
-                // Gunakan $statusDB yang sudah aman dari error ENUM
                 'status_karyawan' => $statusDB,
             ]);
         }
@@ -260,14 +272,12 @@ class KepalaBagianController extends Controller
     {
         $user = User::with('karyawan')->findOrFail($id);
         
-        // Keamanan ekstra: pastikan hanya yang tidak aktif/keluar yang bisa dihapus
         $status = strtolower($user->karyawan->status_karyawan ?? '');
         if (!in_array($status, ['tidak aktif', 'keluar', 'resign'])) {
             return redirect()->route('kabag.karyawan')->with('error', 'Gagal! Hanya karyawan berstatus Tidak Aktif atau Keluar yang boleh dihapus.');
         }
 
         if ($user->karyawan) {
-            // Hapus relasi data yang terikat (foreign key constraint)
             $id_karyawan = $user->karyawan->id_karyawan;
             \App\Models\Absensi::where('id_karyawan', $id_karyawan)->delete();
             \App\Models\Cuti::where('id_karyawan', $id_karyawan)->delete();

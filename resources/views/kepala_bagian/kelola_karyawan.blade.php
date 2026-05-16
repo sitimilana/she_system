@@ -16,8 +16,8 @@
         }
         .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
         .sidebar .logo img { width: 100px; }
-        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
+        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s; text-decoration: none;}
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600; color: #fff;}
         .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
         
         /* CONTENT */
@@ -59,6 +59,27 @@
             margin-bottom: 1.2rem;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 0.5rem;
+        }
+
+        /* DITAMBAHKAN: Style Pagination dinamis Laravel */
+        .pagination { margin-bottom: 0; gap: 4px; }
+        .pagination .page-link {
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 6px !important;
+            color: #475569;
+        }
+        .pagination .page-link:hover { background-color: #f1f5f9 !important; border-color: #8f9fc4 !important; }
+        .pagination .active .page-link { background-color: #8f9fc4 !important; border-color: #8f9fc4 !important; color: white !important;}
+
+        /* DITAMBAHKAN: Aturan CSS cetak cetak PDF agar rapi tanpa Sidebar & Fitur Web */
+        @media print {
+            .sidebar, #searchInput, .input-group-text, .btn, .pagination, .alert { display: none !important; }
+            .content { margin-left: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .card-custom { box-shadow: none !important; border: none !important; padding: 0 !important; }
         }
     </style>
 </head>
@@ -119,7 +140,8 @@
             
             <div class="d-flex gap-2">
                 <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
-                <button class="btn btn-outline-secondary shadow-sm"><i class="bi bi-printer me-2"></i>Cetak</button>
+                
+                <button class="btn btn-outline-secondary shadow-sm" onclick="window.print()"><i class="bi bi-printer me-2"></i>Cetak</button>
                 
                 <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
             </div>
@@ -137,13 +159,12 @@
                         <th width="10%" class="text-center">Sisa Cuti</th>
                         <th width="15%" class="text-center">Status Kerja</th>
                         <th width="10%" class="text-center">Aksi</th>
-                        
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($dataKaryawan as $index => $user)
                     <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
+                        <td class="text-center">{{ $dataKaryawan->firstItem() + $index }}</td>
                         <td class="fw-bold">{{ $user->nama_lengkap }}</td>
                         <td class="text-capitalize">{{ $user->karyawan->divisi ?? '-' }}</td>
                         <td>{{ $user->karyawan->no_hp ?? '-' }}</td>
@@ -268,17 +289,16 @@
             </table>
         </div>
 
-        <div class="d-flex justify-content-center mt-4">
-            <nav>
-                <ul class="pagination pagination-sm m-0 shadow-sm">
-                    <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
-                </ul>
-            </nav>
+        @if($dataKaryawan->hasPages())
+        <div class="d-flex flex-column align-items-center mt-4 gap-2 text-center">
+            <div class="text-muted small">
+                Menampilkan <strong>{{ $dataKaryawan->firstItem() }}</strong> s/d <strong>{{ $dataKaryawan->lastItem() }}</strong> dari <strong>{{ $dataKaryawan->total() }}</strong> data
+            </div>
+            <div class="d-flex justify-content-center">
+                {{ $dataKaryawan->links('pagination::bootstrap-5') }}
+            </div>
         </div>
+        @endif
 
     </div>
     
@@ -411,17 +431,14 @@
         });
     });
 
-    // SCRIPT TAMBAHAN: Untuk Toggle Show/Hide Password
     const togglePasswordIcon = document.getElementById('togglePasswordIcon');
     const inputPasswordBaru = document.getElementById('inputPasswordBaru');
     const eyeIcon = document.getElementById('eyeIcon');
 
     togglePasswordIcon.addEventListener('click', function () {
-        // Toggle attribute type (password ke text atau sebaliknya)
         const type = inputPasswordBaru.getAttribute('type') === 'password' ? 'text' : 'password';
         inputPasswordBaru.setAttribute('type', type);
         
-        // Toggle icon mata
         if (type === 'text') {
             eyeIcon.classList.remove('bi-eye');
             eyeIcon.classList.add('bi-eye-slash');

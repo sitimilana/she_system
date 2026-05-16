@@ -23,7 +23,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 100;
+            z-index: 1045; /* DITAMBAHKAN: Diperbesar agar di atas elemen lain saat di mobile */
+            transition: transform 0.3s ease-in-out; /* DITAMBAHKAN: Animasi geser */
         }
 
         .sidebar .logo { 
@@ -68,15 +69,43 @@
             color: #fff !important;
         }
 
-        /* CONTENT (Lama tetap dipertahankan, hanya menyesuaikan margin kiri sidebar baru) */
-        .content { margin-left: 250px; padding: 30px; background: white; min-height: 100vh;}
+        /* CONTENT (Lama tetap dipertahankan, ditambah transisi) */
+        .content { margin-left: 250px; padding: 30px; background: white; min-height: 100vh; transition: margin-left 0.3s ease;}
         .table-custom th { background-color: #f8f9fa; font-weight: 600; }
+        
+        /* Style tambahan untuk merapikan pagination bawaan Laravel */
+        .pagination { margin-bottom: 0; }
+
+        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show-mobile { transform: translateX(0); }
+            .content { margin-left: 0 !important; padding: 15px !important; }
+            .sidebar-overlay.show { display: block; }
+            
+            /* Disesuaikan agar form filter membungkus rapi di HP */
+            .filter-form-wrapper .col-auto { margin-bottom: 10px; width: 100%; }
+            .filter-form-wrapper .form-select { width: 100%; }
+            .filter-form-wrapper .btn-wrapper { width: 100%; display: flex; flex-direction: column; gap: 8px;}
+        }
+        /* --------------------------------------- */
     </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
     <div class="logo">
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
@@ -122,14 +151,17 @@
 </div>
 
 <div class="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold m-0">Manajemen Gaji</h2>
-            <p class="text-muted">Rekapitulasi penggajian karyawan.</p>
-        </div>
-        <a href="{{ route('pimpinan.gaji.create') }}" class="btn btn-primary px-4 py-2 fw-bold shadow-sm">
-            <i class="bi bi-plus-circle me-2"></i> Buat Slip Gaji
-        </a>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <h5 class="fw-bold m-0" style="color: #2c3e50;">Manajemen Gaji</h5>
+        <button class="btn btn-light border" id="openSidebarBtn">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <div class="mb-4 d-none d-md-block">
+        <h2 class="fw-bold m-0">Manajemen Gaji</h2>
+        <p class="text-muted">Rekapitulasi penggajian karyawan.</p>
     </div>
 
     @if(session('success'))
@@ -139,7 +171,7 @@
     </div>
     @endif
 
-    <div class="card shadow-sm border-0 mb-4 p-3 bg-light">
+    <div class="card shadow-sm border-0 mb-4 p-3 bg-light filter-form-wrapper">
         <form method="GET" action="{{ route('pimpinan.gaji') }}" class="row g-3 align-items-center">
             <div class="col-12 col-md-4 mb-2 mb-md-0">
                 <div class="input-group">
@@ -164,15 +196,17 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-auto d-flex gap-2">
-                <button type="submit" class="btn btn-secondary shadow-sm"><i class="bi bi-filter"></i> Tampilkan</button>
-                @if(request('search'))
-                    <a href="{{ route('pimpinan.gaji') }}?bulan={{ $bulan }}&tahun={{ $tahun }}" class="btn btn-outline-secondary">Reset Pencarian</a>
-                @endif
+            <div class="col-auto d-flex gap-2 align-items-center btn-wrapper">
+                <button type="submit" class="btn btn-secondary shadow-sm">
+                    <i class="bi bi-filter"></i> Tampilkan
+                </button>
+
+                <a href="{{ route('pimpinan.gaji.create') }}" class="btn btn-primary fw-bold shadow-sm">
+                    <i class="bi bi-plus-circle me-2"></i> Buat Slip Gaji
+                </a>
             </div>
         </form>
     </div>
-
     <div class="table-responsive shadow-sm rounded border">
         <table class="table table-hover align-middle m-0 table-custom">
             <thead>
@@ -189,8 +223,6 @@
             <tbody>
                 @forelse($dataGaji as $index => $gaji)
                 @php
-                    // Gunakan kolom total_potongan dari database. 
-                    // Jika data lama belum ada, gunakan fallback penjumlahan manual termasuk cash_bon_2
                     $totalPotongan = $gaji->total_potongan ?? (
                         ($gaji->potongan_absen ?? 0) + 
                         ($gaji->cash_bon ?? 0) + 
@@ -199,15 +231,21 @@
                         ($gaji->potongan_lain ?? 0)
                     );
 
-                    // Gunakan kolom total_penerimaan dari database.
                     $totalPenerimaan = $gaji->total_penerimaan ?? (($gaji->total_gaji ?? 0) + $totalPotongan);
                 @endphp
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td class="text-center">{{ $dataGaji->firstItem() + $index }}</td>
                     <td class="fw-bold">{{ $gaji->karyawan->nama ?? '-' }}</td>
                     <td>{{ ($bulanList[$gaji->bulan] ?? $gaji->bulan) . ' ' . $gaji->tahun }}</td>
                     <td class="text-success">Rp {{ number_format($totalPenerimaan, 0, ',', '.') }}</td>
-                    <td class="text-danger">Rp {{ number_format($totalPotongan, 0, ',', '.') }}</td>
+                    <td class="text-danger">
+                        <strong>Rp {{ number_format($totalPotongan, 0, ',', '.') }}</strong><br>
+                        <small class="text-muted" style="font-size: 0.75rem;">
+                            @if($gaji->potongan_absen > 0) Absen: Rp{{ number_format($gaji->potongan_absen,0,',','.') }}<br> @endif
+                            @if(($gaji->cash_bon + $gaji->cash_bon_2) > 0) Bon: Rp{{ number_format(($gaji->cash_bon + $gaji->cash_bon_2),0,',','.') }}<br> @endif
+                            @if($gaji->potongan_bpjs > 0) BPJS: Rp{{ number_format($gaji->potongan_bpjs,0,',','.') }} @endif
+                        </small>
+                    </td>
                     <td class="fw-bold">Rp {{ number_format($gaji->total_gaji, 0, ',', '.') }}</td>
                     <td class="text-center">
                         <a href="{{ route('pimpinan.gaji.edit', $gaji->id_gaji) }}" class="btn btn-warning btn-sm text-dark me-1" title="Edit Data">
@@ -233,15 +271,50 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">Belum ada data gaji untuk periode ini.</td>
+                    <td colspan="7" class="text-center py-4 text-muted">Belum ada data gaji untuk periode ini.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    @if($dataGaji->hasPages())
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 gap-2">
+        <div class="text-muted small">
+            Menampilkan <strong>{{ $dataGaji->firstItem() }}</strong> s/d <strong>{{ $dataGaji->lastItem() }}</strong> dari <strong>{{ $dataGaji->total() }}</strong> data
+        </div>
+        <div>
+            {{ $dataGaji->links('pagination::bootstrap-5') }}
+        </div>
+    </div>
+    @endif
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+    });
+</script>
 
 @include('auth.logout')
 

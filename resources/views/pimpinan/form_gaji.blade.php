@@ -8,34 +8,176 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { background: #f4f7f6; font-family: 'Inter', sans-serif; color: #333; }
-        .sidebar { width: 250px; min-height: 100vh; background-color: #8f9fc4; position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100; }
-        .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
-        .sidebar .logo img { width: 100px; }
-        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
-        .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
-        .content { margin-left: 250px; padding: 40px; }
+        
+        /* SIDEBAR STRUKTUR BARU */
+        .sidebar {
+            width: 250px; 
+            min-height: 100vh; 
+            background-color: #8f9fc4;
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
+            z-index: 1045; /* Diperbesar agar di atas elemen lain saat di mobile */
+            transition: transform 0.3s ease-in-out; /* Animasi mulus */
+        }
+
+        .sidebar .logo { 
+            width: 140px; 
+            display: block; 
+            margin: 0 auto; 
+            margin-top: 20px;
+        }
+
+        .sidebar .logo img { 
+            width: 100px; 
+        }
+
+        /* LINK NAVIGASI BARU */
+        .sidebar .nav-link { 
+            color: #fff; 
+            font-size: 16px; 
+            padding: 12px 25px; 
+            margin: 4px 15px; 
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .sidebar .nav-link i { 
+            margin-right: 12px; 
+            font-size: 1.1rem; 
+        }
+
+        /* HOVER & ACTIVE STATE BARU */
+        .sidebar .nav-link:hover, 
+        .sidebar .nav-link.active { 
+            background-color: rgba(255,255,255,0.2); 
+            border-radius: 8px; 
+            font-weight: 600;
+            color: #fff;
+        }
+
+        /* LOGOUT STYLE BARU */
+        .sidebar .nav-link.text-white-50:hover {
+            color: #fff !important;
+        }
+        
+        /* CONTENT LAMA (Ditambah transisi) */
+        .content { margin-left: 250px; padding: 40px; transition: margin-left 0.3s ease; }
         .card-custom { background-color: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .form-label { font-weight: 600; color: #4a5568; font-size: 0.95rem; }
         .form-control, .form-select { border-radius: 8px; border: 1px solid #cbd5e0; padding: 10px 15px; background-color: #f8fafc; }
         .form-control:focus, .form-select:focus { background-color: #fff; border-color: #8f9fc4; box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15); }
+        
+        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
+        .sidebar-overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%); /* Sembunyikan sidebar ke kiri */
+            }
+            .sidebar.show-mobile {
+                transform: translateX(0); /* Tampilkan saat menu di-klik */
+            }
+            .content {
+                margin-left: 0; /* Hapus margin kiri di HP */
+                padding: 15px; /* Perkecil padding di HP */
+            }
+            .card-custom {
+                padding: 20px !important; /* Perkecil padding dalam form di HP */
+            }
+            .sidebar-overlay.show {
+                display: block; /* Tampilkan overlay gelap */
+            }
+        }
+        /* --------------------------------------- */
     </style>
 </head>
 
 <body>
-<div class="sidebar">
-    <div class="logo"><img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo"></div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
+    <div class="logo">
+        <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
+    </div>
+    
     <ul class="nav flex-column mt-5">
-        <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link active"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar2-check"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
-        <li class="nav-item mt-4"><a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan') || Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.gaji') }}" class="nav-link {{ Request::is('pimpinan/gaji*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack"></i> Manajemen Gaji
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.cuti') }}" class="nav-link {{ Request::is('pimpinan/cuti*') ? 'active' : '' }}">
+                <i class="bi bi-calendar2-check"></i> Manajemen Cuti
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.reward') }}" class="nav-link {{ Request::is('pimpinan/reward*') ? 'active' : '' }}">
+                <i class="bi bi-gift"></i> Reward & Recognition
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link {{ Request::is('pimpinan/karyawan-pending*') ? 'active' : '' }}">
+                <i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.hari_libur') }}" class="nav-link {{ Request::is('pimpinan/hari-libur*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Hari Libur
+            </a>
+        </li>
+
+        <li class="nav-item mt-4">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </li>
     </ul>
 </div>
 
 <div class="content">
-    <div class="mb-4 d-flex justify-content-between align-items-center">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-light border" id="openSidebarBtn">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <h5 class="fw-bold m-0" style="color: #2c3e50;">Buat Slip Gaji</h5>
+        </div>
+        <a href="{{ route('pimpinan.gaji') }}" class="btn btn-secondary btn-sm shadow-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
+    </div>
+
+    <div class="mb-4 d-none d-md-flex justify-content-between align-items-center">
         <div>
             <h2 class="fw-bold m-0" style="color: #1e293b;">Buat Slip Gaji</h2>
             <p class="text-muted m-0">Input data komponen gaji manual untuk karyawan.</p>
@@ -66,7 +208,7 @@
             </div>
 
             <div class="row mb-4">
-                <div class="col-md-6">
+                <div class="col-md-6 mb-3 mb-md-0">
                     <label class="form-label">Nama Karyawan <span class="text-danger">*</span></label>
                     <select name="id_karyawan" id="id_karyawan" class="form-select" required>
                         <option value="" disabled selected>-- Pilih Karyawan --</option>
@@ -82,7 +224,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 border-end pe-4">
+                <div class="col-md-6 border-end pe-md-4">
                     <h5 class="text-success fw-bold border-bottom pb-2 mb-3"><i class="bi bi-plus-circle me-2"></i>Komponen Penerimaan</h5>
                     
                     <div class="mb-3">
@@ -136,7 +278,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-6 ps-4">
+                <div class="col-md-6 ps-md-4 mt-4 mt-md-0">
                     <h5 class="text-danger fw-bold border-bottom pb-2 mb-3"><i class="bi bi-dash-circle me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
@@ -164,7 +306,7 @@
                         <label class="form-label fw-bold">Potongan BPJS Disnaker (Otomatis)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light">Rp</span>
-                            <input type="number" name="potongan_bpjs" id="potongan_bpjs" class="form-control bg-light text-muted" value="25000" readonly>
+                            <input type="number" name="potongan_bpjs" id="potongan_bpjs" class="form-control bg-light text-muted calc-potongan" value="25000" readonly>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -179,9 +321,9 @@
 
             <div class="row mt-4 pt-3 border-top">
                 <div class="col-md-6 offset-md-6">
-                    <div class="p-3 bg-light rounded border border-secondary">
-                        <h6 class="text-danger">Total Potongan: <span id="text_total_potongan">Rp 0</span></h6>
-                        <h4 class="text-success fw-bold m-0 mt-2">Gaji Bersih: <span id="text_total_gaji">Rp 0</span></h4>
+                    <div class="p-3 bg-light rounded border border-secondary text-end">
+                        <h6 class="text-danger">Total Potongan: <span id="text_total_potongan">Rp 25.000</span></h6>
+                        <h4 class="text-success fw-bold m-0 mt-2">Gaji Bersih: <span id="text_total_gaji">Rp -25.000</span></h4>
                     </div>
                 </div>
             </div>
@@ -190,17 +332,39 @@
             
             <div class="d-flex justify-content-end gap-2">
                 <input type="hidden" name="status_slip" value="draft">
-                <button type="submit" class="btn btn-primary px-5 fw-bold"><i class="bi bi-save me-2"></i>Simpan Slip Gaji</button>
+                <button type="submit" class="btn btn-primary px-5 fw-bold w-100 w-md-auto"><i class="bi bi-save me-2"></i>Simpan Slip Gaji</button>
             </div>
         </form>
     </div>
 </div>
 
-@include('auth.logout')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- TAMBAHAN: LOGIKA MENU BURGER HP ---
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+        // ----------------------------------------
+
+        // --- LOGIKA KALKULASI GAJI (Tidak Diubah) ---
         const selectKaryawan = document.getElementById('id_karyawan');
         const selectPeriode = document.getElementById('periode');
         
@@ -251,7 +415,8 @@
         
         function calculateTotal() {
             let totalPenerimaan = 0;
-            let totalPotongan = parseFloat(inBpjs.value) || 0; // Fix hitung BPJS jg
+            // Menjumlahkan semua yg berclass calc-potongan, tidak perlu declare inBpjs ulang
+            let totalPotongan = 0; 
 
             inputsPenerimaan.forEach(i => totalPenerimaan += parseFloat(i.value) || 0);
             inputsPotongan.forEach(i => totalPotongan += parseFloat(i.value) || 0);
@@ -264,8 +429,12 @@
 
         inputsPenerimaan.forEach(input => input.addEventListener('input', calculateTotal));
         inputsPotongan.forEach(input => input.addEventListener('input', calculateTotal));
+        
+        // Panggil saat awal load agar BPJS terpotong otomatis
+        calculateTotal();
     });
 </script>
 
+@include('auth.logout')
 </body>
 </html>

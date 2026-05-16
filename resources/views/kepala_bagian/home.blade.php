@@ -21,7 +21,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 100;
+            z-index: 1045;
+            transition: transform 0.3s ease-in-out;
         }
         .sidebar .logo { 
             width: 140px; 
@@ -32,28 +33,15 @@
         .sidebar .logo img { 
             width: 100px; 
         }
-        .sidebar .nav-link { 
-            color: #fff; 
-            font-size: 15px; 
-            padding: 12px 25px; 
-            margin: 4px 15px; 
-            transition: 0.3s; 
-            border-radius: 8px;
-        }
-        .sidebar .nav-link:hover { 
-            background-color: rgba(255,255,255,0.1); 
-        }
-        .sidebar .nav-link.active { 
-            background-color: rgba(255,255,255,0.3); 
-            font-weight: 600;
-        }
-        .sidebar .nav-link i { 
-            margin-right: 12px; 
-            font-size: 1.1rem; 
-        }
+        
+        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
+        .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        
         .content { 
             margin-left: 250px; 
             padding: 40px; 
+            transition: margin-left 0.3s ease;
         }
         .card-custom { 
             background-color: #ffffff; 
@@ -110,26 +98,38 @@
         .modal-footer { 
             border-top: 1px solid #f1f5f9; 
         }
+
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show-mobile { transform: translateX(0); }
+            .content { margin-left: 0 !important; padding: 15px !important; }
+            .sidebar-overlay.show { display: block; }
+        }
     </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
     <div class="logo">
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
     <ul class="nav flex-column mt-5">
-        <li class="nav-item">
-            <a href="{{ route('kabag.dashboard') }}" class="nav-link active"><i class="bi bi-house-door"></i> Home</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a>
-        </li>
-        <li class="nav-item">
-            <a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a>
-        </li>
-        <li class="nav-item mt-5 pt-3 border-top border-light border-opacity-25 mx-3">
+        <li class="nav-item"><a href="{{ route('kabag.dashboard') }}" class="nav-link active"><i class="bi bi-house-door"></i> Home</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
+        <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
+        <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50 px-3" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
@@ -139,13 +139,20 @@
 
 <div class="content">
     
-    <div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <h5 class="fw-bold m-0" style="color: #2c3e50;">Dashboard</h5>
+        <button class="btn btn-light border" id="openSidebarBtn">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <div class="mb-5 d-none d-md-block">
         <h2 class="fw-bold m-0" style="color: #1e293b;">Selamat Datang, Kepala Bagian</h2>
         <p class="text-muted">Berikut adalah ringkasan operasional departemen Anda hari ini.</p>
     </div>
 
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
+        <div class="col-lg-4 col-md-6 mb-3">
             <div class="card card-custom stat-widget p-4 h-100">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -157,7 +164,7 @@
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-6 mb-3">
+        <div class="col-lg-4 col-md-6 mb-3">
             <div class="card card-custom stat-widget p-4 h-100" style="background: linear-gradient(135deg, #475569 0%, #334155 100%);">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
@@ -169,26 +176,11 @@
             </div>
         </div>
         
-        <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card card-custom stat-widget p-4 h-100" style="background: linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%);">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="text-white-50 fw-medium mb-1">Data Belum Lengkap</p>
-                        <div class="stat-value mb-1">{{ $karyawanBelumLengkap ?? 0 }}</div>
-                        <a href="{{ route('kabag.karyawan') }}" class="badge bg-light bg-opacity-10 text-white mt-1 text-decoration-none">
-                            <i class="bi bi-pencil-square"></i> Lengkapi Data
-                        </a>
-                    </div>
-                    <i class="bi bi-exclamation-triangle text-white" style="opacity: 0.15; font-size: 4rem; position: absolute; right: 10px; bottom: -10px;"></i>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6 mb-3">
+        <div class="col-lg-4 col-md-12 mb-3">
             <div class="card card-custom p-4 h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(120deg, #f8fafc 0%, #f1f5f9 100%);">
                 <div class="d-flex justify-content-between align-items-end mb-2">
                     <div>
-                        <h6 class="fw-bold mb-1 text-dark">Progress Evaluasi Kinerja ({{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }})</h6>
+                        <h6 class="fw-bold mb-1 text-dark">Progress Evaluasi ({{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }})</h6>
                         <p class="text-muted m-0 small"><span class="fw-bold text-dark">{{ $evaluasiSelesai ?? 0 }} / {{ $jumlahKaryawan ?? 0 }}</span> Selesai</p>
                     </div>
                     <a href="{{ route('kabag.penilaian') }}" class="btn btn-primary shadow-sm px-3 py-1 rounded-pill fw-medium" style="font-size: 0.8rem;">
@@ -209,7 +201,7 @@
         <div class="col-md-12 mb-4">
             <div class="card card-custom p-4 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-                    <h5 class="fw-bold m-0"><i class="bi bi-list-check text-info me-2"></i>Progress Penilaian Kinerja {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }}</h5>
+                    <h5 class="fw-bold m-0"><i class="bi bi-list-check text-info me-2"></i>Karyawan Yang Belum Dievaluasi ({{ \Carbon\Carbon::now()->locale('id')->translatedFormat('F Y') }})</h5>
                     <a href="{{ route('kabag.penilaian') }}" class="btn btn-sm btn-outline-primary">Lihat Selengkapnya</a>
                 </div>
 
@@ -225,9 +217,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($progressPenilaian as $index => $pegawai)
+                            @php
+                                $karyawanBelumDievaluasi = collect($progressPenilaian)->filter(function($item) {
+                                    return empty($item->is_dinilai);
+                                })->take(3);
+                            @endphp
+
+                            @forelse($karyawanBelumDievaluasi as $pegawai)
                             <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
+                                <td class="text-center">{{ $loop->iteration }}</td>
                                 <td class="fw-bold">{{ $pegawai->nama }}</td>
                                 <td class="text-capitalize">{{ $pegawai->divisi ?? '-' }}</td>
                                 <td class="text-center">
@@ -248,8 +246,8 @@
                             @empty
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">
-                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
-                                    Belum ada data Karyawan Aktif.
+                                    <i class="bi bi-check-circle fs-1 d-block mb-2 text-success opacity-50"></i>
+                                    Semua Karyawan bulan ini telah dievaluasi!
                                 </td>
                             </tr>
                             @endforelse
@@ -260,6 +258,29 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+    });
+</script>
 
 @include('auth.logout')
 

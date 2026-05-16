@@ -19,7 +19,7 @@
             color: #333; 
         }
 
-        /* ================= SIDEBAR (TIDAK DIUBAH) ================= */
+        /* SIDEBAR STRUKTUR BARU */
         .sidebar {
             width: 250px; 
             min-height: 100vh; 
@@ -28,7 +28,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 100;
+            z-index: 1045; /* DITAMBAHKAN: Diperbesar agar selalu di atas elemen lain saat mobile */
+            transition: transform 0.3s ease-in-out; /* DITAMBAHKAN: Efek animasi geser */
         }
 
         .sidebar .logo { 
@@ -69,12 +70,12 @@
         .sidebar .nav-link.text-white-50:hover {
             color: #fff !important;
         }
-        /* ========================================================== */
 
-        /* KUSTOMISASI KONTEN UTAMA ESTETIK */
+        /* CONTENT LAMA (Ditambah transisi) */
         .content { 
             margin-left: 250px; 
             padding: 40px 50px; 
+            transition: margin-left 0.3s ease; 
         }
 
         .page-header {
@@ -124,12 +125,6 @@
             background-color: #fff;
             border-color: #8f9fc4;
             box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15);
-        }
-
-        .form-control[readonly] {
-            background-color: #f1f3f5;
-            cursor: not-allowed;
-            color: #6c757d;
         }
 
         /* Area Map & Tombol Melayang */
@@ -196,11 +191,34 @@
             transform: translateY(-1px);
             box-shadow: 0 5px 15px rgba(74, 111, 165, 0.3);
         }
+
+        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show-mobile { transform: translateX(0); }
+            .content { margin-left: 0 !important; padding: 15px !important; }
+            .sidebar-overlay.show { display: block; }
+            
+            .custom-card .card-body { padding: 20px; } /* Perkecil padding dalam form di HP */
+            .btn-floating-location { padding: 6px 12px; font-size: 11px; } /* Sesuaikan ukuran tombol map di HP */
+        }
+        /* --------------------------------------- */
     </style>
 </head>
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
     <div class="logo">
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
@@ -211,32 +229,43 @@
                 <i class="bi bi-house-door"></i> Home
             </a>
         </li>
+
         <li class="nav-item">
             <a href="{{ route('pimpinan.gaji') }}" class="nav-link {{ Request::is('pimpinan/gaji*') ? 'active' : '' }}">
                 <i class="bi bi-cash-stack"></i> Manajemen Gaji
             </a>
         </li>
+
         <li class="nav-item">
             <a href="{{ route('pimpinan.cuti') }}" class="nav-link {{ Request::is('pimpinan/cuti*') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-check"></i> Manajemen Cuti
             </a>
         </li>
+
         <li class="nav-item">
             <a href="{{ route('pimpinan.reward') }}" class="nav-link {{ Request::is('pimpinan/reward*') ? 'active' : '' }}">
                 <i class="bi bi-gift"></i> Reward & Recognition
             </a>
         </li>
+
         <li class="nav-item">
             <a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link {{ Request::is('pimpinan/karyawan-pending*') ? 'active' : '' }}">
                 <i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan
             </a>
         </li>
+
         <li class="nav-item">
             <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
                 <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
             </a>
         </li>
-        
+
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.hari_libur') }}" class="nav-link {{ Request::is('pimpinan/hari-libur*') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Hari Libur
+            </a>
+        </li>
+
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
@@ -247,7 +276,14 @@
 
 <div class="content">
 
-    <div class="page-header">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <h5 class="fw-bold m-0" style="color: #2c3e50;">Pengaturan Lokasi</h5>
+        <button class="btn btn-light border" id="openSidebarBtn">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <div class="page-header d-none d-md-block">
         <h2>Pengaturan Lokasi Kantor</h2>
         <p>Tentukan titik koordinat pusat dan batas area presensi karyawan.</p>
     </div>
@@ -286,11 +322,11 @@
                 <div class="row mb-4">
                     <div class="col-md-6 mb-3 mb-md-0">
                         <label class="form-label"><i class="bi bi-geo text-primary me-1"></i> Latitude</label>
-                        <input type="number" step="0.0000001" name="latitude" id="input-lat" class="form-control" value="{{ old('latitude', $pengaturan->latitude ?? '') }}" required readonly>
+                        <input type="number" step="0.0000001" name="latitude" id="input-lat" class="form-control" value="{{ old('latitude', $pengaturan->latitude ?? '') }}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label"><i class="bi bi-geo text-primary me-1"></i> Longitude</label>
-                        <input type="number" step="0.0000001" name="longitude" id="input-lng" class="form-control" value="{{ old('longitude', $pengaturan->longitude ?? '') }}" required readonly>
+                        <input type="number" step="0.0000001" name="longitude" id="input-lng" class="form-control" value="{{ old('longitude', $pengaturan->longitude ?? '') }}" required>
                     </div>
                 </div>
 
@@ -318,6 +354,29 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+
+        // --- DITAMBAHKAN: LOGIKA MENU BURGER HP ---
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+        // ------------------------------------------
+
+        // --- LOGIKA MAPS (TIDAK DIUBAH) ---
         const latInput = document.getElementById('input-lat');
         const lngInput = document.getElementById('input-lng');
         const btnCurrentLoc = document.getElementById('btn-current-loc');
@@ -338,6 +397,22 @@
             latInput.value = lat.toFixed(7);
             lngInput.value = lng.toFixed(7);
         }
+
+        function updateMapFromInput() {
+            let lat = parseFloat(latInput.value);
+            let lng = parseFloat(lngInput.value);
+
+            // Validasi agar map tidak error jika input dikosongkan sementara
+            if (!isNaN(lat) && !isNaN(lng)) {
+                let newLatLng = new L.LatLng(lat, lng);
+                marker.setLatLng(newLatLng);
+                map.setView(newLatLng, map.getZoom()); // Menyesuaikan view tanpa mengubah level zoom
+            }
+        }
+
+        // Mendaftarkan event listener ke kolom input
+        latInput.addEventListener('input', updateMapFromInput);
+        lngInput.addEventListener('input', updateMapFromInput);
 
         marker.on('dragend', function (e) {
             const position = marker.getLatLng();

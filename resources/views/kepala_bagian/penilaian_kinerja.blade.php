@@ -12,16 +12,18 @@
         /* SIDEBAR */
         .sidebar {
             width: 250px; min-height: 100vh; background-color: #8f9fc4;
-            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
+            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
+            z-index: 1045; 
+            transition: transform 0.3s ease-in-out; 
         }
         .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
         .sidebar .logo img { width: 100px; }
-        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s;}
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
+        .sidebar .nav-link { color: #fff; font-size: 16px; padding: 12px 25px; margin: 4px 15px; transition: 0.3s; text-decoration: none;}
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600; color: #fff;}
         .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
         
         /* CONTENT */
-        .content { margin-left: 250px; padding: 40px; }
+        .content { margin-left: 250px; padding: 40px; transition: margin-left 0.3s ease; }
         .card-custom { 
             background-color: #ffffff; 
             border-radius: 16px; 
@@ -32,12 +34,55 @@
         /* TABLE STYLES */
         .table-custom th { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
         .table-custom td { vertical-align: middle; border-bottom: 1px solid #e2e8f0; }
+
+        /* Style Pagination dinamis Laravel */
+        .pagination { margin-bottom: 0; gap: 4px; }
+        .pagination .page-link {
+            padding: 0.35rem 0.5rem !important;
+            font-size: 0.85rem !important;
+            line-height: 1.4 !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 6px !important;
+            color: #475569;
+        }
+        .pagination .page-link:hover { background-color: #f1f5f9 !important; border-color: #8f9fc4 !important; }
+        .pagination .active .page-link { background-color: #8f9fc4 !important; border-color: #8f9fc4 !important; color: white !important;}
+
+        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            /* YANG DIUBAH: Menambahkan width ketat agar sidebar tidak melebar tumpah di HP */
+            .sidebar { transform: translateX(-100%); width: 250px !important; max-width: 85vw; }
+            .sidebar.show-mobile { transform: translateX(0); }
+            .content { margin-left: 0 !important; padding: 15px !important; }
+            .sidebar-overlay.show { display: block; }
+            
+            /* Penyesuaian form filter di HP */
+            .filter-form-group { flex-direction: column; align-items: stretch !important; }
+            .filter-form-group .search-wrapper, .filter-form-group .date-wrapper, .filter-form-group .btn-wrapper { width: 100% !important; }
+            .filter-form-group .btn-wrapper d-flex { width: 100%; }
+            .filter-form-group .btn-wrapper .btn { width: 100%; }
+
+            .content .d-flex { flex-direction: column; align-items: stretch !important; gap: 12px; }
+            .content .btn { width: 100%; }
+        }
+        /* --------------------------------------- */
     </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
+
     <div class="logo">
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
@@ -46,7 +91,7 @@
         <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
         <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link active"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
         <li class="nav-item mt-4">
-            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            <a href="#" class="nav-link text-white-50 px-3" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
         </li>
@@ -54,13 +99,25 @@
 </div>
 
 <div class="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <h5 class="fw-bold m-0" style="color: #2c3e50;">Penilaian Kinerja</h5>
+        <button class="btn btn-light border" id="openSidebarBtn">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <div class="d-none d-md-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold m-0" style="color: #1e293b;">Penilaian Kinerja</h2>
             <p class="text-muted m-0">Evaluasi kinerja bulanan karyawan di departemen Anda.</p>
         </div>
-        <!-- Tombol Pemicu Modal -->
         <button class="btn btn-primary shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalTambahPenilaian">
+            <i class="bi bi-plus-circle me-2"></i>Tambah Penilaian
+        </button>
+    </div>
+    
+    <div class="d-md-none mb-4">
+        <button class="btn btn-primary shadow-sm fw-bold w-100" data-bs-toggle="modal" data-bs-target="#modalTambahPenilaian">
             <i class="bi bi-plus-circle me-2"></i>Tambah Penilaian
         </button>
     </div>
@@ -84,20 +141,39 @@
         </div>
     @endif
 
-    <!-- Tabel Riwayat (Sekarang Full Width) -->
     <div class="row">
         <div class="col-lg-12">
             <div class="card card-custom p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                     <h5 class="fw-bold m-0" style="color: #1e293b;"><i class="bi bi-clock-history me-2 text-primary"></i>Riwayat Penilaian</h5>
-                    <div class="input-group" style="max-width: 300px;">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" id="searchInputPenilaian" class="form-control border-start-0 ps-0" placeholder="Cari karyawan atau bulan...">
-                    </div>
                 </div>
                 
+                <form action="{{ route('kabag.penilaian') }}" method="GET" class="mb-4 bg-light p-3 rounded-4 border">
+                    <div class="row g-3 filter-form-group">
+                        <div class="col-md-5 search-wrapper">
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-person me-1"></i> Cari Staf Karyawan</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Ketik nama karyawan..." value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4 date-wrapper">
+                            <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-month me-1"></i> Bulan & Tahun Penilaian</label>
+                            <input type="month" name="periode" class="form-control shadow-sm" value="{{ request('periode') }}">
+                        </div>
+                        <div class="col-md-3 btn-wrapper" style="margin-top: auto;">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary shadow-sm flex-grow-1 fw-bold"><i class="bi bi-funnel-fill me-1"></i> Filter</button>
+                                @if(request('search') || request('periode'))
+                                    <a href="{{ route('kabag.penilaian') }}" class="btn btn-danger text-white shadow-sm px-3 text-center d-inline-flex align-items-center justify-content-center" title="Reset Filter"><i class="bi bi-arrow-clockwise"></i></a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
                 <div class="table-responsive">
-                    <table class="table table-hover table-custom m-0" id="tabelPenilaian">
+                    <table class="table table-hover table-custom m-0 text-nowrap" id="tabelPenilaian">
                         <thead>
                             <tr>
                                 <th width="20%">Bulan & Tahun</th>
@@ -111,23 +187,21 @@
                             <tr>
                                 <td>
                                     @php
-                                        setlocale(LC_TIME, 'id_ID');
-                                        $monthName = \Carbon\Carbon::create()->month($rp->bulan)->translatedFormat('F');
+                                        $monthName = \Carbon\Carbon::create()->month($rp->bulan)->locale('id')->translatedFormat('F');
                                     @endphp
                                     <span class="fw-medium">{{ $monthName }} {{ $rp->tahun }}</span>
                                 </td>
                                 <td>{{ $rp->karyawan->nama ?? 'Tidak Ditemukan' }}</td>
                                 <td class="text-center fw-bold text-primary fs-5">{{ $rp->total_skor }}</td>
                                 <td class="text-center">
-                                    <!-- Menyesuaikan badge dengan skor 1-100 hasil konversi controller -->
                                     @if($rp->total_skor >= 90)
-                                        <span class="badge bg-success px-3 py-2 rounded-pill">Sangat Baik</span>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">Sangat Baik</span>
                                     @elseif($rp->total_skor >= 80)
-                                        <span class="badge bg-primary px-3 py-2 rounded-pill">Baik</span>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">Baik</span>
                                     @elseif($rp->total_skor >= 60)
-                                        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Cukup</span>
+                                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill">Cukup</span>
                                     @else
-                                        <span class="badge bg-danger px-3 py-2 rounded-pill">Kurang</span>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">Kurang</span>
                                     @endif
                                 </td>
                             </tr>
@@ -143,14 +217,22 @@
                     </table>
                 </div>
 
+                @if($riwayatPenilaian->hasPages())
+                <div class="d-flex flex-column align-items-center mt-4 gap-2 text-center">
+                    <div class="text-muted small">
+                        Menampilkan <strong>{{ $riwayatPenilaian->firstItem() }}</strong> s/d <strong>{{ $riwayatPenilaian->lastItem() }}</strong> dari <strong>{{ $riwayatPenilaian->total() }}</strong> data
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        {{ $riwayatPenilaian->links('pagination::bootstrap-5') }}
+                    </div>
+                </div>
+                @endif
+
             </div>
         </div>
     </div>
 </div>
 
-<!-- ============================================== -->
-<!-- MODAL TAMBAH PENILAIAN DITARUH DI SINI -->
-<!-- ============================================== -->
 <div class="modal fade" id="modalTambahPenilaian" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
@@ -162,7 +244,7 @@
             <form action="{{ route('kabag.penilaian.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
-                    <div class="row mb-4">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Pilih Karyawan</label>
                             <select name="id_karyawan" class="form-select form-select-lg" required>
@@ -245,9 +327,9 @@
                     </div>
 
                 </div>
-                <div class="modal-footer bg-light border-top-0 rounded-bottom-4">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold"><i class="bi bi-save me-2"></i>Simpan Penilaian</button>
+                <div class="modal-footer bg-light px-4 py-3 border-top-0 rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold rounded-pill shadow-sm"><i class="bi bi-save me-2"></i>Simpan Penilaian</button>
                 </div>
             </form>
         </div>
@@ -257,7 +339,6 @@
 @include('auth.logout')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Jika ada error validasi, otomatis buka modal lagi -->
 @if($errors->any())
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -268,20 +349,25 @@
 @endif
 
 <script>
-    document.getElementById('searchInputPenilaian').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#tabelPenilaian tbody tr');
-        
-        rows.forEach(row => {
-            if (row.querySelector('td[colspan]')) return; // Abaikan baris "Data Kosong"
-            
-            let text = row.textContent.toLowerCase();
-            if (text.includes(filter)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
     });
 </script>
 

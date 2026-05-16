@@ -45,13 +45,8 @@ class AkademikController extends Controller
         // ---------------------------------------------------------
         // PERUBAHAN: Menghitung Tidak Hadir (Alpha)
         // ---------------------------------------------------------
-        // Kita hitung yang statusnya 'alpha' di tabel absensi hari ini
         $alphaTercatat = $dataAbsensiHariIni->where('status', 'alpha')->count();
 
-        // Logika tampilan:
-        // Jika Cron Job (jam 17:00) SUDAH berjalan, $alphaTercatat akan memiliki angka pasti.
-        // Jika Cron Job BELUM berjalan (masih pagi/siang), kita gunakan rumus perkiraan seperti sebelumnya
-        // agar dashboard tetap menampilkan sisa orang yang belum absen.
         $waktuSekarang = now()->toTimeString();
         if ($waktuSekarang >= '17:00:00') {
             $tidakHadir = $alphaTercatat;
@@ -67,9 +62,9 @@ class AkademikController extends Controller
             'Cuti' => $cutiToday
         ];
 
-        // Variabel $hadirHariIni saya arahkan ke $hadir agar konsisten
         return view('akademik.beranda', compact('totalKaryawan', 'hadir', 'rekapCuti', 'rekapAbsensi'));
     }
+
     public function absensi(Request $request)
     {
         $query = \App\Models\Absensi::with(['karyawan.user']);
@@ -94,7 +89,7 @@ class AkademikController extends Controller
             }
         }
 
-        // 3. Filter Berdasarkan Status (hadir, absen, dll)
+        // 3. Filter Berdasarkan Status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -105,6 +100,7 @@ class AkademikController extends Controller
 
         return view('akademik.riwayat_absensi', compact('dataAbsensi'));
     }
+
     public function cuti(Request $request)
     {
         $query = \App\Models\Cuti::with(['karyawan.user']);
@@ -134,17 +130,20 @@ class AkademikController extends Controller
             $query->where('status', $request->status);
         }
 
-        $dataCuti = $query->orderBy('tanggal_pengajuan', 'desc')->get();
+        // YANG DIUBAH: Mengganti ->get() menjadi ->paginate(15) dengan query string filter bawaan
+        $dataCuti = $query->orderBy('tanggal_pengajuan', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('akademik.riwayat_cuti', compact('dataCuti'));
     }
+
     public function karyawan()
     {
-        // Mengambil data karyawan dari database (tabel users yang memiliki role karyawan)
         $dataKaryawan = \App\Models\User::with(['karyawan', 'role'])
             ->whereHas('role', function ($query) {
                 $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
-            })->get();
+            })->paginate(15);
 
         return view('akademik.manajemen_karyawan', compact('dataKaryawan'));
     }

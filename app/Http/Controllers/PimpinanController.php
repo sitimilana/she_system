@@ -44,12 +44,15 @@ class PimpinanController extends Controller
 
     public function karyawanPending()
     {
-        $users = User::with('role', 'karyawan')->where('status_akun', 'pending')->get();
+        $users = User::with('role', 'karyawan')
+            ->where('status_akun', 'pending')
+            ->paginate(5, ['*'], 'pending_page');
+
         $approvedUsers = User::with('role', 'karyawan')
-                     ->where('status_akun', 'aktif')
-                     ->whereHas('karyawan')
-                     ->orderBy('updated_at', 'desc')
-                     ->get();
+            ->where('status_akun', 'aktif')
+            ->whereHas('karyawan')
+            ->orderBy('updated_at', 'desc')
+            ->paginate(5, ['*'], 'approved_page');
 
         return view('pimpinan.karyawan_pending', compact('users', 'approvedUsers'));
     }
@@ -109,12 +112,55 @@ class PimpinanController extends Controller
             ->sum('total_gaji');
         $totalBebanGaji = number_format($totalBebanGaji ?: 150000000, 0, ',', '.');
 
-        $cutiTerbaru = []; 
-        $topKaryawan = []; 
+        $cutiTerbaru = Cuti::with('karyawan')
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
 
+        // 2. REVISI: Logika Cerdas Top Performer (Bulan Ini atau Bulan Lalu)
+        $currentDate = Carbon::now();
+        $bulanTopPerformer = $currentDate->translatedFormat('F Y'); // Default: Bulan Ini
+        
+        $topKaryawan = \App\Models\Reward::with(['karyawan', 'penilaian'])
+            ->whereMonth('tanggal_reward', $currentDate->month)
+            ->whereYear('tanggal_reward', $currentDate->year)
+            ->get()
+            ->sortByDesc(function($reward) {
+                return $reward->penilaian->total_skor ?? 0;
+            })
+            ->take(1); 
+
+        // Jika bulan ini kosong, cari data bulan sebelumnya
+        if ($topKaryawan->isEmpty()) {
+            $lastMonthDate = Carbon::now()->subMonth();
+            $topKaryawan = \App\Models\Reward::with(['karyawan', 'penilaian'])
+                ->whereMonth('tanggal_reward', $lastMonthDate->month)
+                ->whereYear('tanggal_reward', $lastMonthDate->year)
+                ->get()
+                ->sortByDesc(function($reward) {
+                    return $reward->penilaian->total_skor ?? 0;
+                })
+                ->take(1);
+
+            // Jika bulan lalu ternyata ada datanya, ubah teks judul bulannya
+            if ($topKaryawan->isNotEmpty()) {
+                $bulanTopPerformer = $lastMonthDate->translatedFormat('F Y');
+            }
+        }
+
+        $karyawanSudahDigaji = Penggajian::where('bulan', now()->month)
+            ->where('tahun', now()->year)
+            ->distinct('id_karyawan')
+            ->count('id_karyawan');
+        $belumDigaji = max(0, $totalKaryawan - $karyawanSudahDigaji);
+
+        $karyawanPending = User::where('status_akun', 'pending')->count();
+
+        // Jangan lupa tambahkan 'bulanTopPerformer' ke compact()
         return view('pimpinan.dashboard', compact(
             'totalKaryawan', 'karyawanCutiHariIni', 'totalBebanGaji', 'cutiTerbaru', 'topKaryawan',
-            'jmlHadir', 'jmlTerlambat', 'jmlAlpha', 'jmlCuti', 'filterKehadiran', 'karyawanTanpaCuti', 'totalSaldoCutiPerusahaan'
+            'jmlHadir', 'jmlTerlambat', 'jmlAlpha', 'jmlCuti', 'filterKehadiran', 'karyawanTanpaCuti', 
+            'totalSaldoCutiPerusahaan', 'belumDigaji', 'karyawanPending', 'bulanTopPerformer'
         ));
     }
 
@@ -137,8 +183,13 @@ class PimpinanController extends Controller
             $queryRiwayat->where('jenis_cuti', $request->jenis_cuti);
         }
 
-        $dataCuti = $query->orderByDesc('tanggal_pengajuan')->paginate(10, ['*'], 'page')->withQueryString();
-        $riwayatCuti = $queryRiwayat->orderByDesc('updated_at')->paginate(10, ['*'], 'riwayat_page')->withQueryString();
+        $dataCuti = $query
+            ->paginate(10, ['*'], 'page')
+            ->withQueryString();
+
+        $riwayatCuti = $queryRiwayat
+            ->paginate(10, ['*'], 'riwayat_page')
+            ->withQueryString();
 
         return view('pimpinan.manajemen_cuti', compact('dataCuti', 'riwayatCuti'));
     }
@@ -184,13 +235,16 @@ class PimpinanController extends Controller
         $search = $request->input('search');
 
         $query = Penggajian::with('karyawan')->where('bulan', $bulan)->where('tahun', $tahun);
+        
         if ($search) {
             $query->whereHas('karyawan', function($q) use ($search) {
                 $q->where('nama', 'like', '%' . $search . '%');
             });
         }
 
-        $dataGaji = $query->get();
+        // PERUBAHAN DI SINI: Mengganti get() menjadi paginate(10)
+        $dataGaji = $query->paginate(10)->withQueryString(); 
+
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',

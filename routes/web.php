@@ -37,6 +37,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/pimpinan/gaji/{id}', [PimpinanController::class, 'destroyGaji'])->name('pimpinan.gaji.destroy');
     # Reward
     Route::get('/pimpinan/reward', [RewardController::class, 'index'])->name('pimpinan.reward');
+    Route::post('/pimpinan/reward/store', [RewardController::class, 'store'])->name('pimpinan.reward.store');
     # Pengaturan Lokasi Presensi
     Route::get('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'pengaturanLokasi'])->name('pimpinan.pengaturan-lokasi');
     Route::put('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'updatePengaturanLokasi'])->name('pimpinan.pengaturan-lokasi.update');
