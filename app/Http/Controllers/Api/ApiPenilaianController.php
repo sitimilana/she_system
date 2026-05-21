@@ -83,40 +83,58 @@ class ApiPenilaianController extends Controller
 
         // 1. Cek Skor Tertinggi (Rank 1) di Perusahaan pada bulan ini
         $topScoreBulanIni = Penilaian::where('bulan', $bulanSekarang)
-                                     ->where('tahun', $tahunSekarang)
-                                     ->max('total_skor');
+                                    ->where('tahun', $tahunSekarang)
+                                    ->max('total_skor');
 
         // 2. Ambil Penilaian milik Karyawan ini pada bulan ini
         $penilaianSayaBulanIni = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
-                                          ->where('bulan', $bulanSekarang)
-                                          ->where('tahun', $tahunSekarang)
-                                          ->first();
+                                        ->where('bulan', $bulanSekarang)
+                                        ->where('tahun', $tahunSekarang)
+                                        ->first();
 
         // 3. Tentukan apakah Karyawan ini adalah Penerima Reward (Top 1)
         $isTopPerformer = false;
         if ($topScoreBulanIni !== null && $penilaianSayaBulanIni !== null) {
-            // (Opsional: Jika ada tie-breaker, logika disamakan dengan controller pimpinan)
             if ($penilaianSayaBulanIni->total_skor == $topScoreBulanIni) {
-                // Sederhananya, jika nilai dia adalah nilai tertinggi, dia dapat reward.
                 $isTopPerformer = true;
             }
         }
 
         // 4. Ambil 6 bulan terakhir untuk Data Chart Kinerja
         $riwayat6Bulan = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
-                                  ->orderBy('tahun', 'desc')
-                                  ->orderBy('bulan', 'desc')
-                                  ->take(6)
-                                  ->get()
-                                  ->reverse(); // Balik urutan agar dari bulan terlama ke terbaru (untuk chart)
+                                ->orderBy('tahun', 'desc')
+                                ->orderBy('bulan', 'desc')
+                                ->take(6)
+                                ->get()
+                                ->reverse(); 
 
         $chartData = $riwayat6Bulan->map(function ($item) {
             $namaBulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             return [
-                'label' => $namaBulan[$item->bulan - 1] . ' ' . substr($item->tahun, -2), // Contoh: "Mei 26"
+                'label' => $namaBulan[$item->bulan - 1] . ' ' . substr($item->tahun, -2), 
                 'skor'  => (int) $item->total_skor
             ];
         })->values();
+
+        // 5. Tambahkan payload riwayat terformat untuk menyuplai halaman RewardList di Android
+        $allPenilaian = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
+                                ->orderBy('tahun', 'desc')
+                                ->orderBy('bulan', 'desc')
+                                ->get();
+
+        $rewardHistory = $allPenilaian->map(function ($item) use ($karyawan, $user) {
+            $paddedMonth = str_pad($item->bulan, 2, '0', STR_PAD_LEFT);
+
+            return [
+                'id' => (int) $item->id_penilaian,
+                'nama' => $karyawan->nama ?? $karyawan->nama_karyawan ?? $user->name ?? 'Karyawan',
+                'skor' => (int) $item->total_skor,
+                'alasan' => "Apresiasi kinerja bulan ke-" . $item->bulan,
+                'tanggal' => $item->tahun . "-" . $paddedMonth . "-01",
+                'bulan' => (int) $item->bulan,
+                'tahun' => (int) $item->tahun
+            ];
+        });
 
         return response()->json([
             'success' => true,
@@ -124,7 +142,8 @@ class ApiPenilaianController extends Controller
             'data'    => [
                 'is_top_performer_bulan_ini' => $isTopPerformer,
                 'skor_bulan_ini'             => $penilaianSayaBulanIni ? (int) $penilaianSayaBulanIni->total_skor : 0,
-                'chart_data'                 => $chartData
+                'chart_data'                 => $chartData,
+                'reward_history'             => $rewardHistory // Sesuai struktur data objek RewardItem Android
             ]
         ], 200);
     }

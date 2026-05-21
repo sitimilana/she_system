@@ -456,14 +456,34 @@
 
                             @if($absen->foto_masuk)
 
-                                <img src="{{ asset('storage/' . $absen->foto_masuk) }}"
+                                @php
+                                    $fotoMasuk = $absen->foto_masuk;
+                                    if (preg_match('/^https?:\/\//', $fotoMasuk)) {
+                                        $fotoMasukUrl = $fotoMasuk;
+                                    } else {
+                                        $cleanPath = ltrim(str_replace('storage/', '', $fotoMasuk), '/');
+                                        $fotoMasukUrl = asset('storage/' . $cleanPath);
+                                    }
+                                @endphp
+
+                                <img src="{{ $fotoMasukUrl }}"
                                      alt="In"
                                      class="photo-thumb me-1"
                                      title="Foto Masuk">
 
                                 @if($absen->foto_pulang)
 
-                                    <img src="{{ asset('storage/' . $absen->foto_pulang) }}"
+                                    @php
+                                        $fotoPulang = $absen->foto_pulang;
+                                        if (preg_match('/^https?:\/\//', $fotoPulang)) {
+                                            $fotoPulangUrl = $fotoPulang;
+                                        } else {
+                                            $cleanPath = ltrim(str_replace('storage/', '', $fotoPulang), '/');
+                                            $fotoPulangUrl = asset('storage/' . $cleanPath);
+                                        }
+                                    @endphp
+
+                                    <img src="{{ $fotoPulangUrl }}"
                                          alt="Out"
                                          class="photo-thumb"
                                          title="Foto Pulang">

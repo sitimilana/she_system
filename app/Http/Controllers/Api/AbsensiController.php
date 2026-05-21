@@ -13,6 +13,20 @@ use Illuminate\Support\Facades\DB;
 
 class AbsensiController extends Controller
 {
+    private function getPhotoUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//', $path)) {
+            return $path;
+        }
+
+        $cleanPath = ltrim(str_replace('storage/', '', $path), '/');
+        return asset('storage/' . $cleanPath);
+    }
+
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
         $earthRadius = 6371; // Radius bumi dalam kilometer
@@ -275,13 +289,16 @@ class AbsensiController extends Controller
             $startDate->addDay();
         }
 
-        // =================================================================
-        // BACA KEMBALI DATABASE SETELAH REKAP
-        // =================================================================
         $riwayat = Absensi::where('id_karyawan', $id_karyawan)
                           ->whereDate('tanggal', '>=', $tanggalMulaiAktif->toDateString())
                           ->orderBy('tanggal', 'desc')
-                          ->get();
+                          ->get()
+                          ->map(function ($absen) {
+                              $absen->foto_masuk = $this->getPhotoUrl($absen->foto_masuk);
+                              $absen->foto_pulang = $this->getPhotoUrl($absen->foto_pulang);
+                              
+                              return $absen;
+                          });
 
         return response()->json([
             'success' => true,
