@@ -18,6 +18,7 @@ class Cuti extends Model
         'jenis_cuti',
         'berkas_bukti',
         'status',
+        'keterangan_pimpinan',
         'disetujui_oleh'
     ];
 

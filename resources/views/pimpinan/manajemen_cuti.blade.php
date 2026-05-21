@@ -217,15 +217,6 @@
         </div>
     </div>
     
-    <div class="mb-4">
-        <form action="{{ route('pimpinan.cuti.tambah_jatah') }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-info px-4 py-2 fw-bold shadow-sm text-white btn-jatah-cuti" onclick="return confirm('PENTING: Apakah Anda yakin ingin membagikan jatah cuti (+1 hari) untuk bulan ini? Pastikan Anda hanya menekan tombol ini 1 kali dalam sebulan!')">
-                <i class="bi bi-plus-circle me-2"></i> Bagikan Jatah Cuti Bulanan
-            </button>
-        </form>
-    </div>
-
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
@@ -274,11 +265,19 @@
                 </thead>
                 <tbody>
                     @forelse($dataCuti as $index => $cuti)
-                    <tr>
+                    <tr class="{{ $cuti->is_bentrok ? 'table-warning' : '' }}">
                         <td class="text-center">{{ ($dataCuti->currentPage() - 1) * $dataCuti->perPage() + $index + 1 }}</td>
                         <td>
                             <div class="fw-bold text-dark">{{ $cuti->karyawan->nama ?? '-' }}</div>
                             <div class="small text-muted">{{ $cuti->karyawan->jabatan ?? '-' }}</div>
+                            @if($cuti->is_bentrok)
+                                <div class="badge bg-danger mt-1 text-wrap text-start" style="font-size:0.7rem; max-width: 15rem;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Bentrok Divisi:<br>
+                                    @foreach($cuti->data_bentrok as $bentrok)
+                                        - {{ $bentrok->karyawan->nama ?? 'Unknown' }} ({{ $bentrok->jenis_cuti }})<br>
+                                    @endforeach
+                                </div>
+                            @endif
                         </td>
                         <td class="text-center"><span class="jenis-cuti-badge">{{ $cuti->jenis_cuti }}</span></td>
                         <td>
@@ -297,12 +296,42 @@
                             <div class="d-flex justify-content-center gap-1">
                                 <form action="{{ route('pimpinan.cuti.approve', $cuti->id_cuti) }}" method="POST" class="d-inline">
                                     @csrf 
-                                    <button type="submit" class="btn btn-success action-btn shadow-sm" title="Setujui" onclick="return confirm('Setujui & potong saldo cuti karyawan ini?')"><i class="bi bi-check-lg"></i></button>
+                                    <button type="submit" class="btn btn-success action-btn shadow-sm" title="Setujui" onclick="return confirm('Setujui pengajuan ini?')"><i class="bi bi-check-lg"></i></button>
                                 </form>
-                                <form action="{{ route('pimpinan.cuti.reject', $cuti->id_cuti) }}" method="POST" class="d-inline">
-                                    @csrf 
-                                    <button type="submit" class="btn btn-danger action-btn shadow-sm" title="Tolak" onclick="return confirm('Tolak pengajuan cuti ini?')"><i class="bi bi-x-lg"></i></button>
-                                </form>
+                                <button type="button" class="btn btn-danger action-btn shadow-sm" title="Tolak" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $cuti->id_cuti }}"><i class="bi bi-x-lg"></i></button>
+                            </div>
+
+                            <!-- Modal Reject / Auto Convert -->
+                            <div class="modal fade" id="rejectModal{{ $cuti->id_cuti }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $cuti->id_cuti }}" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold" id="rejectModalLabel{{ $cuti->id_cuti }}">Tolak Pengajuan ({{ $cuti->jenis_cuti }})</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <form action="{{ route('pimpinan.cuti.reject', $cuti->id_cuti) }}" method="POST">
+                                            @csrf
+                                            <div class="modal-body text-start">
+                                                <p class="mb-2">Anda akan menolak pengajuan <b>{{ $cuti->karyawan->nama }}</b>.</p>
+                                                
+                                                @if(strtolower($cuti->jenis_cuti) === 'sakit')
+                                                    <div class="alert alert-warning py-2 mb-3">
+                                                        <i class="bi bi-info-circle-fill"></i> Karena ini adalah surat <b>SAKIT</b>, menekan tombol Tolak akan otomatis mengkonversinya menjadi <b>IZIN (Potong Gaji)</b>.
+                                                    </div>
+                                                @endif
+                                                
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Alasan / Keterangan Penolakan:</label>
+                                                    <textarea class="form-control" name="keterangan_pimpinan" rows="3" required placeholder="Tulis alasan mengapa pengajuan ini ditolak/dialihkan..."></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-danger">Tolak & Konfirmasi</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -359,6 +388,12 @@
                                 <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 badge-status"><i class="bi bi-clock-fill me-1"></i> Pending</span>
                             @else
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 badge-status"><i class="bi bi-x-circle-fill me-1"></i> {{ ucfirst($cuti->status) }}</span>
+                            @endif
+
+                            @if($cuti->keterangan_pimpinan)
+                                <div class="mt-2 text-start">
+                                    <small class="text-muted d-block" style="font-size:0.75rem;"><b>Catatan:</b><br>{{ $cuti->keterangan_pimpinan }}</small>
+                                </div>
                             @endif
                         </td>
                     </tr>

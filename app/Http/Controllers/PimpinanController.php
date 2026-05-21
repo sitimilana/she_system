@@ -59,11 +59,13 @@ class PimpinanController extends Controller
 
     public function approveKaryawan($id)
     {
+        /** @var User $user */
         $user = User::with('karyawan')->findOrFail($id);
         $user->status_akun = 'aktif';
         
         if ($user->karyawan) {
             $user->karyawan->status_karyawan = 'aktif';
+            $user->karyawan->tanggal_masuk = $user->karyawan->tanggal_masuk ?? now()->toDateString();
             $user->karyawan->save();
 
             if($user->karyawan->email && $user->karyawan->email != '-') {
@@ -185,40 +187,70 @@ class PimpinanController extends Controller
 
         $dataCuti = $query
             ->paginate(10, ['*'], 'page')
-            ->withQueryString();
+            ->appends(request()->query());
 
         $riwayatCuti = $queryRiwayat
             ->paginate(10, ['*'], 'riwayat_page')
-            ->withQueryString();
+            ->appends(request()->query());
 
         return view('pimpinan.manajemen_cuti', compact('dataCuti', 'riwayatCuti'));
     }
 
-    public function approveCuti($id)
+    public function approve(Request $request, $id)
     {
-        $cuti = Cuti::with('karyawan')->where('id_cuti', $id)->where('status', 'pending_pimpinan')->firstOrFail();
-
+        // 1. Ambil data pengajuan beserta relasi karyawan
+        $cuti = Cuti::with('karyawan')->findOrFail($id);
+        
+        // 2. Hitung durasi hari secara riil berdasarkan tanggal pengajuan
         $mulai      = \Carbon\Carbon::parse($cuti->tanggal_mulai);
         $selesai    = \Carbon\Carbon::parse($cuti->tanggal_selesai);
         $jumlahHari = $mulai->diffInDays($selesai) + 1;
 
         try {
-            DB::transaction(function () use ($cuti, $jumlahHari) {
-                $karyawan = Karyawan::lockForUpdate()->findOrFail($cuti->id_karyawan);
-                if ($karyawan->sisa_cuti < $jumlahHari) {
-                    throw new \RuntimeException('insufficient_quota');
+            // 3. Gunakan DB::transaction untuk mengamankan perubahan data saldo kuota
+            DB::transaction(function () use ($cuti, $jumlahHari, $request) {
+                
+                // Jika jenis perizinannya adalah murni 'Cuti', lakukan pemotongan kuota saldo
+                if (strtolower($cuti->jenis_cuti) === 'cuti' && $cuti->karyawan) {
+                    
+                    // Kunci baris data karyawan di database agar tidak dimanipulasi request lain saat ini
+                    $karyawan = Karyawan::lockForUpdate()->findOrFail($cuti->id_karyawan);
+                    
+                    // Validasi ulang kuota di sisi server sebelum memotong
+                    if ($karyawan->sisa_cuti < $jumlahHari) {
+                        throw new \RuntimeException('insufficient_quota');
+                    }
+                    
+                    // Potong kuota jatah cuti secara dinamis sesuai total hari ($jumlahHari)
+                    $karyawan->update(['sisa_cuti' => $karyawan->sisa_cuti - $jumlahHari]);
                 }
-                $karyawan->update(['sisa_cuti' => $karyawan->sisa_cuti - $jumlahHari]);
-                $cuti->update(['status' => 'approved', 'disetujui_oleh'=> auth()->id()]);
+
+                // Update status pengajuan cuti menjadi disetujui (Approved)
+                $cuti->update([
+                    'status' => 'approved',
+                    'keterangan_pimpinan' => $request->keterangan_pimpinan ?? 'Disetujui',
+                    'disetujui_oleh' => auth()->id()
+                ]);
             });
+
         } catch (\RuntimeException $e) {
+            // Tangkap error jika kuota tidak mencukupi saat divalidasi server
             if ($e->getMessage() === 'insufficient_quota') {
-                return redirect()->route('pimpinan.cuti')->with('error', 'Saldo cuti karyawan tidak mencukupi.');
+                return redirect()->back()->with('error', 'Saldo cuti karyawan tidak mencukupi.');
             }
             throw $e;
         }
 
-        return redirect()->route('pimpinan.cuti')->with('success', 'Pengajuan cuti disetujui.');
+        // 4. Kirim notifikasi email otomatis setelah transaksi database sukses diselesaikan
+        if ($cuti->karyawan && $cuti->karyawan->email) {
+            try {
+                Mail::to($cuti->karyawan->email)->send(new \App\Mail\StatusCutiMail($cuti, 'Disetujui'));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Gagal mengirim email approve: " . $e->getMessage());
+            }
+        }
+
+        return redirect()->back()->with('success', 'Pengajuan cuti berhasil disetujui.');
     }
 
     public function rejectCuti($id)
@@ -243,7 +275,7 @@ class PimpinanController extends Controller
         }
 
         // PERUBAHAN DI SINI: Mengganti get() menjadi paginate(10)
-        $dataGaji = $query->paginate(10)->withQueryString(); 
+        $dataGaji = $query->paginate(10)->appends(request()->query());
 
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -531,19 +563,6 @@ class PimpinanController extends Controller
         ]);
     }
 
-    public function tambahJatahBulanan()
-    {
-        $karyawans = \App\Models\Karyawan::where('status_karyawan', 'aktif')->get();
-        $jumlahDiupdate = 0;
-        foreach ($karyawans as $karyawan) {
-            if ($karyawan->sisa_cuti < 12) {
-                $karyawan->increment('sisa_cuti', 1);
-                $jumlahDiupdate++;
-            }
-        }
-        return redirect()->back()->with('success', "Jatah cuti bulanan (+1) berhasil dibagikan.");
-    }
-    
     public function hariLibur()
     {
         $hariLibur = DB::table('hari_libur')->orderBy('tanggal', 'desc')->get();

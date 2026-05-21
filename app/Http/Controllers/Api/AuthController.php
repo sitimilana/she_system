@@ -43,18 +43,20 @@ class AuthController extends Controller
         // 6. Ambil relasi data Karyawan berdasarkan ID User yang login
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
-        // 7. Kembalikan Response ke Android
+        // 7. Kembalikan Response ke Android (Sudah Fix Menyertakan Tanggal Masuk)
         return response()->json([
             'success' => true,
             'message' => 'Login Berhasil',
             'token'   => $token,
             'data'    => [
-                'id_user'      => $user->id_user,
-                'username'     => $user->username,
+                'id_user'       => $user->id_user,
+                'username'      => $user->username,
                 // Ambil nama dari tabel karyawan jika ada, jika tidak fallback ke nama/username di tabel users
-                'nama_lengkap' => $karyawan ? $karyawan->nama : $user->username,
+                'nama_lengkap'  => $karyawan ? $karyawan->nama : $user->username,
                 // Kirim divisi jika ada, jika tidak kirim string kosong
-                'divisi'       => $karyawan ? $karyawan->divisi : '' 
+                'divisi'        => $karyawan ? $karyawan->divisi : '',
+                // ✅ BERHASIL DITAMBAHKAN: Digunakan untuk batasan filter tahun di RiwayatPengajuanActivity Android
+                'tanggal_masuk' => ($karyawan && $karyawan->tanggal_masuk) ? $karyawan->tanggal_masuk : $user->created_at->toDateString()
             ]
         ]);
     }

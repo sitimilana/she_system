@@ -67,8 +67,8 @@
             .filter-form-group .btn-wrapper d-flex { width: 100%; }
             .filter-form-group .btn-wrapper .btn { width: 100%; }
 
-            .content .d-flex { flex-direction: column; align-items: stretch !important; gap: 12px; }
-            .content .btn { width: 100%; }
+            .content .d-flex:not(.d-md-none):not(.bg-white) { flex-direction: column; align-items: stretch !important; gap: 12px; }
+            .content .btn:not(#openSidebarBtn) { width: 100%; }
         }
         /* --------------------------------------- */
     </style>
@@ -176,10 +176,11 @@
                     <table class="table table-hover table-custom m-0 text-nowrap" id="tabelPenilaian">
                         <thead>
                             <tr>
-                                <th width="20%">Bulan & Tahun</th>
-                                <th width="35%">Nama Karyawan</th>
-                                <th width="20%" class="text-center">Total Skor Akhir</th>
-                                <th width="25%" class="text-center">Kategori</th>
+                                <th width="18%">Bulan & Tahun</th>
+                                <th width="30%">Nama Karyawan</th>
+                                <th width="17%" class="text-center">Total Skor Akhir</th>
+                                <th width="20%" class="text-center">Kategori</th>
+                                <th width="15%" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -204,10 +205,20 @@
                                         <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">Kurang</span>
                                     @endif
                                 </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalEditPenilaian" onclick="loadEditPenilaian({{ $rp->id_penilaian }})" title="Edit Penilaian">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" onclick="confirmDelete({{ $rp->id_penilaian }}, '{{ $rp->karyawan->nama ?? 'Karyawan' }}')" title="Hapus">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
+                                <td colspan="5" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-2 d-block mb-2 text-light"></i>
                                     Belum ada riwayat penilaian.
                                 </td>
@@ -337,6 +348,137 @@
 </div>
 
 @include('auth.logout')
+
+<!-- Modal Detail Penilaian -->
+<div class="modal fade" id="modalDetailPenilaian" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header bg-light border-bottom-0 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Detail Penilaian Kinerja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div id="detailContent" class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+            
+            <div class="modal-footer bg-light px-4 py-3 border-top-0 rounded-bottom-4">
+                <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Penilaian -->
+<div class="modal fade" id="modalEditPenilaian" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header bg-light border-bottom-0 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-square me-2 text-warning"></i>Edit Penilaian Kinerja</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form id="formEditPenilaian" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <div id="editLoading" class="text-center">
+                        <div class="spinner-border text-warning" role="status"><span class="visually-hidden">Loading...</span></div>
+                        <p class="mt-2 text-muted">Memuat data...</p>
+                    </div>
+
+                    <div id="editFormContent" style="display: none;">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nama Karyawan</label>
+                                <input type="text" id="edit_nama_karyawan" class="form-control form-control-lg bg-light" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Periode Penilaian <span class="text-danger">*</span></label>
+                                <input type="month" name="periode" id="edit_periode" class="form-control form-control-lg" required>
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive border rounded-3 mb-4">
+                            <table class="table table-sm text-center align-middle m-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-start py-3 px-3" width="45%">Aspek Penilaian</th>
+                                        <th class="py-3">1</th>
+                                        <th class="py-3">2</th>
+                                        <th class="py-3">3</th>
+                                        <th class="py-3">4</th>
+                                        <th class="py-3">5</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Kedisiplinan & Kehadiran (20%)</td>
+                                        <td><input class="form-check-input" type="radio" name="disiplin" id="edit_disiplin_1" value="1" required></td>
+                                        <td><input class="form-check-input" type="radio" name="disiplin" id="edit_disiplin_2" value="2"></td>
+                                        <td><input class="form-check-input" type="radio" name="disiplin" id="edit_disiplin_3" value="3"></td>
+                                        <td><input class="form-check-input" type="radio" name="disiplin" id="edit_disiplin_4" value="4"></td>
+                                        <td><input class="form-check-input" type="radio" name="disiplin" id="edit_disiplin_5" value="5"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Produktivitas Target (30%)</td>
+                                        <td><input class="form-check-input" type="radio" name="produktivitas" id="edit_prod_1" value="1" required></td>
+                                        <td><input class="form-check-input" type="radio" name="produktivitas" id="edit_prod_2" value="2"></td>
+                                        <td><input class="form-check-input" type="radio" name="produktivitas" id="edit_prod_3" value="3"></td>
+                                        <td><input class="form-check-input" type="radio" name="produktivitas" id="edit_prod_4" value="4"></td>
+                                        <td><input class="form-check-input" type="radio" name="produktivitas" id="edit_prod_5" value="5"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Tanggung Jawab Pekerjaan (20%)</td>
+                                        <td><input class="form-check-input" type="radio" name="tanggung_jawab" id="edit_tj_1" value="1" required></td>
+                                        <td><input class="form-check-input" type="radio" name="tanggung_jawab" id="edit_tj_2" value="2"></td>
+                                        <td><input class="form-check-input" type="radio" name="tanggung_jawab" id="edit_tj_3" value="3"></td>
+                                        <td><input class="form-check-input" type="radio" name="tanggung_jawab" id="edit_tj_4" value="4"></td>
+                                        <td><input class="form-check-input" type="radio" name="tanggung_jawab" id="edit_tj_5" value="5"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Sikap Kerja & Perilaku (15%)</td>
+                                        <td><input class="form-check-input" type="radio" name="sikap_kerja" id="edit_sk_1" value="1" required></td>
+                                        <td><input class="form-check-input" type="radio" name="sikap_kerja" id="edit_sk_2" value="2"></td>
+                                        <td><input class="form-check-input" type="radio" name="sikap_kerja" id="edit_sk_3" value="3"></td>
+                                        <td><input class="form-check-input" type="radio" name="sikap_kerja" id="edit_sk_4" value="4"></td>
+                                        <td><input class="form-check-input" type="radio" name="sikap_kerja" id="edit_sk_5" value="5"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Loyalitas & Kerja Sama (15%)</td>
+                                        <td><input class="form-check-input" type="radio" name="loyalitas" id="edit_loy_1" value="1" required></td>
+                                        <td><input class="form-check-input" type="radio" name="loyalitas" id="edit_loy_2" value="2"></td>
+                                        <td><input class="form-check-input" type="radio" name="loyalitas" id="edit_loy_3" value="3"></td>
+                                        <td><input class="form-check-input" type="radio" name="loyalitas" id="edit_loy_4" value="4"></td>
+                                        <td><input class="form-check-input" type="radio" name="loyalitas" id="edit_loy_5" value="5"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">Catatan Evaluasi / Feedback (Opsional)</label>
+                            <textarea name="catatan_evaluasi" id="edit_catatan_evaluasi" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light px-4 py-3 border-top-0 rounded-bottom-4">
+                    <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" id="btnSubmitEdit" class="btn btn-warning px-4 fw-bold rounded-pill shadow-sm" style="display: none;"><i class="bi bi-save me-2"></i>Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Delete Penilaian -->
+<form id="formDeletePenilaian" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 @if($errors->any())
@@ -369,6 +511,176 @@
         if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
         if(overlay) overlay.addEventListener('click', closeSidebar);
     });
+
+    // Fungsi untuk load detail penilaian
+    function loadDetailPenilaian(id) {
+        const detailContent = document.getElementById('detailContent');
+        detailContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Memuat data penilaian...</p></div>';
+
+        const baseUrl = window.location.origin;
+        const url = `${baseUrl}/kepala-bagian/penilaian/${id}`;
+
+        console.log('Fetching URL:', url);
+
+        fetch(url, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    const p = data.penilaian;
+                    const html = `
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted fw-bold">Nama Karyawan</label>
+                                <p class="fw-semibold text-dark">${p.karyawan.nama || 'Tidak Ditemukan'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted fw-bold">Periode Penilaian</label>
+                                <p class="fw-semibold text-dark">${data.periode}</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive border rounded-3 mb-4">
+                            <table class="table table-sm text-center align-middle m-0 table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-start py-3 px-3" width="45%">Aspek Penilaian</th>
+                                        <th class="py-3" width="11%">Skor</th>
+                                        <th class="py-3" width="44%">Bobot</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Kedisiplinan & Kehadiran</td>
+                                        <td><span class="badge bg-info text-white">${p.disiplin}</span></td>
+                                        <td class="text-muted small">20%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Produktivitas Target</td>
+                                        <td><span class="badge bg-info text-white">${p.produktivitas}</span></td>
+                                        <td class="text-muted small">30%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Tanggung Jawab Pekerjaan</td>
+                                        <td><span class="badge bg-info text-white">${p.tanggung_jawab}</span></td>
+                                        <td class="text-muted small">20%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Sikap Kerja & Perilaku</td>
+                                        <td><span class="badge bg-info text-white">${p.sikap_kerja}</span></td>
+                                        <td class="text-muted small">15%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start px-3 py-2 fw-medium">Loyalitas & Kerja Sama</td>
+                                        <td><span class="badge bg-info text-white">${p.loyalitas}</span></td>
+                                        <td class="text-muted small">15%</td>
+                                    </tr>
+                                    <tr class="table-primary fw-bold">
+                                        <td class="text-start px-3 py-3">Total Skor Akhir</td>
+                                        <td colspan="2"><span class="fs-5">${p.total_skor}</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        ${p.catatan_evaluasi ? `
+                        <div class="mb-3">
+                            <label class="form-label small text-muted fw-bold">Catatan Evaluasi / Feedback</label>
+                            <div class="alert alert-light border p-3 rounded-3">
+                                <p class="mb-0">${p.catatan_evaluasi}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="row text-muted small mt-3 pt-3 border-top">
+                            <div class="col-md-6">
+                                <strong>Dinilai oleh:</strong> ${p.penilai.nama_lengkap || 'Sistem'}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Tanggal:</strong> ${data.tanggal_penilaian}
+                            </div>
+                        </div>
+                    `;
+                    detailContent.innerHTML = html;
+                } else {
+                    detailContent.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${data.message || 'Gagal memuat data penilaian'}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                detailContent.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message || 'Terjadi kesalahan saat memuat data'}</div>`;
+            });
+    }
+
+    // Fungsi untuk load pop-up edit
+    function loadEditPenilaian(id) {
+        const loading = document.getElementById('editLoading');
+        const formContent = document.getElementById('editFormContent');
+        const btnSubmit = document.getElementById('btnSubmitEdit');
+        const form = document.getElementById('formEditPenilaian');
+        
+        loading.style.display = 'block';
+        formContent.style.display = 'none';
+        btnSubmit.style.display = 'none';
+
+        const baseUrl = window.location.origin;
+        form.action = `${baseUrl}/kepala-bagian/penilaian/${id}`;
+
+        fetch(`${baseUrl}/kepala-bagian/penilaian/${id}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const p = data.penilaian;
+                
+                document.getElementById('edit_nama_karyawan').value = p.karyawan.nama;
+                document.getElementById('edit_periode').value = `${p.tahun}-${p.bulan}`;
+                document.getElementById('edit_catatan_evaluasi').value = p.catatan_evaluasi || '';
+
+                if (p.disiplin) document.getElementById(`edit_disiplin_${p.disiplin}`).checked = true;
+                if (p.produktivitas) document.getElementById(`edit_prod_${p.produktivitas}`).checked = true;
+                if (p.tanggung_jawab) document.getElementById(`edit_tj_${p.tanggung_jawab}`).checked = true;
+                if (p.sikap_kerja) document.getElementById(`edit_sk_${p.sikap_kerja}`).checked = true;
+                if (p.loyalitas) document.getElementById(`edit_loy_${p.loyalitas}`).checked = true;
+
+                loading.style.display = 'none';
+                formContent.style.display = 'block';
+                btnSubmit.style.display = 'inline-block';
+            } else {
+                loading.innerHTML = `<div class="alert alert-danger">${data.message || 'Gagal memuat data'}</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching edit data:', error);
+            loading.innerHTML = `<div class="alert alert-danger">Terjadi kesalahan koneksi</div>`;
+        });
+    }
+
+    // Fungsi untuk konfirmasi hapus
+    function confirmDelete(id, namaKaryawan) {
+        if (confirm(`Apakah Anda yakin ingin menghapus penilaian kinerja untuk ${namaKaryawan}?\n\nTindakan ini tidak dapat dibatalkan.`)) {
+            const form = document.getElementById('formDeletePenilaian');
+            const baseUrl = window.location.origin;
+            form.action = `${baseUrl}/kepala-bagian/penilaian/${id}`;
+            form.submit();
+        }
+    }
 </script>
 
 </body>

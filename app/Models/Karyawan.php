@@ -18,6 +18,7 @@ class Karyawan extends Model
         'foto',
         'status_karyawan',
         'divisi',
+        'tanggal_masuk',
         'sisa_cuti',
         'gaji_pokok',
         'tunjangan_jabatan',
@@ -52,5 +53,10 @@ class Karyawan extends Model
     public function reward()
     {
         return $this->hasMany(Reward::class,'id_karyawan');
+    }
+
+    public function getSisaCutiTahunIniAttribute()
+    {
+        return (int) ($this->sisa_cuti ?? 0);
     }
 }

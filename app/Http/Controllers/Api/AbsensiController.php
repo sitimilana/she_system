@@ -211,11 +211,15 @@ class AbsensiController extends Controller
         }
 
         $id_karyawan = $karyawan->id_karyawan;
+        $tanggalMulaiAktif = Carbon::parse($karyawan->tanggal_masuk ?? $karyawan->created_at)->startOfDay();
 
         // =================================================================
         // PROSES CATCH-UP (MERAPEL ALFA OTOMATIS)
         // =================================================================
         $startDate = Carbon::now()->startOfMonth();
+        if ($tanggalMulaiAktif->greaterThan($startDate)) {
+            $startDate = $tanggalMulaiAktif->copy();
+        }
         $endDate = Carbon::now()->subDay(); // Sampai H-1 (Kemarin)
 
         // Jika hari ini sudah lewat jam 17:00, kita include hari ini untuk dicek Alfa-nya
@@ -275,6 +279,7 @@ class AbsensiController extends Controller
         // BACA KEMBALI DATABASE SETELAH REKAP
         // =================================================================
         $riwayat = Absensi::where('id_karyawan', $id_karyawan)
+                          ->whereDate('tanggal', '>=', $tanggalMulaiAktif->toDateString())
                           ->orderBy('tanggal', 'desc')
                           ->get();
 
@@ -288,6 +293,16 @@ class AbsensiController extends Controller
     public function getConfigPresensi()
     {
         $config = DB::table('pengaturan_kantor')->first();
+        
+        // Jika konfigurasi kantor belum ada, return error
+        if (!$config) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Konfigurasi kantor belum diatur oleh admin',
+                'data' => null
+            ], 404);
+        }
+
         $tanggalHariIni = \Carbon\Carbon::now('Asia/Jakarta')->toDateString();
         $isLibur = DB::table('hari_libur')->where('tanggal', $tanggalHariIni)->first();
         $isWeekend = \Carbon\Carbon::now('Asia/Jakarta')->isWeekend();
@@ -303,15 +318,21 @@ class AbsensiController extends Controller
             $pesanLibur = 'Presensi tidak tersedia di hari libur akhir pekan.';
         }
 
+        // Pastikan radius/max_radius tidak bernilai 0, default ke 100 jika kosong atau 0
+        $maxRadius = (double) $config->radius;
+        if ($maxRadius <= 0) {
+            $maxRadius = 100; // Default 100 meter jika tidak ada atau 0
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Konfigurasi berhasil dimuat',
             'data' => [
-                'office_lat' => $config ? (double) $config->latitude : 0,
-                'office_lon' => $config ? (double) $config->longitude : 0,
-                'max_radius' => $config ? (double) $config->radius : 0,
-                'is_libur'   => $statusLibur,   // <-- Sekarang data ini ikut terkirim!
-                'pesan_libur'=> $pesanLibur     // <-- Pesannya juga terkirim
+                'office_lat' => (double) $config->latitude,
+                'office_lon' => (double) $config->longitude,
+                'max_radius' => $maxRadius,
+                'is_libur'   => $statusLibur,
+                'pesan_libur'=> $pesanLibur
             ]
         ]);
     }

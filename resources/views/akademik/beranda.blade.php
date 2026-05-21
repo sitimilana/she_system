@@ -97,7 +97,7 @@
         <div class="col-md-3 mt-3 mt-md-0">
             <div class="card card-custom p-4 h-100 text-center" style="border-bottom: 4px solid #3b82f6;">
                 <div class="metric-value text-primary">{{ $hadir }}</div>
-                <p class="text-muted m-0 fw-medium">Karyawan Hadir Hari Ini</p>
+                <p class="text-muted m-0 fw-medium">Jumlah Karyawan Hadir</p>
             </div>
         </div>
     </div>
@@ -111,9 +111,8 @@
                 @forelse($rekapCuti as $cuti)
                     @if($loop->iteration <= 3)
                         <div class="bg-light rounded p-3 mb-3 border">
-                            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                            <div class="mb-2">
                                 <strong class="fs-5">{{ $cuti->nama }}</strong>
-                                <button class="btn btn-sm btn-danger fw-bold">Detail</button>
                             </div>
                             <p class="m-0 text-muted" style="font-size: 0.9rem;">
                                 Tanggal: {{ $cuti->tgl_mulai }} s/d {{ $cuti->tgl_selesai }} <br>
@@ -129,7 +128,19 @@
 
         <div class="col-md-6 mb-4">
             <div class="card card-custom p-4 h-100">
-                <h5 class="fw-bold mb-3">Grafik Rekap Absensi Hari Ini</h5>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1">Grafik Rekap Absensi</h5>
+                        <div class="text-muted small">Periode: {{ $selectedPeriod['label'] }}</div>
+                    </div>
+                    <form method="GET" action="{{ route('akademik.beranda') }}" class="m-0">
+                        <select name="periode_absensi" class="form-select form-select-sm" style="min-width: 160px;" onchange="this.form.submit()">
+                            <option value="hari" {{ $chartPeriod === 'hari' ? 'selected' : '' }}>Hari Ini</option>
+                            <option value="minggu" {{ $chartPeriod === 'minggu' ? 'selected' : '' }}>Minggu Ini</option>
+                            <option value="bulan" {{ $chartPeriod === 'bulan' ? 'selected' : '' }}>Bulan Ini</option>
+                        </select>
+                    </form>
+                </div>
                 <hr class="mt-0 mb-4">
                 <div style="position: relative; height: 180px; width: 100%; display: flex; justify-content: center;">
                     <canvas id="absensiChart"></canvas>
@@ -195,7 +206,7 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { 
-                            position: 'right', 
+                            position: 'bottom', 
                             labels: {
                                 boxWidth: 10,
                                 font: { size: 11, family: 'Inter' }

@@ -26,8 +26,11 @@ Route::get('/config-presensi', [AbsensiController::class, 'getConfigPresensi']);
 
 Route::middleware('auth:sanctum')->group(function () {
     // Cuti
+    Route::get('/cuti/sisa', [PengajuanController::class, 'sisaCuti']);
     Route::get('/cuti', [PengajuanController::class, 'index']);
     Route::post('/cuti', [PengajuanController::class, 'store']);
+    Route::put('/cuti/{id}', [PengajuanController::class, 'update']);
+    Route::delete('/cuti/{id}', [PengajuanController::class, 'destroy']);
     
     // Penilaian
    Route::get('/penilaian', [ApiPenilaianController::class, 'index']);

@@ -8,28 +8,167 @@ use App\Models\Karyawan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail; // Tambahan untuk kirim email
 
 class PengajuanController extends Controller
 {
+    private function isAnnualLeave(string $jenisCuti): bool
+    {
+        $jenisCuti = strtolower(trim($jenisCuti));
+
+        return in_array($jenisCuti, ['cuti', 'cuti tahunan'], true);
+    }
+
+    private function getAnnualLeaveRemaining(Karyawan $karyawan): int
+    {
+        $usedDays = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereIn('status', ['approved', 'Disetujui'])
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
+                    ->orWhereRaw('LOWER(jenis_cuti) = ?', ['cuti tahunan']);
+            })
+            ->whereYear('tanggal_mulai', now()->year)
+            ->get()
+            ->sum(function ($cuti) {
+                $mulai = Carbon::parse($cuti->tanggal_mulai);
+                $selesai = Carbon::parse($cuti->tanggal_selesai);
+
+                return $mulai->diffInDays($selesai) + 1;
+            });
+
+        return max(0, 12 - (int) $usedDays);
+    }
+
+    private function hasAnnualLeaveInMonth(Karyawan $karyawan, string $periode, ?int $ignoreId = null): bool
+    {
+        [$tahun, $bulan] = array_map('intval', explode('-', $periode));
+
+        $cutiQuery = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereIn('status', [
+                'pending',
+                'pending_pimpinan',
+                'pending_kabag',
+                'approved',
+                'Disetujui'
+            ])
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
+                      ->orWhereRaw('LOWER(jenis_cuti) = ?', ['cuti tahunan']);
+            })
+            ->where(function ($query) use ($tahun, $bulan) {
+                $query->whereYear('tanggal_mulai', $tahun)
+                    ->whereMonth('tanggal_mulai', $bulan)
+                    ->orWhere(function ($subQuery) use ($tahun, $bulan) {
+                        $subQuery->whereYear('tanggal_selesai', $tahun)
+                            ->whereMonth('tanggal_selesai', $bulan);
+                    });
+            });
+
+        if ($ignoreId !== null) {
+            $cutiQuery->where('id_cuti', '!=', $ignoreId);
+        }
+
+        return $cutiQuery->exists();
+    }
+
     public function sisaCuti(Request $request)
     {
         $user = $request->user();
+
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
+        if (!$karyawan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data karyawan tidak ditemukan.'
+            ], 404);
+        }
+
+        // =========================================================
+        // TAMBAHAN: Total jatah cuti per tahun
+        // =========================================================
+        $totalCutiTahunIni = 12;
+
+        // =========================================================
+        // TAMBAHAN: Hitung cuti yang sudah digunakan
+        // =========================================================
+        $cutiDigunakan = $totalCutiTahunIni - $this->getAnnualLeaveRemaining($karyawan);
+
+        // =========================================================
+        // TAMBAHAN: Hitung cuti pending
+        // =========================================================
+        $cutiPending = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereIn('status', [
+                'pending',
+                'pending_pimpinan',
+                'pending_kabag'
+            ])
+            ->count();
+
+        // =========================================================
+        // TAMBAHAN: Hitung cuti approved
+        // =========================================================
+        $cutiApproved = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereIn('status', ['approved', 'Disetujui'])
+            ->count();
+
+        // =========================================================
+        // TAMBAHAN: Hitung sisa cuti bulan ini
+        // =========================================================
+        $bulanSekarang = now()->month;
+        $tahunSekarang = now()->year;
+
+        $cutiBulanIni = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+            ->whereIn('status', [
+                'pending',
+                'pending_pimpinan',
+                'pending_kabag',
+                'approved',
+                'Disetujui'
+            ])
+            ->where(function ($query) {
+                $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
+                    ->orWhereRaw('LOWER(jenis_cuti) = ?', ['cuti tahunan']);
+            })
+            ->whereMonth('tanggal_mulai', $bulanSekarang)
+            ->whereYear('tanggal_mulai', $tahunSekarang)
+            ->count();
+
+        $sisaCutiBulanIni = max(0, 1 - $cutiBulanIni);
+
+        // =========================================================
+        // RESPONSE BARU SESUAI ANDROID
+        // =========================================================
         return response()->json([
-            'nama'      => $karyawan->nama,
-            'sisa_cuti' => $karyawan->sisa_cuti, // Data ini yang dikirim ke Android
+            'success' => true,
+            'message' => 'Sisa cuti berhasil diambil',
+            'data' => [
+                'nama' => $karyawan->nama,
+
+                'total_cuti_tahun_ini' => $totalCutiTahunIni,
+
+                'cuti_digunakan' => $cutiDigunakan,
+
+                'sisa_cuti_tahun_ini' => $this->getAnnualLeaveRemaining($karyawan),
+
+                'cuti_pending' => $cutiPending,
+
+                'cuti_approved' => $cutiApproved,
+
+                'sisa_cuti_bulan_ini' => $sisaCutiBulanIni,
+            ]
         ]);
     }
 
     public function index(Request $request)
     {
         $user = $request->user();
+
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         if (!$karyawan) {
-            return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
+            return response()->json([
+                'message' => 'Data karyawan tidak ditemukan.'
+            ], 404);
         }
 
         $dataCuti = Cuti::where('id_karyawan', $karyawan->id_karyawan)
@@ -37,19 +176,28 @@ class PengajuanController extends Controller
             ->get()
             ->map(function ($cuti) {
                 return [
-                    'id_cuti'          => $cuti->id_cuti,
-                    'tanggal_mulai'    => $cuti->tanggal_mulai,
-                    'tanggal_selesai'  => $cuti->tanggal_selesai,
-                    'jenis_cuti'       => $cuti->jenis_cuti,
-                    'alasan'           => $cuti->alasan,
-                    'status'           => $cuti->status,
-                    'tanggal_pengajuan'=> $cuti->tanggal_pengajuan,
+                    'id_cuti'           => $cuti->id_cuti,
+                    'tanggal_mulai'     => $cuti->tanggal_mulai,
+                    'tanggal_selesai'   => $cuti->tanggal_selesai,
+                    'jenis_cuti'        => $cuti->jenis_cuti,
+                    'alasan'            => $cuti->alasan,
+                    'status'            => $cuti->status,
+                    'tanggal_pengajuan' => $cuti->tanggal_pengajuan,
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | TAMBAHAN DARI ANDROID
+                    |--------------------------------------------------------------------------
+                    | Menambahkan keterangan pimpinan pada riwayat cuti
+                    |--------------------------------------------------------------------------
+                    */
+                    'keterangan_pimpinan' => $cuti->keterangan_pimpinan,
                 ];
             });
 
         return response()->json([
             'karyawan'  => $karyawan->nama,
-            'sisa_cuti' => $karyawan->sisa_cuti,
+            'sisa_cuti' => $this->getAnnualLeaveRemaining($karyawan),
             'data'      => $dataCuti,
         ]);
     }
@@ -57,10 +205,13 @@ class PengajuanController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
+
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
 
         if (!$karyawan) {
-            return response()->json(['message' => 'Data karyawan tidak ditemukan.'], 404);
+            return response()->json([
+                'message' => 'Data karyawan tidak ditemukan.'
+            ], 404);
         }
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
@@ -77,164 +228,143 @@ class PengajuanController extends Controller
             ], 422);
         }
 
-        $jenisCuti = strtolower($request->jenis_cuti);
+        $jenisCuti = strtolower(trim($request->jenis_cuti));
 
-        // ==========================================
-        // 1. KATEGORI & SYARAT BERKAS
-        // ==========================================
         if ($jenisCuti === 'sakit' && !$request->hasFile('berkas_bukti')) {
             return response()->json([
-                'message' => 'Pengajuan Sakit wajib melampirkan berkas (surat keterangan dokter/bukti sakit).'
+                'message' => 'Pengajuan sakit wajib melampirkan surat dokter atau bukti sakit.'
             ], 422);
         }
 
-        // ==========================================
-        // 2. ATURAN WAKTU PENGAJUAN
-        // ==========================================
         $tglMulai = Carbon::parse($request->tanggal_mulai)->startOfDay();
+        $tglSelesai = Carbon::parse($request->tanggal_selesai)->startOfDay();
         $hariIni = now()->startOfDay();
 
-        if ($jenisCuti === 'cuti tahunan' || $jenisCuti === 'cuti') {
-            // CUTI: Wajib H-1 atau sebelumnya
+        $isCutiTahunan = $this->isAnnualLeave($jenisCuti);
+
+        if ($isCutiTahunan) {
+
             if ($tglMulai->lessThanOrEqualTo($hariIni)) {
                 return response()->json([
-                    'message' => 'Pengajuan Cuti harus dilakukan minimal 1 hari sebelumnya (H-1).'
+                    'message' => 'Pengajuan cuti harus dilakukan minimal H-1.'
                 ], 422);
             }
-        } elseif ($jenisCuti === 'izin') {
-            // IZIN: Boleh H-1 atau Hari H (tidak boleh masa lalu)
-            if ($tglMulai->lessThan($hariIni)) {
+
+            if ($request->tanggal_mulai !== $request->tanggal_selesai) {
                 return response()->json([
-                    'message' => 'Tanggal mulai izin tidak boleh di masa lalu.'
+                    'message' => 'Cuti tahunan hanya boleh 1 hari.'
                 ], 422);
             }
-        } elseif ($jenisCuti === 'sakit') {
-            // SAKIT: Boleh Hari H (tidak boleh masa lalu)
+
+            $periodePengajuan = $tglMulai->format('Y-m');
+
+            if ($this->hasAnnualLeaveInMonth($karyawan, $periodePengajuan)) {
+                return response()->json([
+                    'message' => 'Dalam 1 bulan hanya boleh mengajukan 1 hari cuti.'
+                ], 422);
+            }
+
+            if ($this->getAnnualLeaveRemaining($karyawan) <= 0) {
+                return response()->json([
+                    'message' => 'Jatah cuti tahunan Anda telah habis.'
+                ], 422);
+            }
+
+        } elseif (in_array($jenisCuti, ['izin', 'sakit'])) {
+
             if ($tglMulai->lessThan($hariIni)) {
                 return response()->json([
-                    'message' => 'Tanggal mulai sakit tidak boleh di masa lalu.'
+                    'message' => 'Tanggal pengajuan tidak boleh di masa lalu.'
                 ], 422);
             }
         }
-
-        // ==========================================
-        // 3. VALIDASI KEAMANAN SISTEM (Pencegahan Bentrok Diri Sendiri)
-        // ==========================================
 
         $izinBentrok = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-            ->where('status', '!=', 'rejected') 
-            ->where(function($query) use ($request) {
-                $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_selesai])
-                      ->orWhereBetween('tanggal_selesai', [$request->tanggal_mulai, $request->tanggal_selesai])
-                      ->orWhere(function($q) use ($request) {
-                          $q->where('tanggal_mulai', '<=', $request->tanggal_mulai)
-                            ->where('tanggal_selesai', '>=', $request->tanggal_selesai);
-                      });
+            ->where('status', '!=', 'rejected')
+            ->where(function ($query) use ($request) {
+
+                $query->whereBetween('tanggal_mulai', [
+                    $request->tanggal_mulai,
+                    $request->tanggal_selesai
+                ])
+
+                ->orWhereBetween('tanggal_selesai', [
+                    $request->tanggal_mulai,
+                    $request->tanggal_selesai
+                ])
+
+                ->orWhere(function ($q) use ($request) {
+                    $q->where('tanggal_mulai', '<=', $request->tanggal_mulai)
+                      ->where('tanggal_selesai', '>=', $request->tanggal_selesai);
+                });
+
             })->exists();
-            
+
         if ($izinBentrok) {
             return response()->json([
-                'message' => 'Anda sudah memiliki pengajuan aktif pada rentang tanggal tersebut.'
+                'message' => 'Anda sudah memiliki pengajuan pada tanggal tersebut.'
             ], 422);
         }
 
-        // b) Cek Absen Ganda (Sudah Absen Masuk/Pulang)
         $sudahAbsen = \App\Models\Absensi::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereBetween('tanggal', [$request->tanggal_mulai, $request->tanggal_selesai])
+            ->whereBetween('tanggal', [
+                $request->tanggal_mulai,
+                $request->tanggal_selesai
+            ])
             ->whereNotNull('jam_masuk')
             ->exists();
-            
+
         if ($sudahAbsen) {
-             return response()->json([
-                'message' => 'Pengajuan ditolak. Anda sudah melakukan presensi di rentang tanggal tersebut.'
+            return response()->json([
+                'message' => 'Anda sudah melakukan presensi pada tanggal tersebut.'
             ], 422);
         }
 
-        // ==========================================
-        // FITUR BARU: CEK BENTROK DENGAN KARYAWAN LAIN (KHUSUS CUTI)
-        // ==========================================
-        $karyawanBentrok = [];
-        if (str_contains($jenisCuti, 'cuti')) {
-            $bentrokLain = Cuti::with('karyawan')
-                ->where('id_karyawan', '!=', $karyawan->id_karyawan)
-                // PERBAIKAN: Masukkan semua status pending yang mungkin ada di DB Anda
-                ->whereIn('status', ['approved', 'pending_pimpinan', 'pending_kabag', 'Disetujui', 'pending'])
-                ->where(function($query) use ($request) {
-                    $query->whereBetween('tanggal_mulai', [$request->tanggal_mulai, $request->tanggal_selesai])
-                        ->orWhereBetween('tanggal_selesai', [$request->tanggal_mulai, $request->tanggal_selesai])
-                        ->orWhere(function($q) use ($request) {
-                            $q->where('tanggal_mulai', '<=', $request->tanggal_mulai)
-                                ->where('tanggal_selesai', '>=', $request->tanggal_selesai);
-                        });
-                })->get();
+        $jumlahHari = $tglMulai->diffInDays($tglSelesai) + 1;
 
-            // Mengumpulkan nama karyawan yang bentrok jadwalnya
-            foreach ($bentrokLain as $b) {
-            if ($b->karyawan) {
-                $karyawanBentrok[] = $b->karyawan->nama;
+        if ($isCutiTahunan) {
+
+            // CODE LAMA TETAP DIPERTAHANKAN
+            if ($jumlahHari > 1) {
+                return response()->json([
+                    'message' => 'Pengajuan Cuti maksimal adalah 1 hari. Jika lebih dari 1 hari, silakan ajukan sebagai Izin.'
+                ], 422);
             }
-        }
-    }
 
-        // ==========================================
-        // 4. LOGIKA SISA CUTI (Hanya untuk Cuti Tahunan)
-        // ==========================================
-        $jumlahHari = $tglMulai->diffInDays(Carbon::parse($request->tanggal_selesai)) + 1;
-
-        if (str_contains($jenisCuti, 'cuti')) {
-            if ($karyawan->sisa_cuti <= 0) {
+            if ($this->getAnnualLeaveRemaining($karyawan) <= 0) {
                 return response()->json([
                     'message' => 'Jatah cuti tahunan Anda telah habis.',
                 ], 422);
             }
-
-            if ($jumlahHari > $karyawan->sisa_cuti) {
-                return response()->json([
-                    'message' => "Durasi pengajuan ({$jumlahHari} hari) melebihi sisa kuota cuti Anda ({$karyawan->sisa_cuti} hari).",
-                ], 422);
-            }
         }
 
-        // Proses Simpan
         $berkasPath = null;
+
         if ($request->hasFile('berkas_bukti')) {
-            $berkasPath = $request->file('berkas_bukti')->store('berkas_cuti', 'public');
+            $berkasPath = $request->file('berkas_bukti')
+                ->store('berkas_cuti', 'public');
         }
 
         $cuti = Cuti::create([
-            'id_karyawan'      => $karyawan->id_karyawan,
-            'tanggal_pengajuan'=> now()->toDateString(),
-            'tanggal_mulai'    => $request->tanggal_mulai,
-            'tanggal_selesai'  => $request->tanggal_selesai,
-            'jenis_cuti'       => $request->jenis_cuti,
-            'alasan'           => $request->alasan,
-            'berkas_bukti'     => $berkasPath,
-            'status'           => 'pending_pimpinan', // UBAH: Langsung status Pending agar dilihat pimpinan
+            'id_karyawan'       => $karyawan->id_karyawan,
+            'tanggal_pengajuan' => now()->toDateString(),
+            'tanggal_mulai'     => $request->tanggal_mulai,
+            'tanggal_selesai'   => $request->tanggal_selesai,
+            'jenis_cuti'        => $request->jenis_cuti,
+            'alasan'            => $request->alasan,
+            'berkas_bukti'      => $berkasPath,
+            'status'            => 'pending_pimpinan',
         ]);
 
-        // Cari bagian ini di paling bawah method store:
-        if (!empty($karyawanBentrok) && $karyawan->email) { // PERBAIKAN: Pakai $karyawan->email
-            $namaUnik = array_unique($karyawanBentrok);
-            $listNama = implode(', ', $namaUnik);
-            
-            try {
-                // PERBAIKAN: Wajib masukkan ($cuti, $listNama)
-                Mail::to($karyawan->email)->send(new \App\Mail\NotifikasiBentrokMail($cuti, $listNama));
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Gagal mengirim email bentrok: " . $e->getMessage());
-            }
-        }
-
         return response()->json([
-            'message' => 'Pengajuan berhasil dikirim. Menunggu persetujuan.',
+            'message' => 'Pengajuan berhasil dikirim.',
             'data'    => [
-                'id_cuti'          => $cuti->id_cuti,
-                'tanggal_mulai'    => $cuti->tanggal_mulai,
-                'tanggal_selesai'  => $cuti->tanggal_selesai,
-                'jenis_cuti'       => $cuti->jenis_cuti,
-                'status'           => $cuti->status,
+                'id_cuti'         => $cuti->id_cuti,
+                'tanggal_mulai'   => $cuti->tanggal_mulai,
+                'tanggal_selesai' => $cuti->tanggal_selesai,
+                'jenis_cuti'      => $cuti->jenis_cuti,
+                'status'          => $cuti->status,
             ],
         ], 201);
     }
-    
 }

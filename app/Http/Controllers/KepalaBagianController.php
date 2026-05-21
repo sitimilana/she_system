@@ -7,6 +7,7 @@ use App\Models\Karyawan;
 use App\Models\Cuti;
 use App\Models\Penilaian;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\KaryawanBaruMail;
 
@@ -155,6 +156,110 @@ class KepalaBagianController extends Controller
         return redirect()->route('kabag.penilaian')->with('success', 'Penilaian kinerja skala kuisioner berhasil disimpan dan dikonversi!');
     }
 
+    public function showPenilaian($id)
+    {
+        try {
+            $penilaian = Penilaian::with(['karyawan', 'penilai'])->findOrFail($id);
+            
+            $monthName = \Carbon\Carbon::create()->month($penilaian->bulan)->locale('id')->translatedFormat('F');
+            $periode = "$monthName {$penilaian->tahun}";
+            // Fallback for updated_at if null
+            $tanggalPenilaian = $penilaian->updated_at ? $penilaian->updated_at->locale('id')->translatedFormat('d F Y H:i') : '-';
+
+            // Format penilai
+            $penilaiNama = 'Sistem';
+            if ($penilaian->penilai) {
+                $penilaiNama = $penilaian->penilai->nama_lengkap ?? 'Tidak diketahui';
+            }
+
+            return response()->json([
+                'success' => true,
+                'penilaian' => [
+                    'id_penilaian' => $penilaian->id_penilaian,
+                    'bulan' => sprintf("%02d", $penilaian->bulan),
+                    'tahun' => $penilaian->tahun,
+                    'disiplin' => $penilaian->disiplin,
+                    'produktivitas' => $penilaian->produktivitas,
+                    'tanggung_jawab' => $penilaian->tanggung_jawab,
+                    'sikap_kerja' => $penilaian->sikap_kerja,
+                    'loyalitas' => $penilaian->loyalitas,
+                    'total_skor' => $penilaian->total_skor,
+                    'catatan_evaluasi' => $penilaian->catatan_evaluasi,
+                    'karyawan' => [
+                        'nama' => $penilaian->karyawan->nama ?? 'Tidak Ditemukan'
+                    ],
+                    'penilai' => [
+                        'nama_lengkap' => $penilaiNama
+                    ]
+                ],
+                'periode' => $periode,
+                'tanggal_penilaian' => $tanggalPenilaian
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data penilaian tidak ditemukan',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    public function updatePenilaian(Request $request, $id)
+    {
+        $penilaian = Penilaian::findOrFail($id);
+        
+        $validated = $request->validate([
+            'periode'     => ['required', 'regex:/^\d{4}-\d{2}$/'],
+            'disiplin'    => 'required|integer|min:1|max:5',
+            'produktivitas' => 'required|integer|min:1|max:5',
+            'tanggung_jawab' => 'required|integer|min:1|max:5',
+            'sikap_kerja' => 'required|integer|min:1|max:5',
+            'loyalitas'   => 'required|integer|min:1|max:5',
+            'catatan_evaluasi' => 'nullable|string',
+        ]);
+
+        [$tahun, $bulan] = explode('-', $validated['periode']);
+
+        $bobot = [
+            'disiplin' => 0.20,
+            'produktivitas' => 0.30,
+            'tanggung_jawab' => 0.20,
+            'sikap_kerja' => 0.15,
+            'loyalitas' => 0.15,
+        ];
+
+        $skorTertimbang = 0;
+        foreach ($bobot as $indikator => $persentase) {
+            $skorTertimbang += ((int)$validated[$indikator]) * $persentase;
+        }
+        
+        $skorAkhir = (int) round($skorTertimbang * 20);
+
+        $penilaian->update([
+            'bulan' => $bulan,
+            'tahun' => $tahun,
+            'disiplin' => $validated['disiplin'],
+            'produktivitas' => $validated['produktivitas'],
+            'tanggung_jawab' => $validated['tanggung_jawab'],
+            'sikap_kerja' => $validated['sikap_kerja'],
+            'loyalitas' => $validated['loyalitas'],
+            'total_skor' => $skorAkhir,
+            'catatan_evaluasi' => $validated['catatan_evaluasi'] ?? null,
+        ]);
+
+        return redirect()->route('kabag.penilaian')->with('success', 'Data penilaian kinerja berhasil diperbarui!');
+    }
+
+    public function destroyPenilaian($id)
+    {
+        $penilaian = Penilaian::findOrFail($id);
+        $namakaryawan = $penilaian->karyawan->nama ?? 'Karyawan';
+        
+        $penilaian->delete();
+
+        return redirect()->route('kabag.penilaian')->with('success', "Penilaian kinerja untuk {$namakaryawan} berhasil dihapus.");
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -290,5 +395,50 @@ class KepalaBagianController extends Controller
         $user->delete();
 
         return redirect()->route('kabag.karyawan')->with('success', 'Data karyawan berstatus tidak aktif beserta data terkait (absensi, cuti, dl) berhasil dihapus permanen.');
+    }
+    public function cetakKaryawan(Request $request)
+    {
+        $search = $request->input('search');
+
+        $query = User::with('karyawan')
+        ->whereHas('role', function ($query) {
+            $query->where('nama_role', 'Karyawan')
+                ->orWhere('nama_role', 'karyawan');
+        });
+
+        // Filter pencarian
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                ->orWhereHas('karyawan', function($qKar) use ($search) {
+                    $qKar->where('divisi', 'like', "%{$search}%")
+                        ->orWhere('status_karyawan', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Data karyawan
+        $dataKaryawan = $query->orderBy('nama_lengkap', 'asc')->get();
+
+        // Rekap status
+        $jumlahAktif = $dataKaryawan->filter(function ($user) {
+            return strtolower($user->karyawan->status_karyawan ?? '') == 'aktif';
+        })->count();
+
+        $jumlahPending = $dataKaryawan->filter(function ($user) {
+            return strtolower($user->karyawan->status_karyawan ?? '') == 'pending';
+        })->count();
+
+        $jumlahKeluar = $dataKaryawan->filter(function ($user) {
+            return strtolower($user->karyawan->status_karyawan ?? '') == 'keluar';
+        })->count();
+
+        return view('kepala_bagian.cetak_karyawan', compact(
+            'dataKaryawan',
+            'search',
+            'jumlahAktif',
+            'jumlahPending',
+            'jumlahKeluar'
+        ));
     }
 }

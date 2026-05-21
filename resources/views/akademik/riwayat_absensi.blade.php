@@ -316,14 +316,20 @@
 
                     <div class="d-flex gap-2 filter-btn-group">
 
-                        <button type="submit" class="btn btn-primary shadow-sm flex-grow-1 fw-bold">
+                        <button type="submit" class="btn btn-primary shadow-sm fw-bold">
                             <i class="bi bi-funnel-fill me-1"></i> Filter
                         </button>
 
+                        <a href="{{ route('akademik.cetak.absensi', request()->query()) }}"
+                        target="_blank"
+                        class="btn btn-danger shadow-sm fw-bold">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Cetak PDF
+                        </a>
+
                         @if(request('search') || request('bulan') || request('status'))
                             <a href="{{ route('akademik.absensi') }}"
-                               class="btn btn-danger text-white shadow-sm px-3 text-center"
-                               title="Reset Semua Filter">
+                            class="btn btn-danger text-white shadow-sm px-3 text-center"
+                            title="Reset Semua Filter">
 
                                 <i class="bi bi-arrow-clockwise"></i>
                             </a>

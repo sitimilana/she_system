@@ -12,7 +12,7 @@
         /* SIDEBAR */
         .sidebar {
             width: 250px; min-height: 100vh; background-color: #8f9fc4;
-            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 100;
+            position: fixed; left: 0; top: 0; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 1050;
         }
         .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
         .sidebar .logo img { width: 100px; }
@@ -52,6 +52,15 @@
             border: 1px solid #f1f5f9;
             height: 100%;
         }
+        @media (max-width: 768px) {
+            .modal-content {
+                max-height: 85vh;
+                overflow-y: auto !important;
+            }
+            .modal-dialog-scrollable .modal-content {
+                overflow-y: auto !important;
+            }
+        }
         .modal-section-title {
             font-size: 0.95rem;
             font-weight: 700;
@@ -81,12 +90,29 @@
             body { background: white !important; }
             .card-custom { box-shadow: none !important; border: none !important; padding: 0 !important; }
         }
+
+        .sidebar-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1040;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+            .sidebar.show-mobile { transform: translateX(0); }
+            .content { margin-left: 0 !important; padding: 15px !important; }
+            .sidebar-overlay.show { display: block; }
+        }
     </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="sidebar" id="sidebar">
+    <button class="btn text-white position-absolute top-0 end-0 mt-3 me-2 d-md-none fs-4" id="closeSidebarBtn">
+        <i class="bi bi-x-lg"></i>
+    </button>
     <div class="logo">
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
@@ -103,7 +129,15 @@
 </div>
 
 <div class="content">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
+        <h5 class="fw-bold m-0" style="color: #2c3e50;">Data Karyawan</h5>
+        <button class="btn btn-light border" id="openSidebarBtn">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 d-none d-md-flex">
         <div>
             <h2 class="fw-bold m-0" style="color: #1e293b;">Data Karyawan</h2>
             <p class="text-muted m-0">Daftar staf dan karyawan di departemen Anda.</p>
@@ -141,7 +175,9 @@
             <div class="d-flex gap-2">
                 <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
                 
-                <button class="btn btn-outline-secondary shadow-sm" onclick="window.print()"><i class="bi bi-printer me-2"></i>Cetak</button>
+                <a href="{{ route('kabag.karyawan.cetak', request()->query()) }}" target="_blank" class="btn btn-outline-secondary shadow-sm">
+                    <i class="bi bi-printer me-2"></i>Cetak
+                </a>
                 
                 <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
             </div>
@@ -415,6 +451,27 @@
 @endif
 
 <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+    });
+
     document.getElementById('searchInput').addEventListener('keyup', function() {
         let filter = this.value.toLowerCase();
         let rows = document.querySelectorAll('#tabelKaryawan tbody tr');

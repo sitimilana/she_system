@@ -22,8 +22,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 1045; /* Dinaikkan agar di atas elemen lain saat di HP */
-            transition: transform 0.3s ease-in-out; /* Tambahan transisi mulus */
+            z-index: 1050; /* Dinaikkan agar di atas overlay (1040) */
+            transition: transform 0.3s ease-in-out; 
         }
         .sidebar .logo { 
             width: 140px; 
@@ -161,7 +161,7 @@
 
 <div class="content">
 
-    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-4 d-md-none bg-white p-3 rounded-3 shadow-sm border">
         <h4 class="fw-bold m-0" style="color: #2c3e50;">Dashboard</h4>
         <button class="btn btn-light border" id="openSidebarBtn">
             <i class="bi bi-list fs-4"></i>

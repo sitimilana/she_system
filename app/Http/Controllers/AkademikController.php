@@ -8,7 +8,31 @@ class AkademikController extends Controller
 {
     public function index()
     {
-        $today = now()->toDateString();
+        $today = now();
+        $chartPeriod = request('periode_absensi', 'hari');
+        $chartPeriods = [
+            'hari' => [
+                'label' => 'Hari Ini',
+                'start' => $today->copy()->startOfDay(),
+                'end' => $today->copy()->endOfDay(),
+            ],
+            'minggu' => [
+                'label' => 'Minggu Ini',
+                'start' => $today->copy()->startOfWeek(),
+                'end' => $today->copy()->endOfWeek(),
+            ],
+            'bulan' => [
+                'label' => 'Bulan Ini',
+                'start' => $today->copy()->startOfMonth(),
+                'end' => $today->copy()->endOfMonth(),
+            ],
+        ];
+
+        if (!array_key_exists($chartPeriod, $chartPeriods)) {
+            $chartPeriod = 'hari';
+        }
+
+        $selectedPeriod = $chartPeriods[$chartPeriod];
         
         // Total seluruh karyawan
         $totalKaryawan = \App\Models\Karyawan::count();
@@ -27,42 +51,31 @@ class AkademikController extends Controller
                                 ];
                             });
 
-        // Rekap untuk grafik absensi hari ini
-        $dataAbsensiHariIni = \App\Models\Absensi::where('tanggal', $today)->get();
-        
-        // Karyawan hadir hari ini (gabungan dari status 'hadir' dan 'terlambat')
-        $hadir = $dataAbsensiHariIni->whereIn('status', ['hadir', 'terlambat'])->count();
-        $sakit = $dataAbsensiHariIni->where('status', 'sakit')->count();
-        $izin = $dataAbsensiHariIni->where('status', 'izin')->count();
-        
-        // Jumlah karyawan yang sedang cuti hari ini 
-        // (Kita ambil dari tabel Cuti agar lebih akurat jika Cron Job belum berjalan)
-        $cutiToday = \App\Models\Cuti::whereIn('status', ['Disetujui', 'approved', 'disetujui_hrd'])
-                            ->whereDate('tanggal_mulai', '<=', $today)
-                            ->whereDate('tanggal_selesai', '>=', $today)
-                            ->count();
+        // Rekap absensi berdasarkan periode filter
+        $dataAbsensiPeriode = \App\Models\Absensi::whereBetween('tanggal', [
+            $selectedPeriod['start']->toDateString(),
+            $selectedPeriod['end']->toDateString(),
+        ])->get();
 
-        // ---------------------------------------------------------
-        // PERUBAHAN: Menghitung Tidak Hadir (Alpha)
-        // ---------------------------------------------------------
-        $alphaTercatat = $dataAbsensiHariIni->where('status', 'alpha')->count();
+        $hadir = $dataAbsensiPeriode->whereIn('status', ['hadir', 'terlambat'])->count();
+        $sakit = $dataAbsensiPeriode->where('status', 'sakit')->count();
+        $izin = $dataAbsensiPeriode->where('status', 'izin')->count();
+        $alpha = $dataAbsensiPeriode->whereIn('status', ['alpha', 'alfa', 'tidak hadir'])->count();
 
-        $waktuSekarang = now()->toTimeString();
-        if ($waktuSekarang >= '17:00:00') {
-            $tidakHadir = $alphaTercatat;
-        } else {
-            $tidakHadir = max(0, $totalKaryawan - ($hadir + $sakit + $izin + $cutiToday));
-        }
+        $cuti = \App\Models\Cuti::whereIn('status', ['Disetujui', 'approved', 'disetujui_hrd'])
+            ->whereDate('tanggal_mulai', '<=', $selectedPeriod['end']->toDateString())
+            ->whereDate('tanggal_selesai', '>=', $selectedPeriod['start']->toDateString())
+            ->count();
 
         $rekapAbsensi = [
             'Hadir' => $hadir,
-            'Tidak Hadir' => $tidakHadir,
+            'Tidak Hadir' => $alpha,
             'Sakit' => $sakit,
             'Izin' => $izin,
-            'Cuti' => $cutiToday
+            'Cuti' => $cuti
         ];
 
-        return view('akademik.beranda', compact('totalKaryawan', 'hadir', 'rekapCuti', 'rekapAbsensi'));
+        return view('akademik.beranda', compact('totalKaryawan', 'hadir', 'rekapCuti', 'rekapAbsensi', 'chartPeriod', 'selectedPeriod'));
     }
 
     public function absensi(Request $request)
@@ -95,8 +108,8 @@ class AkademikController extends Controller
         }
 
         $dataAbsensi = $query->orderBy('tanggal', 'desc')
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+        $dataAbsensi->appends($request->query());
 
         return view('akademik.riwayat_absensi', compact('dataAbsensi'));
     }
@@ -132,8 +145,8 @@ class AkademikController extends Controller
 
         // YANG DIUBAH: Mengganti ->get() menjadi ->paginate(15) dengan query string filter bawaan
         $dataCuti = $query->orderBy('tanggal_pengajuan', 'desc')
-            ->paginate(15)
-            ->withQueryString();
+            ->paginate(15);
+        $dataCuti->appends($request->query());
 
         return view('akademik.riwayat_cuti', compact('dataCuti'));
     }
@@ -146,5 +159,66 @@ class AkademikController extends Controller
             })->paginate(15);
 
         return view('akademik.manajemen_karyawan', compact('dataKaryawan'));
+    }
+    public function cetakAbsensi(Request $request)
+    {
+        $query = \App\Models\Absensi::with('karyawan');
+
+        // Filter nama karyawan
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->whereHas('karyawan', function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter bulan & tahun
+        if ($request->filled('bulan')) {
+
+            $periode = explode('-', $request->bulan);
+
+            if (count($periode) == 2) {
+
+                $tahun = $periode[0];
+                $bulan = $periode[1];
+
+                $query->whereYear('tanggal', $tahun)
+                    ->whereMonth('tanggal', $bulan);
+            }
+        }
+
+        // Filter status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $dataAbsensi = $query->orderBy('tanggal', 'desc')->get();
+
+        // =========================
+        // REKAP STATUS ABSENSI
+        // =========================
+
+        $jumlahHadir = $dataAbsensi->where('status', 'hadir')->count();
+
+        $jumlahTerlambat = $dataAbsensi->where('status', 'terlambat')->count();
+
+        $jumlahIzin = $dataAbsensi->where('status', 'izin')->count();
+
+        $jumlahSakit = $dataAbsensi->where('status', 'sakit')->count();
+
+        $jumlahAlfa = $dataAbsensi->where('status', 'alfa')->count();
+
+        $jumlahCuti = $dataAbsensi->where('status', 'cuti')->count();
+
+        return view('akademik.cetak_absensi', compact(
+            'dataAbsensi',
+            'jumlahHadir',
+            'jumlahTerlambat',
+            'jumlahIzin',
+            'jumlahSakit',
+            'jumlahAlfa',
+            'jumlahCuti'
+        ));
     }
 }

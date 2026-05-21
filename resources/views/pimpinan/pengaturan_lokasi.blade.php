@@ -331,11 +331,38 @@
                 </div>
 
                 <div class="radius-box">
-                    <label class="form-label text-danger fs-6"><i class="bi bi-bullseye me-1"></i> Jangkauan Radius Presensi (Meter)</label>
-                    <input type="number" step="0.001" min="0.001" name="radius" class="form-control form-control-lg border-secondary" value="{{ old('radius', $pengaturan->radius ?? 0.1) }}" required>
-                    <div class="form-text text-muted mt-2" style="font-size: 13px;">
-                        Masukkan jarak dalam hitungan Kilometer (km). <br>
-                        Contoh: <b class="text-dark">0.1</b> untuk 100 meter (m).
+                    <label class="form-label text-danger fs-6">
+                        <i class="bi bi-bullseye me-1"></i> Jangkauan Radius Presensi
+                    </label>
+
+                    <div class="input-group mb-3">
+                        <input type="number"
+                               step="1"
+                               min="1"
+                               max="10000"
+                               name="radius"
+                               id="input-radius"
+                               class="form-control form-control-lg border-secondary"
+                               value="{{ old('radius', $pengaturan->radius ?? 100) }}"
+                               required
+                               placeholder="Contoh: 100">
+                        <span class="input-group-text bg-light border-secondary fw-bold">METER</span>
+                    </div>
+
+                    <div class="form-text text-muted" style="font-size: 13px;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Masukkan jarak dalam <b>METER</b>. Contoh:
+                        <ul class="mt-2">
+                            <li><b>100</b> = 100 meter</li>
+                            <li><b>500</b> = 500 meter (½ km)</li>
+                            <li><b>1000</b> = 1 kilometer</li>
+                            <li><b>5000</b> = 5 kilometer</li>
+                        </ul>
+                    </div>
+
+                    <!-- Visual Indicator -->
+                    <div class="mt-3 p-2 bg-info bg-opacity-10 rounded" id="radius-preview">
+                        Radius yang akan digunakan: <strong id="radius-display">100</strong> meter
                     </div>
                 </div>
 
@@ -375,6 +402,36 @@
         if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
         if(overlay) overlay.addEventListener('click', closeSidebar);
         // ------------------------------------------
+
+        // --- LOGIKA RADIUS INPUT REALTIME UPDATE & VALIDATION ---
+        const radiusInput = document.getElementById('input-radius');
+        const radiusDisplay = document.getElementById('radius-display');
+
+        // Update display saat input berubah
+        radiusInput.addEventListener('input', function() {
+            radiusDisplay.textContent = this.value || '0';
+        });
+
+        // Validation sebelum submit
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const radius = parseFloat(radiusInput.value);
+
+            if (isNaN(radius) || radius <= 0) {
+                e.preventDefault();
+                alert('❌ Radius harus lebih besar dari 0 meter!');
+                radiusInput.focus();
+                return false;
+            }
+
+            if (radius > 10000) {
+                e.preventDefault();
+                alert('❌ Radius tidak boleh lebih dari 10000 meter (10 km)!');
+                radiusInput.focus();
+                return false;
+            }
+        });
+        // -------------------------------------------------------
 
         // --- LOGIKA MAPS (TIDAK DIUBAH) ---
         const latInput = document.getElementById('input-lat');

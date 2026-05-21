@@ -8,6 +8,7 @@ use App\Http\Controllers\AkademikController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\PimpinanCutiController;
 use App\Http\Controllers\RewardController;
+use App\Http\Controllers\PengaturanLokasiController;
 
 /* LOGIN */
 Route::get('/login', [LoginController::class, 'index'])->name('login');
@@ -25,7 +26,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pimpinan/cuti', [PimpinanCutiController::class, 'indexPimpinan'])->name('pimpinan.cuti');
     Route::post('/pimpinan/cuti/{id}/approve', [PimpinanCutiController::class, 'approve'])->name('pimpinan.cuti.approve');
     Route::post('/pimpinan/cuti/{id}/reject', [PimpinanCutiController::class, 'reject'])->name('pimpinan.cuti.reject');
-    Route::post('/pimpinan/cuti/tambah-jatah', [App\Http\Controllers\PimpinanCutiController::class, 'tambahJatahBulanan'])->name('pimpinan.cuti.tambah_jatah');
     
     #Gaji
     Route::get('/pimpinan/gaji', [PimpinanController::class, 'gaji'])->name('pimpinan.gaji');
@@ -39,8 +39,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pimpinan/reward', [RewardController::class, 'index'])->name('pimpinan.reward');
     Route::post('/pimpinan/reward/store', [RewardController::class, 'store'])->name('pimpinan.reward.store');
     # Pengaturan Lokasi Presensi
-    Route::get('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'pengaturanLokasi'])->name('pimpinan.pengaturan-lokasi');
-    Route::put('/pimpinan/pengaturan-lokasi', [PimpinanController::class, 'updatePengaturanLokasi'])->name('pimpinan.pengaturan-lokasi.update');
+    Route::get('/pimpinan/pengaturan-lokasi', [PengaturanLokasiController::class, 'edit'])->name('pimpinan.pengaturan-lokasi');
+    Route::put('/pimpinan/pengaturan-lokasi', [PengaturanLokasiController::class, 'update'])->name('pimpinan.pengaturan-lokasi.update');
     Route::delete('/pimpinan/karyawan-pending/{id}/reject', [PimpinanController::class, 'rejectKaryawan'])->name('pimpinan.rejectKaryawan');
     Route::put('/pimpinan/karyawan-pending/{id}/approve', [PimpinanController::class, 'approveKaryawan'])->name('pimpinan.approveKaryawan');
     Route::get('/pimpinan/karyawan/{id}/finansial', [App\Http\Controllers\PimpinanController::class, 'getKaryawanFinansial']);
@@ -57,6 +57,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian/karyawan', [KepalaBagianController::class, 'karyawan'])->name('kabag.karyawan');
     Route::get('/kepala-bagian/penilaian', [KepalaBagianController::class, 'penilaian'])->name('kabag.penilaian');
     Route::post('/kepala-bagian/penilaian', [KepalaBagianController::class, 'storePenilaian'])->name('kabag.penilaian.store');
+    Route::get('/kepala-bagian/penilaian/{id}', [KepalaBagianController::class, 'showPenilaian'])->name('kabag.penilaian.show');
+    Route::put('/kepala-bagian/penilaian/{id}', [KepalaBagianController::class, 'updatePenilaian'])->name('kabag.penilaian.update');
+    Route::delete('/kepala-bagian/penilaian/{id}', [KepalaBagianController::class, 'destroyPenilaian'])->name('kabag.penilaian.destroy');
     #Kelola Karyawan
     Route::post('/kepala-bagian/karyawan', [KepalaBagianController::class, 'store'])->name('kabag.karyawan.store_baru');
     Route::post('/kabag/karyawan/store', [App\Http\Controllers\KepalaBagianController::class, 'store'])->name('kabag.karyawan.store');
@@ -68,8 +71,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kepala-bagian/cuti', [KepalaBagianController::class, 'cuti'])->name('kabag.cuti');
     Route::patch('/kepala-bagian/cuti/{id}/approve', [KepalaBagianController::class, 'approveCuti'])->name('kabag.cuti.approve');
     Route::patch('/kepala-bagian/cuti/{id}/reject', [KepalaBagianController::class, 'rejectCuti'])->name('kabag.cuti.reject');
-    
-    #Gaji
+
+    # Cetak Karyawan
+    Route::get('/kabag/karyawan/cetak', [KepalaBagianController::class, 'cetakKaryawan'])->name('kabag.karyawan.cetak');
 
 });
 
@@ -79,6 +83,7 @@ Route::middleware(['auth', 'role:akademik'])->group(function () {
     Route::get('/akademik/absensi', [AkademikController::class, 'absensi'])->name('akademik.absensi');
     Route::get('/akademik/cuti', [AkademikController::class, 'cuti'])->name('akademik.cuti');
     Route::get('/akademik/karyawan', [AkademikController::class, 'karyawan'])->name('akademik.karyawan');
+    Route::get('/akademik/absensi/cetak', [AkademikController::class, 'cetakAbsensi'])->name('akademik.cetak.absensi');
     
 });
 
