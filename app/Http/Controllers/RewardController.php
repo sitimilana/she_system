@@ -28,28 +28,34 @@ class RewardController extends Controller
             });
         }
 
-        // PERUBAHAN DI SINI:
-        // 1. Ambil top kandidat (1 orang terbaik) tanpa mengganggu pagination
-        $topKandidat = (clone $query)->orderBy('total_skor', 'desc')->take(1)->get();
-        
-        // 2. Terapkan pagination pada tabel utama (10 data per halaman)
-        $daftarReward = $query->orderBy('total_skor', 'desc')->paginate(10)->withQueryString();
+        $topKandidat = (clone $query)
+            ->orderBy('total_skor', 'desc')
+            ->take(1)
+            ->get();
+
+        // TAMBAHKAN INI
+        $daftarReward = Reward::with(['karyawan', 'penilaian'])
+            ->latest()
+            ->paginate(15);
 
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
         ];
+
         $tahunList = range(now()->year, now()->year - 4);
 
         return view('pimpinan.reward', compact(
-            'topKandidat', 'daftarReward', 'bulan', 'tahun', 'bulanList', 'tahunList', 'search'
+            'topKandidat',
+            'daftarReward',
+            'bulan',
+            'tahun',
+            'bulanList',
+            'tahunList',
+            'search'
         ));
     }
-
-    /**
-     * Mengeksekusi (menyimpan) data Karyawan Terbaik ke tabel Reward
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -58,8 +64,6 @@ class RewardController extends Controller
             'keterangan' => 'nullable|string'
         ]);
 
-        // Cek apakah karyawan ini sudah mendapatkan reward di bulan dan tahun yang sama
-        // Menggunakan tanggal hari ini sebagai patokan
         $exists = Reward::where('id_karyawan', $request->id_karyawan)
                     ->whereMonth('tanggal_reward', now()->month)
                     ->whereYear('tanggal_reward', now()->year)
@@ -69,7 +73,6 @@ class RewardController extends Controller
             return redirect()->back()->with('error', 'Gagal: Karyawan ini sudah dieksekusi/diberikan reward pada bulan ini.');
         }
 
-        // Simpan ke database
         Reward::create([
             'id_karyawan' => $request->id_karyawan,
             'id_penilaian' => $request->id_penilaian,

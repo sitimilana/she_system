@@ -84,15 +84,12 @@ class KepalaBagianController extends Controller
 
         $query = Penilaian::with('karyawan');
 
-        // 1. Filter Pencarian Nama Karyawan
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('karyawan', function($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%");
             });
         }
-
-        // 2. Filter Berdasarkan Bulan & Tahun Pengajuan (format dari input month: YYYY-MM)
         if ($request->filled('periode')) {
             $periode = explode('-', $request->periode);
             if (count($periode) == 2) {
@@ -405,8 +402,6 @@ class KepalaBagianController extends Controller
             $query->where('nama_role', 'Karyawan')
                 ->orWhere('nama_role', 'karyawan');
         });
-
-        // Filter pencarian
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('nama_lengkap', 'like', "%{$search}%")
@@ -416,11 +411,7 @@ class KepalaBagianController extends Controller
                 });
             });
         }
-
-        // Data karyawan
         $dataKaryawan = $query->orderBy('nama_lengkap', 'asc')->get();
-
-        // Rekap status
         $jumlahAktif = $dataKaryawan->filter(function ($user) {
             return strtolower($user->karyawan->status_karyawan ?? '') == 'aktif';
         })->count();

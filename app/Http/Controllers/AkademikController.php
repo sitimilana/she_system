@@ -33,11 +33,9 @@ class AkademikController extends Controller
         }
 
         $selectedPeriod = $chartPeriods[$chartPeriod];
-        
-        // Total seluruh karyawan
+    
         $totalKaryawan = \App\Models\Karyawan::count();
 
-        // 5 data cuti terbaru
         $rekapCuti = \App\Models\Cuti::with('karyawan')
                             ->orderBy('created_at', 'desc')
                             ->take(5)
@@ -51,7 +49,6 @@ class AkademikController extends Controller
                                 ];
                             });
 
-        // Rekap absensi berdasarkan periode filter
         $dataAbsensiPeriode = \App\Models\Absensi::whereBetween('tanggal', [
             $selectedPeriod['start']->toDateString(),
             $selectedPeriod['end']->toDateString(),
@@ -81,8 +78,6 @@ class AkademikController extends Controller
     public function absensi(Request $request)
     {
         $query = \App\Models\Absensi::with(['karyawan.user']);
-
-        // 1. Filter Pencarian Nama
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('karyawan', function($q) use ($search) {
@@ -92,8 +87,6 @@ class AkademikController extends Controller
                   });
             });
         }
-
-        // 2. Filter Berdasarkan Bulan (format: YYYY-MM)
         if ($request->filled('bulan')) {
             $bulan = explode('-', $request->bulan);
             if (count($bulan) == 2) {
@@ -101,8 +94,6 @@ class AkademikController extends Controller
                       ->whereMonth('tanggal', $bulan[1]);
             }
         }
-
-        // 3. Filter Berdasarkan Status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -117,8 +108,6 @@ class AkademikController extends Controller
     public function cuti(Request $request)
     {
         $query = \App\Models\Cuti::with(['karyawan.user']);
-
-        // 1. Filter Pencarian Nama
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('karyawan', function($q) use ($search) {
@@ -129,7 +118,6 @@ class AkademikController extends Controller
             });
         }
 
-        // 2. Filter Berdasarkan Bulan Pengajuan (format: YYYY-MM)
         if ($request->filled('bulan')) {
             $bulan = explode('-', $request->bulan);
             if (count($bulan) == 2) {
@@ -137,13 +125,10 @@ class AkademikController extends Controller
                       ->whereMonth('tanggal_pengajuan', $bulan[1]);
             }
         }
-
-        // 3. Filter Berdasarkan Status Cuti
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // YANG DIUBAH: Mengganti ->get() menjadi ->paginate(15) dengan query string filter bawaan
         $dataCuti = $query->orderBy('tanggal_pengajuan', 'desc')
             ->paginate(15);
         $dataCuti->appends($request->query());
@@ -164,7 +149,7 @@ class AkademikController extends Controller
     {
         $query = \App\Models\Absensi::with('karyawan');
 
-        // Filter nama karyawan
+    
         if ($request->filled('search')) {
             $search = $request->search;
 
@@ -172,8 +157,6 @@ class AkademikController extends Controller
                 $q->where('nama', 'like', "%{$search}%");
             });
         }
-
-        // Filter bulan & tahun
         if ($request->filled('bulan')) {
 
             $periode = explode('-', $request->bulan);
@@ -187,17 +170,11 @@ class AkademikController extends Controller
                     ->whereMonth('tanggal', $bulan);
             }
         }
-
-        // Filter status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         $dataAbsensi = $query->orderBy('tanggal', 'desc')->get();
-
-        // =========================
-        // REKAP STATUS ABSENSI
-        // =========================
 
         $jumlahHadir = $dataAbsensi->where('status', 'hadir')->count();
 

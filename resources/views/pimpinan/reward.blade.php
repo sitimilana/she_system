@@ -107,12 +107,9 @@
             <h2 class="fw-bold m-0" style="color: #1e293b;">Reward & Recognition</h2>
             <p class="text-muted m-0">Evaluasi dan berikan penghargaan untuk karyawan berprestasi.</p>
         </div>
-        <button class="btn btn-outline-danger fw-bold shadow-sm"><i class="bi bi-file-earmark-pdf-fill me-2"></i>Export PDF</button>
     </div>
 
-    <div class="d-md-none mb-4">
-        <button class="btn btn-outline-danger fw-bold shadow-sm w-100"><i class="bi bi-file-earmark-pdf-fill me-2"></i>Export PDF</button>
-    </div>
+
     
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
@@ -206,8 +203,8 @@
                         <td class="text-center fw-bold">{{ $daftarReward->firstItem() + $index }}</td>
                         <td class="fw-bold">{{ $reward->karyawan->nama ?? '-' }}</td>
                         <td>{{ $reward->karyawan->divisi ?? '-' }}</td>
-                        <td class="text-center">{{ $bulanList[$reward->bulan] }} {{ $reward->tahun }}</td>
-                        <td class="text-center fw-bold {{ $reward->total_skor >= 90 ? 'text-success' : 'text-dark' }}">{{ $reward->total_skor }}</td>
+                        <td class="text-center">{{ $bulanList[$reward->penilaian->bulan ?? 0] ?? '-' }} {{ $reward->penilaian->tahun ?? '-' }}</td>
+                        <td class="text-center fw-bold {{ ($reward->penilaian->total_skor ?? 0) >= 90 ? 'text-success' : 'text-dark' }}">{{ $reward->penilaian->total_skor ?? '-' }}</td>
                         <td class="text-center">
                             @if(($daftarReward->firstItem() + $index) == 1)
                                 <span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-trophy-fill me-1"></i> Penerima Reward</span>

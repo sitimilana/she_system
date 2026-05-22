@@ -108,21 +108,16 @@ class PimpinanController extends Controller
         $jmlTerlambat = (clone $queryAbsensi)->where('status', 'terlambat')->count();
         $jmlAlpha = (clone $queryAbsensi)->whereIn('status', ['alfa', 'alpha'])->count(); 
         $jmlCuti = (clone $queryAbsensi)->whereIn('status', ['cuti', 'izin', 'sakit'])->count();
-
         $totalBebanGaji = Penggajian::whereMonth('tanggal_dibuat', now()->month)
             ->whereYear('tanggal_dibuat', now()->year)
             ->sum('total_gaji');
         $totalBebanGaji = number_format($totalBebanGaji ?: 150000000, 0, ',', '.');
-
         $cutiTerbaru = Cuti::with('karyawan')
             ->orderBy('created_at', 'desc')
             ->take(3)
             ->get();
-
-        // 2. REVISI: Logika Cerdas Top Performer (Bulan Ini atau Bulan Lalu)
         $currentDate = Carbon::now();
-        $bulanTopPerformer = $currentDate->translatedFormat('F Y'); // Default: Bulan Ini
-        
+        $bulanTopPerformer = $currentDate->translatedFormat('F Y');
         $topKaryawan = \App\Models\Reward::with(['karyawan', 'penilaian'])
             ->whereMonth('tanggal_reward', $currentDate->month)
             ->whereYear('tanggal_reward', $currentDate->year)
@@ -131,8 +126,6 @@ class PimpinanController extends Controller
                 return $reward->penilaian->total_skor ?? 0;
             })
             ->take(1); 
-
-        // Jika bulan ini kosong, cari data bulan sebelumnya
         if ($topKaryawan->isEmpty()) {
             $lastMonthDate = Carbon::now()->subMonth();
             $topKaryawan = \App\Models\Reward::with(['karyawan', 'penilaian'])
@@ -143,8 +136,6 @@ class PimpinanController extends Controller
                     return $reward->penilaian->total_skor ?? 0;
                 })
                 ->take(1);
-
-            // Jika bulan lalu ternyata ada datanya, ubah teks judul bulannya
             if ($topKaryawan->isNotEmpty()) {
                 $bulanTopPerformer = $lastMonthDate->translatedFormat('F Y');
             }
@@ -157,8 +148,7 @@ class PimpinanController extends Controller
         $belumDigaji = max(0, $totalKaryawan - $karyawanSudahDigaji);
 
         $karyawanPending = User::where('status_akun', 'pending')->count();
-
-        // Jangan lupa tambahkan 'bulanTopPerformer' ke compact()
+// Jangan lupa tambahkan 'bulanTopPerformer' ke compact()
         return view('pimpinan.dashboard', compact(
             'totalKaryawan', 'karyawanCutiHariIni', 'totalBebanGaji', 'cutiTerbaru', 'topKaryawan',
             'jmlHadir', 'jmlTerlambat', 'jmlAlpha', 'jmlCuti', 'filterKehadiran', 'karyawanTanpaCuti', 
