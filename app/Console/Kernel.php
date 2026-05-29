@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Http\Controllers\Api\AbsensiController;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -12,7 +13,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('absensi:auto-alpha')->dailyAt('17:00');
+        $schedule->call(function () {
+            app(AbsensiController::class)->generateAlphaHarian();
+        })->everyMinute();
         // $schedule->command('inspire')->hourly();
     }
 

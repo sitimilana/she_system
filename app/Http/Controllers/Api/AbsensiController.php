@@ -47,6 +47,73 @@ class AbsensiController extends Controller
         return $earthRadius * $c;
     }
 
+    public function generateAlphaHarian()
+    {
+        $now = Carbon::now('Asia/Jakarta');
+        $cutoff = $now->copy()->setTime(17, 0, 0);
+        $startDate = Carbon::parse(Karyawan::where('status_karyawan', 'aktif')
+            ->min(DB::raw('COALESCE(tanggal_masuk, created_at)')) ?? $now)
+            ->startOfDay();
+
+        $endDate = $now->copy()->startOfDay();
+
+        if ($now->lt($cutoff)) {
+            $endDate = $now->copy()->subDay()->startOfDay();
+        }
+
+        if ($startDate->gt($endDate)) {
+            return;
+        }
+
+        $karyawans = Karyawan::where('status_karyawan', 'aktif')->get();
+
+        for ($tanggal = $startDate->copy(); $tanggal->lte($endDate); $tanggal->addDay()) {
+            if ($tanggal->isWeekend()) {
+                continue;
+            }
+
+            $isLibur = DB::table('hari_libur')
+                ->where('tanggal', $tanggal->toDateString())
+                ->first();
+
+            if ($isLibur) {
+                continue;
+            }
+
+            foreach ($karyawans as $karyawan) {
+                $tanggalMulaiAktif = Carbon::parse($karyawan->tanggal_masuk ?? $karyawan->created_at)->startOfDay();
+
+                if ($tanggalMulaiAktif->gt($tanggal)) {
+                    continue;
+                }
+
+                $sedangCuti = Cuti::where('id_karyawan', $karyawan->id_karyawan)
+                    ->where('status', 'approved')
+                    ->whereDate('tanggal_mulai', '<=', $tanggal->toDateString())
+                    ->whereDate('tanggal_selesai', '>=', $tanggal->toDateString())
+                    ->first();
+
+                if ($sedangCuti) {
+                    continue;
+                }
+
+                $sudahAdaAbsensi = Absensi::where('id_karyawan', $karyawan->id_karyawan)
+                    ->whereDate('tanggal', $tanggal->toDateString())
+                    ->exists();
+
+                if ($sudahAdaAbsensi) {
+                    continue;
+                }
+
+                Absensi::create([
+                    'id_karyawan' => $karyawan->id_karyawan,
+                    'tanggal'     => $tanggal->toDateString(),
+                    'status'      => 'alfa',
+                ]);
+            }
+        }
+    }
+
     public function store(Request $request)
     {
         $request->validate([

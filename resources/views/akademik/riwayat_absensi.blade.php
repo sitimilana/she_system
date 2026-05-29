@@ -256,9 +256,9 @@
 
         <form action="{{ route('akademik.absensi') }}" method="GET" class="mb-4 bg-light p-3 rounded-4 border">
 
-            <div class="row g-3">
+            <div class="row g-3 align-items-end">
 
-                <div class="col-md-4">
+                <div class="col-lg-3">
                     <label class="form-label small fw-bold text-muted mb-1">
                         <i class="bi bi-person me-1"></i> Cari Karyawan
                     </label>
@@ -273,7 +273,7 @@
                     </div>
                 </div>
                 
-                <div class="col-md-3">
+                <div class="col-lg-2">
                     <label class="form-label small fw-bold text-muted mb-1">
                         <i class="bi bi-calendar-month me-1"></i> Bulan & Tahun
                     </label>
@@ -281,8 +281,17 @@
                     <input type="month" name="bulan" class="form-control shadow-sm"
                         value="{{ request('bulan') }}">
                 </div>
+
+                <div class="col-lg-2">
+                    <label class="form-label small fw-bold text-muted mb-1">
+                        <i class="bi bi-calendar-date me-1"></i> Tanggal
+                    </label>
+
+                    <input type="date" name="tanggal" class="form-control shadow-sm"
+                        value="{{ request('tanggal') }}">
+                </div>
                 
-                <div class="col-md-3">
+                <div class="col-lg-2">
                     <label class="form-label small fw-bold text-muted mb-1">
                         <i class="bi bi-check-circle me-1"></i> Status Kehadiran
                     </label>
@@ -312,9 +321,9 @@
                     </select>
                 </div>
                 
-                <div class="col-md-2" style="margin-top: auto;">
+                <div class="col-lg-3">
 
-                    <div class="d-flex gap-2 filter-btn-group">
+                    <div class="d-flex gap-2 filter-btn-group h-100 align-items-end">
 
                         <button type="submit" class="btn btn-primary shadow-sm fw-bold">
                             <i class="bi bi-funnel-fill me-1"></i> Filter

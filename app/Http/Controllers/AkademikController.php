@@ -94,6 +94,9 @@ class AkademikController extends Controller
                       ->whereMonth('tanggal', $bulan[1]);
             }
         }
+        if ($request->filled('tanggal')) {
+            $query->whereDate('tanggal', $request->tanggal);
+        }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -169,6 +172,9 @@ class AkademikController extends Controller
                 $query->whereYear('tanggal', $tahun)
                     ->whereMonth('tanggal', $bulan);
             }
+        }
+        if ($request->filled('tanggal')) {
+            $query->whereDate('tanggal', $request->tanggal);
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);

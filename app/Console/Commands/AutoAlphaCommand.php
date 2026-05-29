@@ -16,12 +16,13 @@ class AutoAlphaCommand extends Command
 
     public function handle()
     {
-        $today = now()->toDateString();
+        $now = Carbon::now('Asia/Jakarta');
+        $today = $now->toDateString();
         
         // Ambil semua karyawan aktif yang BELUM ADA di tabel absensi hari ini
         $karyawanMangkir = Karyawan::where('status_karyawan', 'aktif')
             ->whereDoesntHave('absensi', function($query) use ($today) {
-                $query->where('tanggal', $today);
+                $query->whereDate('tanggal', $today);
             })->get();
 
         $jumlahAlpha = 0;
@@ -50,7 +51,7 @@ class AutoAlphaCommand extends Command
                 Absensi::create([
                     'id_karyawan' => $karyawan->id_karyawan,
                     'tanggal'     => $today,
-                    'status'      => 'alpha',
+                    'status'      => 'alfa',
                     'keterangan'  => 'Sistem: Tidak absen hingga jam 17:00'
                 ]);
                 $jumlahAlpha++;
