@@ -264,6 +264,8 @@ class KepalaBagianController extends Controller
             'username'     => 'required|unique:user,username',
             'password'     => 'required|min:6',
             'role_id'      => 'required|exists:roles,role_id',
+            'tanggal_masuk' => 'required|date',
+            'sisa_cuti'    => 'required|integer|min:0',
             'no_hp'        => 'nullable|string|max:20',
             'email'        => 'nullable|email|max:255',
             'alamat'       => 'nullable|string',
@@ -286,7 +288,9 @@ class KepalaBagianController extends Controller
             'email'           => $request->email ?? '-',
             'alamat'          => $request->alamat ?? '-',
             'status_karyawan' => 'pending',
-            'divisi'          => $request->divisi, 
+            'divisi'          => $request->divisi,
+            'tanggal_masuk'   => $request->tanggal_masuk,
+            'sisa_cuti'       => $request->sisa_cuti ?? 12,
         ]);
 
         return redirect()->route('kabag.karyawan')
@@ -340,6 +344,8 @@ class KepalaBagianController extends Controller
         $request->validate([
             'nama_lengkap'    => 'required|string|max:255',
             'divisi'          => 'required|string',
+            'tanggal_masuk'   => 'required|date',
+            'sisa_cuti'       => 'required|integer|min:0',
             'no_hp'           => 'nullable|string|max:20',
             'email'           => 'nullable|email|max:255',
             'alamat'          => 'nullable|string',
@@ -360,6 +366,8 @@ class KepalaBagianController extends Controller
             $user->karyawan->update([
                 'nama'            => $request->nama_lengkap,
                 'divisi'          => $request->divisi,
+                'tanggal_masuk'   => $request->tanggal_masuk,
+                'sisa_cuti'       => $request->sisa_cuti,
                 'no_hp'           => $request->no_hp ?? '-',
                 'email'           => $request->email ?? '-',
                 'alamat'          => $request->alamat ?? '-',

@@ -188,13 +188,14 @@
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No</th>
-                        <th width="20%">Nama</th>
-                        <th width="15%">Divisi</th>
-                        <th width="15%">Kontak</th>
-                        <th width="20%">Alamat</th>
+                        <th width="15%">Nama</th>
+                        <th width="12%">Divisi</th>
+                        <th width="12%">Tanggal Masuk</th>
+                        <th width="12%">Kontak</th>
+                        <th width="18%">Alamat</th>
                         <th width="10%" class="text-center">Sisa Cuti</th>
-                        <th width="15%" class="text-center">Status Kerja</th>
-                        <th width="10%" class="text-center">Aksi</th>
+                        <th width="12%" class="text-center">Status</th>
+                        <th width="8%" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -203,6 +204,13 @@
                         <td class="text-center">{{ $dataKaryawan->firstItem() + $index }}</td>
                         <td class="fw-bold">{{ $user->nama_lengkap }}</td>
                         <td class="text-capitalize">{{ $user->karyawan->divisi ?? '-' }}</td>
+                        <td>
+                            @if($user->karyawan && $user->karyawan->tanggal_masuk)
+                                <small class="text-muted">{{ date('d/m/Y', strtotime($user->karyawan->tanggal_masuk)) }}</small>
+                            @else
+                                <small class="text-danger fw-bold">Belum diisi</small>
+                            @endif
+                        </td>
                         <td>{{ $user->karyawan->no_hp ?? '-' }}</td>
                         <td class="text-truncate" style="max-width: 150px;" title="{{ $user->karyawan->alamat ?? '-' }}">
                             {{ $user->karyawan->alamat ?? '-' }}
@@ -291,6 +299,14 @@
                                                             <label class="form-label">Email</label>
                                                             <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
                                                         </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Tanggal Masuk</label>
+                                                            <input type="date" name="tanggal_masuk" class="form-control" value="{{ $user->karyawan->tanggal_masuk ?? '' }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Sisa Cuti (Hari)</label>
+                                                            <input type="number" name="sisa_cuti" class="form-control" value="{{ $user->karyawan->sisa_cuti ?? 0 }}" min="0" required>
+                                                        </div>
                                                         <div class="mb-3 mt-4 pt-3 border-top">
                                                             <label class="form-label text-danger fw-bold"><i class="bi bi-shield-exclamation me-1"></i>Status Karyawan</label>
                                                             <select name="status_karyawan" class="form-select border-danger bg-white" required>
@@ -315,7 +331,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
+                        <td colspan="9" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2 text-black-50"></i>
                             Tidak ada data karyawan di departemen ini.
                         </td>
@@ -409,8 +425,20 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
+                                        <label class="form-label">Tanggal Masuk <span class="text-danger">*</span></label>
+                                        <input type="date" name="tanggal_masuk" class="form-control" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
                                         <label class="form-label">Nomor HP</label>
                                         <input type="text" name="no_hp" class="form-control" placeholder="08xxxx">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Sisa Cuti (Hari) <span class="text-danger">*</span></label>
+                                        <input type="number" name="sisa_cuti" class="form-control" value="12" min="0" required>
+                                        <div class="form-text">Default: 12 hari</div>
                                     </div>
                                 </div>
                                 

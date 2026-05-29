@@ -61,11 +61,16 @@ class PimpinanController extends Controller
     {
         /** @var User $user */
         $user = User::with('karyawan')->findOrFail($id);
+        
+        // VALIDASI: Pastikan karyawan memiliki tanggal_masuk
+        if (!$user->karyawan || !$user->karyawan->tanggal_masuk) {
+            return redirect()->back()->with('error', 'Tanggal masuk karyawan belum diisi. Silakan lengkapi data terlebih dahulu.');
+        }
+        
         $user->status_akun = 'aktif';
         
         if ($user->karyawan) {
             $user->karyawan->status_karyawan = 'aktif';
-            $user->karyawan->tanggal_masuk = $user->karyawan->tanggal_masuk ?? now()->toDateString();
             $user->karyawan->save();
 
             if($user->karyawan->email && $user->karyawan->email != '-') {

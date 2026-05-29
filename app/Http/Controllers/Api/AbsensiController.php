@@ -57,15 +57,21 @@ class AbsensiController extends Controller
 
         $endDate = $now->copy()->startOfDay();
 
+        // Jika BELUM jam 17:00, proses kemarin (tunggu sampai jam 17:00 hari ini)
         if ($now->lt($cutoff)) {
             $endDate = $now->copy()->subDay()->startOfDay();
         }
+        // Jika SUDAH jam 17:00 atau lebih, proses hari ini
 
         if ($startDate->gt($endDate)) {
             return;
         }
 
         $karyawans = Karyawan::where('status_karyawan', 'aktif')->get();
+        $alfaCount = 0;
+        $cutiCount = 0;
+        
+        \Log::info("AutoAlpha: Processing dari {$startDate->toDateString()} to {$endDate->toDateString()} (Current time: {$now->format('Y-m-d H:i:s')})");
 
         for ($tanggal = $startDate->copy(); $tanggal->lte($endDate); $tanggal->addDay()) {
             if ($tanggal->isWeekend()) {
@@ -87,13 +93,15 @@ class AbsensiController extends Controller
                     continue;
                 }
 
+                // Cek cuti dengan status yang lebih lengkap
                 $sedangCuti = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-                    ->where('status', 'approved')
+                    ->whereIn('status', ['approved', 'disetujui_hrd', 'disetujui_kabag', 'Disetujui'])
                     ->whereDate('tanggal_mulai', '<=', $tanggal->toDateString())
                     ->whereDate('tanggal_selesai', '>=', $tanggal->toDateString())
                     ->first();
 
                 if ($sedangCuti) {
+                    $cutiCount++;
                     continue;
                 }
 
@@ -110,8 +118,11 @@ class AbsensiController extends Controller
                     'tanggal'     => $tanggal->toDateString(),
                     'status'      => 'alfa',
                 ]);
+                $alfaCount++;
             }
         }
+        
+        \Log::info("AutoAlpha: Selesai - {$alfaCount} alfa dicatat, {$cutiCount} cuti terdeteksi");
     }
 
     public function store(Request $request)
