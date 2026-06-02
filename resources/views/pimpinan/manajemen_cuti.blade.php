@@ -362,10 +362,11 @@
                 <thead>
                     <tr>
                         <th class="text-center" width="5%">No</th>
-                        <th width="25%">Nama & Jabatan</th>
-                        <th width="15%" class="text-center">Jenis Cuti</th>
-                        <th width="25%">Tgl Pelaksanaan</th>
-                        <th class="text-center" width="15%">Status</th>
+                        <th width="20%">Nama & Jabatan</th>
+                        <th width="12%" class="text-center">Jenis Cuti</th>
+                        <th width="20%">Tgl Pelaksanaan</th>
+                        <th class="text-center" width="10%">Berkas</th>
+                        <th class="text-center" width="13%">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -380,6 +381,13 @@
                         <td>
                             <strong class="text-dark"><i class="bi bi-calendar-event me-1 text-muted"></i> {{ \Carbon\Carbon::parse($cuti->tanggal_mulai)->format('d M Y') }}</strong><br>
                             <small class="text-muted">s.d {{ \Carbon\Carbon::parse($cuti->tanggal_selesai)->format('d M Y') }}</small>
+                        </td>
+                        <td class="text-center">
+                            @if($cuti->berkas_bukti)
+                                <a href="{{ asset('storage/' . $cuti->berkas_bukti) }}" target="_blank" class="btn btn-light border btn-sm text-primary action-btn" title="Lihat Berkas"><i class="bi bi-file-earmark-text"></i> Berkas</a>
+                            @else
+                                <span class="text-muted small">-</span>
+                            @endif
                         </td>
                         <td class="text-center">
                             @if(strtolower($cuti->status) === 'approved' || strtolower($cuti->status) === 'disetujui')
@@ -399,7 +407,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center py-5 text-muted">
+                        <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-2 d-block mb-2 text-black-50"></i>
                             Belum ada riwayat cuti.
                         </td>

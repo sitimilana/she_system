@@ -192,6 +192,7 @@ class PengajuanController extends Controller
                     |--------------------------------------------------------------------------
                     */
                     'keterangan_pimpinan' => $cuti->keterangan_pimpinan,
+                    'berkas_bukti' => $cuti->berkas_bukti ? asset('storage/' . $cuti->berkas_bukti) : null,
                 ];
             });
 
