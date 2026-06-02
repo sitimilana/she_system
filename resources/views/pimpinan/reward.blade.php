@@ -171,6 +171,8 @@
                         @csrf
                         <input type="hidden" name="id_karyawan" value="{{ $kandidat->id_karyawan }}">
                         <input type="hidden" name="id_penilaian" value="{{ $kandidat->id_penilaian }}">
+                        <input type="hidden" name="bulan" value="{{ $bulan }}">
+                        <input type="hidden" name="tahun" value="{{ $tahun }}">
                         <input type="hidden" name="keterangan" value="Karyawan Terbaik Periode {{ $bulan }} / {{ $tahun }}">
                         <button type="submit" class="btn btn-warning fw-bold">
                             <i class="bi bi-trophy-fill me-1"></i> Berikan Reward

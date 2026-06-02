@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Penilaian;
 use App\Models\Karyawan;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Reward;
+use Carbon\Carbon;
 
 class ApiPenilaianController extends Controller
 {
@@ -81,18 +83,17 @@ class ApiPenilaianController extends Controller
         $bulanSekarang = now()->month;
         $tahunSekarang = now()->year;
 
-        // 1. Cek Skor Tertinggi (Rank 1) di Perusahaan pada bulan ini
+        // 1. Skor tertinggi perusahaan bulan ini
         $topScoreBulanIni = Penilaian::where('bulan', $bulanSekarang)
                                     ->where('tahun', $tahunSekarang)
                                     ->max('total_skor');
 
-        // 2. Ambil Penilaian milik Karyawan ini pada bulan ini
+        // 2. Penilaian milik karyawan untuk bulan ini
         $penilaianSayaBulanIni = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
                                         ->where('bulan', $bulanSekarang)
                                         ->where('tahun', $tahunSekarang)
                                         ->first();
 
-        // 3. Tentukan apakah Karyawan ini adalah Penerima Reward (Top 1)
         $isTopPerformer = false;
         if ($topScoreBulanIni !== null && $penilaianSayaBulanIni !== null) {
             if ($penilaianSayaBulanIni->total_skor == $topScoreBulanIni) {
@@ -100,41 +101,64 @@ class ApiPenilaianController extends Controller
             }
         }
 
-        // 4. Ambil 6 bulan terakhir untuk Data Chart Kinerja
+        // 3. Chart (6 bulan terakhir)
         $riwayat6Bulan = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
                                 ->orderBy('tahun', 'desc')
                                 ->orderBy('bulan', 'desc')
                                 ->take(6)
                                 ->get()
-                                ->reverse(); 
+                                ->reverse();
 
         $chartData = $riwayat6Bulan->map(function ($item) {
             $namaBulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
             return [
-                'label' => $namaBulan[$item->bulan - 1] . ' ' . substr($item->tahun, -2), 
+                'label' => $namaBulan[$item->bulan - 1] . ' ' . substr($item->tahun, -2),
                 'skor'  => (int) $item->total_skor
             ];
         })->values();
 
-        // 5. Tambahkan payload riwayat terformat untuk menyuplai halaman RewardList di Android
-        $allPenilaian = Penilaian::where('id_karyawan', $karyawan->id_karyawan)
-                                ->orderBy('tahun', 'desc')
-                                ->orderBy('bulan', 'desc')
-                                ->get();
+        // 4. Semua reward user (history) diambil dari Tabel Reward yang betul
+        $allRewards = Reward::with('penilaian')
+                        ->where('id_karyawan', $karyawan->id_karyawan)
+                        ->orderBy('tanggal_reward', 'desc')
+                        ->get();
 
-        $rewardHistory = $allPenilaian->map(function ($item) use ($karyawan, $user) {
-            $paddedMonth = str_pad($item->bulan, 2, '0', STR_PAD_LEFT);
+        $rewardHistory = $allRewards->map(function ($item) use ($karyawan, $user) {
+            // Memastikan format tarikh menjadi YYYY-MM-DD
+            $tanggalPemberian = Carbon::parse($item->tanggal_reward)->toDateString();
+            $expiredAt = Carbon::parse($tanggalPemberian)->addDays(7)->toDateString();
+
+            // Tarik data skor, bulan, dan tahun dari jadual relasi Penilaian
+            $skor = $item->penilaian ? (int) $item->penilaian->total_skor : 0;
+            $bulan = $item->penilaian ? (int) $item->penilaian->bulan : (int) Carbon::parse($tanggalPemberian)->month;
+            $tahun = $item->penilaian ? (int) $item->penilaian->tahun : (int) Carbon::parse($tanggalPemberian)->year;
 
             return [
-                'id' => (int) $item->id_penilaian,
-                'nama' => $karyawan->nama ?? $karyawan->nama_karyawan ?? $user->name ?? 'Karyawan',
-                'skor' => (int) $item->total_skor,
-                'alasan' => "Apresiasi kinerja bulan ke-" . $item->bulan,
-                'tanggal' => $item->tahun . "-" . $paddedMonth . "-01",
-                'bulan' => (int) $item->bulan,
-                'tahun' => (int) $item->tahun
+                'id'         => (int) $item->id_reward,
+                'nama'       => $karyawan->nama ?? $user->name ?? 'Karyawan',
+                'skor'       => $skor,
+                'alasan'     => $item->keterangan ?? "Apresiasi kinerja bulan ke-" . $bulan,
+                'tanggal'    => $tanggalPemberian,
+                'expired_at' => $expiredAt,
+                'bulan'      => $bulan,
+                'tahun'      => $tahun
             ];
-        });
+        })->values();
+
+        // 5. recent_rewards: reward dengan tarikh pemberian dalam 7 hari terakhir
+        $recentRewards = $rewardHistory->filter(function ($r) {
+            try {
+                return Carbon::parse($r['tanggal'])->greaterThanOrEqualTo(Carbon::now()->subDays(7));
+            } catch (\Exception $ex) {
+                return false;
+            }
+        })->values();
+
+        $latestRecentReward = null;
+        if ($recentRewards->isNotEmpty()) {
+            // Susun dan ambil yang paling baru
+            $latestRecentReward = $recentRewards->sortByDesc('tanggal')->first();
+        }
 
         return response()->json([
             'success' => true,
@@ -143,7 +167,9 @@ class ApiPenilaianController extends Controller
                 'is_top_performer_bulan_ini' => $isTopPerformer,
                 'skor_bulan_ini'             => $penilaianSayaBulanIni ? (int) $penilaianSayaBulanIni->total_skor : 0,
                 'chart_data'                 => $chartData,
-                'reward_history'             => $rewardHistory // Sesuai struktur data objek RewardItem Android
+                'reward_history'             => $rewardHistory,
+                'recent_rewards'             => $recentRewards,
+                'latest_recent_reward'       => $latestRecentReward
             ]
         ], 200);
     }

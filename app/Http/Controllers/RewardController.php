@@ -33,9 +33,13 @@ class RewardController extends Controller
             ->take(1)
             ->get();
 
-        // TAMBAHKAN INI
+        // Ambil daftar reward yang sudah diberikan, urutkan per bulan penilaian (terbaru dulu)
         $daftarReward = Reward::with(['karyawan', 'penilaian'])
-            ->latest()
+            ->join('penilaian', 'reward.id_penilaian', '=', 'penilaian.id_penilaian')
+            ->select('reward.*')
+            ->orderBy('penilaian.tahun', 'desc')
+            ->orderBy('penilaian.bulan', 'desc')
+            ->orderBy('reward.tanggal_reward', 'desc')
             ->paginate(15);
 
         $bulanList = [
@@ -61,27 +65,36 @@ class RewardController extends Controller
         $request->validate([
             'id_karyawan' => 'required',
             'id_penilaian' => 'required',
+            'bulan' => 'required|numeric|between:1,12',
+            'tahun' => 'required|numeric|digits:4',
             'keterangan' => 'nullable|string'
         ]);
 
+        $bulan = $request->input('bulan');
+        $tahun = $request->input('tahun');
+
+        // Cek apakah reward untuk karyawan ini sudah ada di bulan/tahun yang dipilih
         $exists = Reward::where('id_karyawan', $request->id_karyawan)
-                    ->whereMonth('tanggal_reward', now()->month)
-                    ->whereYear('tanggal_reward', now()->year)
+                    ->whereMonth('tanggal_reward', $bulan)
+                    ->whereYear('tanggal_reward', $tahun)
                     ->exists();
 
         if ($exists) {
-            return redirect()->back()->with('error', 'Gagal: Karyawan ini sudah dieksekusi/diberikan reward pada bulan ini.');
+            return redirect()->back()->with('error', 'Gagal: Karyawan ini sudah diberikan reward pada periode bulan ini.');
         }
+
+        // Buat tanggal reward = hari pertama bulan yang dipilih (atau hari terakhir)
+        $tanggalReward = \Carbon\Carbon::create($tahun, $bulan, 1)->endOfMonth()->toDateString();
 
         Reward::create([
             'id_karyawan' => $request->id_karyawan,
             'id_penilaian' => $request->id_penilaian,
-            'tanggal_reward' => now()->toDateString(), // Format YYYY-MM-DD
+            'tanggal_reward' => $tanggalReward, // Format YYYY-MM-DD (hari terakhir bulan)
             'keterangan' => $request->keterangan ?? 'Karyawan Terbaik Bulan Ini',
             'diberikan_oleh' => auth()->user()->id_user,
         ]);
 
-        return redirect()->back()->with('success', 'Berhasil! Karyawan telah resmi ditetapkan sebagai penerima Reward bulan ini.');
+        return redirect()->back()->with('success', 'Berhasil! Karyawan telah resmi ditetapkan sebagai penerima Reward.');
     }
     
     public function getRewards()
