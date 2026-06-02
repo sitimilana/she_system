@@ -83,13 +83,42 @@
     </div>
     
     <ul class="nav flex-column mt-5">
-        <li class="nav-item"><a href="{{ route('pimpinan.dashboard') }}" class="nav-link"><i class="bi bi-house-door"></i> Home</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.gaji') }}" class="nav-link"><i class="bi bi-cash-stack"></i> Manajemen Gaji</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.cuti') }}" class="nav-link"><i class="bi bi-calendar2-check"></i> Manajemen Cuti</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.reward') }}" class="nav-link active"><i class="bi bi-gift"></i> Reward & Recognition</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link"><i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan</a></li>
-        <li class="nav-item"><a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link"><i class="bi bi-geo-alt"></i> Pengaturan Lokasi</a></li>
-        <li class="nav-item mt-4"><a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.dashboard') }}" class="nav-link {{ Request::is('pimpinan') || Request::is('pimpinan/dashboard*') ? 'active' : '' }}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.gaji') }}" class="nav-link {{ Request::is('pimpinan/gaji*') ? 'active' : '' }}">
+                <i class="bi bi-cash-stack"></i> Manajemen Gaji
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.cuti') }}" class="nav-link {{ Request::is('pimpinan/cuti*') ? 'active' : '' }}">
+                <i class="bi bi-calendar2-check"></i> Manajemen Cuti
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.reward') }}" class="nav-link {{ Request::is('pimpinan/reward*') ? 'active' : '' }}">
+                <i class="bi bi-gift"></i> Reward & Recognition
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.karyawan_pending') }}" class="nav-link {{ Request::is('pimpinan/karyawan-pending*') ? 'active' : '' }}">
+                <i class="bi bi-person-lines-fill"></i> Persetujuan Karyawan
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('pimpinan.pengaturan-lokasi') }}" class="nav-link {{ Request::is('pimpinan/pengaturan-lokasi*') ? 'active' : '' }}">
+                <i class="bi bi-geo-alt"></i> Pengaturan Lokasi
+            </a>
+        </li>
+        <li class="nav-item"><a href="{{ route('pimpinan.hari_libur') }}" class="nav-link"><i class="bi bi-calendar-event"></i> Hari Libur</a></li>
+        <li class="nav-item mt-4">
+            <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </li>
     </ul>
 </div>
 

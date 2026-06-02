@@ -174,7 +174,6 @@
             </button>
             <h5 class="fw-bold m-0" style="color: #2c3e50;">Buat Slip Gaji</h5>
         </div>
-        <a href="{{ route('pimpinan.gaji') }}" class="btn btn-secondary btn-sm shadow-sm"><i class="bi bi-arrow-left"></i> Kembali</a>
     </div>
 
     <div class="mb-4 d-none d-md-flex justify-content-between align-items-center">
@@ -182,7 +181,6 @@
             <h2 class="fw-bold m-0" style="color: #1e293b;">Buat Slip Gaji</h2>
             <p class="text-muted m-0">Input data komponen gaji manual untuk karyawan.</p>
         </div>
-        <a href="{{ route('pimpinan.gaji') }}" class="btn btn-secondary shadow-sm fw-bold"><i class="bi bi-arrow-left me-2"></i>Kembali</a>
     </div>
 
     @if($errors->any())
@@ -228,49 +226,49 @@
                     <h5 class="text-success fw-bold border-bottom pb-2 mb-3"><i class="bi bi-plus-circle me-2"></i>Komponen Penerimaan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label text-secondary">Gaji Pokok (Otomatis dari Master)</label>
+                        <label class="form-label text-secondary">Gaji Pokok</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-muted">Rp</span>
                             <input type="number" name="gaji_pokok" id="gaji_pokok" class="form-control calc-penerimaan bg-light text-muted" value="0" readonly>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Uang Makan (Otomatis dari Absen)</label>
+                        <label class="form-label">Uang Makan</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="uang_makan" id="uang_makan" class="form-control calc-penerimaan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Jabatan (Input Manual)</label>
+                        <label class="form-label">Tunjangan Jabatan/Leader (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan" class="form-control calc-penerimaan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Kinerja (Otomatis dari Penilaian)</label>
+                        <label class="form-label">Tunjangan Kinerja</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="insentif_kinerja" id="insentif_kinerja" class="form-control calc-penerimaan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Program / Lainnya (Input Manual)</label>
+                        <label class="form-label">Tunjangan Program / Lainnya (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="tunjangan_program" id="tunjangan_program" class="form-control calc-penerimaan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Bonus Rank 1 / Tambahan (Otomatis/Manual)</label>
+                        <label class="form-label">Bonus</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="bonus" id="bonus" class="form-control calc-penerimaan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Lain-lain (Input Manual)</label>
+                        <label class="form-label">Lain-lain (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="lain_lain" id="lain_lain" class="form-control calc-penerimaan" min="0" value="0">
@@ -282,21 +280,21 @@
                     <h5 class="text-danger fw-bold border-bottom pb-2 mb-3"><i class="bi bi-dash-circle me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label">Potongan Absen (Otomatis dari Izin/Alpha/Cuti)</label>
+                        <label class="form-label">Potongan Absen (Dari Izin/Alpha/Cuti)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="potongan_absen" id="potongan_absen" class="form-control calc-potongan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Cash Bon Pertama (Input Manual)</label>
+                        <label class="form-label">Cash Bon Pertama (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="cash_bon" id="cash_bon" class="form-control calc-potongan" min="0" value="0">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Cash Bon Kedua (Input Manual)</label>
+                        <label class="form-label">Cash Bon Kedua (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="cash_bon_2" id="cash_bon_2" class="form-control calc-potongan" min="0" value="0">
@@ -310,7 +308,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Potongan Lain-lain (Input Manual)</label>
+                        <label class="form-label">Potongan Lain-lain (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="potongan_lain" id="potongan_lain" class="form-control calc-potongan" min="0" value="0">
