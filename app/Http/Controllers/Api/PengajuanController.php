@@ -368,4 +368,53 @@ class PengajuanController extends Controller
             ],
         ], 201);
     }
+    public function destroy(Request $request, $id)
+    {
+        $user = $request->user();
+
+        // Cari data karyawan berdasarkan user login
+        $karyawan = Karyawan::where('id_user', $user->id_user)->first();
+
+        if (!$karyawan) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data karyawan tidak ditemukan.'
+            ], 404);
+        }
+
+        // Cari pengajuan cuti berdasarkan ID dan ID Karyawan yang sedang login
+        $cuti = Cuti::where('id_cuti', $id)
+                    ->where('id_karyawan', $karyawan->id_karyawan)
+                    ->first();
+
+        // Pastikan cuti ditemukan
+        if (!$cuti) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data pengajuan tidak ditemukan atau bukan milik Anda.'
+            ], 404);
+        }
+
+        // Pastikan hanya cuti yang berstatus 'pending', 'pending_pimpinan', atau 'pending_kabag' yang bisa dihapus
+        $statusPending = ['pending', 'pending_pimpinan', 'pending_kabag'];
+        if (!in_array($cuti->status, $statusPending)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengajuan yang sudah diproses (Disetujui/Ditolak) tidak dapat dihapus.'
+            ], 400);
+        }
+
+        // Hapus file bukti jika ada
+        if ($cuti->berkas_bukti) {
+            Storage::disk('public')->delete($cuti->berkas_bukti);
+        }
+
+        // Hapus data dari database
+        $cuti->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Pengajuan berhasil dihapus.'
+        ], 200);
+    }
 }

@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/cuti', [PengajuanController::class, 'store']);
     Route::put('/cuti/{id}', [PengajuanController::class, 'update']);
     Route::delete('/cuti/{id}', [PengajuanController::class, 'destroy']);
+    Route::delete('/cuti/{id}', [App\Http\Controllers\Api\PengajuanController::class, 'destroy']);
     
     // Penilaian
    Route::get('/penilaian', [ApiPenilaianController::class, 'index']);
