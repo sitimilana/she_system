@@ -9,7 +9,6 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { background: #f4f7f6; font-family: 'Inter', sans-serif; color: #333; }
         
-        /* SIDEBAR STRUKTUR BARU */
         .sidebar {
             width: 250px; 
             min-height: 100vh; 
@@ -18,8 +17,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 1045; /* Diperbesar agar di atas elemen lain saat di mobile */
-            transition: transform 0.3s ease-in-out; /* Animasi mulus */
+            z-index: 1045; 
+            transition: transform 0.3s ease-in-out; 
         }
 
         .sidebar .logo { 
@@ -33,7 +32,6 @@
             width: 100px; 
         }
 
-        /* LINK NAVIGASI BARU */
         .sidebar .nav-link { 
             color: #fff; 
             font-size: 16px; 
@@ -50,7 +48,6 @@
             font-size: 1.1rem; 
         }
 
-        /* HOVER & ACTIVE STATE BARU */
         .sidebar .nav-link:hover, 
         .sidebar .nav-link.active { 
             background-color: rgba(255,255,255,0.2); 
@@ -59,19 +56,16 @@
             color: #fff;
         }
 
-        /* LOGOUT STYLE BARU */
         .sidebar .nav-link.text-white-50:hover {
             color: #fff !important;
         }
         
-        /* CONTENT LAMA (Ditambah transisi) */
         .content { margin-left: 250px; padding: 40px; transition: margin-left 0.3s ease; }
         .card-custom { background-color: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .form-label { font-weight: 600; color: #4a5568; font-size: 0.95rem; }
         .form-control, .form-select { border-radius: 8px; border: 1px solid #cbd5e0; padding: 10px 15px; background-color: #f8fafc; }
         .form-control:focus, .form-select:focus { background-color: #fff; border-color: #8f9fc4; box-shadow: 0 0 0 4px rgba(143, 159, 196, 0.15); }
         
-        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
         .sidebar-overlay {
             display: none;
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -81,23 +75,22 @@
 
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-100%); /* Sembunyikan sidebar ke kiri */
+                transform: translateX(-100%);
             }
             .sidebar.show-mobile {
-                transform: translateX(0); /* Tampilkan saat menu di-klik */
+                transform: translateX(0); 
             }
             .content {
-                margin-left: 0; /* Hapus margin kiri di HP */
-                padding: 15px; /* Perkecil padding di HP */
+                margin-left: 0; 
+                padding: 15px; 
             }
             .card-custom {
-                padding: 20px !important; /* Perkecil padding dalam form di HP */
+                padding: 20px !important; 
             }
             .sidebar-overlay.show {
-                display: block; /* Tampilkan overlay gelap */
+                display: block; 
             }
         }
-        /* --------------------------------------- */
     </style>
 </head>
 
@@ -236,11 +229,13 @@
                         <label class="form-label">Uang Makan</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="uang_makan" id="uang_makan" class="form-control calc-penerimaan" min="0" value="0">
+                            <input type="number" name="uang_makan" id="uang_makan"
+                            class="form-control calc-penerimaan bg-light text-muted"
+                            readonly>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Jabatan/Leader (Input)</label>
+                        <label class="form-label">Tunjangan Jabatan(Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan" class="form-control calc-penerimaan" min="0" value="0">
@@ -250,11 +245,14 @@
                         <label class="form-label">Tunjangan Kinerja</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="insentif_kinerja" id="insentif_kinerja" class="form-control calc-penerimaan" min="0" value="0">
+                            <input type="number" name="insentif_kinerja"
+                            id="insentif_kinerja"
+                            class="form-control calc-penerimaan bg-light text-muted"
+                            readonly>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tunjangan Program / Lainnya (Input)</label>
+                        <label class="form-label">Tunjangan Program(Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="tunjangan_program" id="tunjangan_program" class="form-control calc-penerimaan" min="0" value="0">
@@ -264,14 +262,17 @@
                         <label class="form-label">Bonus</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="bonus" id="bonus" class="form-control calc-penerimaan" min="0" value="0">
+                            <input type="number" name="bonus"
+                            id="bonus"
+                            class="form-control calc-penerimaan bg-light text-muted"
+                            readonly>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Lain-lain (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="lain_lain" id="lain_lain" class="form-control calc-penerimaan" min="0" value="0">
+                            <input type="number" name="lain_lain" id="lain_lain" class="form-control calc-penerimaan bg-light text-muted" readonly>
                         </div>
                     </div>
                 </div>
@@ -280,24 +281,27 @@
                     <h5 class="text-danger fw-bold border-bottom pb-2 mb-3"><i class="bi bi-dash-circle me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label">Potongan Absen (Dari Izin/Alpha/Cuti)</label>
+                        <label class="form-label">Potongan Absensi (Dari Izin/Alpha/Cuti)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="potongan_absen" id="potongan_absen" class="form-control calc-potongan" min="0" value="0">
+                            <input type="number" name="potongan_absen"
+                            id="potongan_absen"
+                            class="form-control calc-potongan bg-light text-muted"
+                            readonly>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Cash Bon Pertama (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="cash_bon" id="cash_bon" class="form-control calc-potongan" min="0" value="0">
+                            <input type="number" name="cash_bon" id="cash_bon" class="form-control calc-potongan bg-light text-muted" readonly >
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Cash Bon Kedua (Input)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
-                            <input type="number" name="cash_bon_2" id="cash_bon_2" class="form-control calc-potongan" min="0" value="0">
+                            <input type="number" name="cash_bon_2" id="cash_bon_2" class="form-control calc-potongan bg-light text-muted" readonly>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -341,7 +345,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        // --- TAMBAHAN: LOGIKA MENU BURGER HP ---
         const sidebar = document.getElementById('sidebar');
         const openBtn = document.getElementById('openSidebarBtn');
         const closeBtn = document.getElementById('closeSidebarBtn');
@@ -360,9 +363,7 @@
         if(openBtn) openBtn.addEventListener('click', openSidebar);
         if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
         if(overlay) overlay.addEventListener('click', closeSidebar);
-        // ----------------------------------------
-
-        // --- LOGIKA KALKULASI GAJI (Tidak Diubah) ---
+        
         const selectKaryawan = document.getElementById('id_karyawan');
         const selectPeriode = document.getElementById('periode');
         
@@ -380,7 +381,7 @@
             
             if(idKaryawan && periode) {
                 const [tahun, bulan] = periode.split('-');
-                
+            
                 const url = `/pimpinan/karyawan/${idKaryawan}/finansial?bulan=${bulan}&tahun=${tahun}`;
                 fetch(url)
                     .then(res => {
@@ -388,6 +389,23 @@
                         return res.json();
                     })
                     .then(data => {
+                        const btnSubmit = document.querySelector('button[type="submit"]');
+                        if (data.sudah_dibuat) {
+                            alert('⚠️ PERINGATAN: Karyawan ini sudah memiliki slip gaji untuk periode tersebut. Anda tidak dapat membuat slip ganda.');
+                            
+                            // Matikan tombol simpan dan ubah warnanya
+                            btnSubmit.disabled = true;
+                            btnSubmit.innerHTML = '<i class="bi bi-x-circle me-2"></i>Slip Sudah Ada';
+                            btnSubmit.classList.remove('btn-primary');
+                            btnSubmit.classList.add('btn-secondary');
+                        } else {
+                            // Nyalakan kembali tombol simpan
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerHTML = '<i class="bi bi-save me-2"></i>Simpan Slip Gaji';
+                            btnSubmit.classList.remove('btn-secondary');
+                            btnSubmit.classList.add('btn-primary');
+                        }
+                        
                         inGajiPokok.value = data.gaji_pokok || 0;
                         inUangMakan.value = data.uang_makan || 0;
                         inKinerja.value = data.insentif_kinerja || 0;
@@ -407,13 +425,11 @@
         selectKaryawan.addEventListener('change', fetchFinansial);
         selectPeriode.addEventListener('change', fetchFinansial);
 
-        // Auto Calculator logic
         const inputsPenerimaan = document.querySelectorAll('.calc-penerimaan');
         const inputsPotongan = document.querySelectorAll('.calc-potongan');
         
         function calculateTotal() {
             let totalPenerimaan = 0;
-            // Menjumlahkan semua yg berclass calc-potongan, tidak perlu declare inBpjs ulang
             let totalPotongan = 0; 
 
             inputsPenerimaan.forEach(i => totalPenerimaan += parseFloat(i.value) || 0);
@@ -428,7 +444,6 @@
         inputsPenerimaan.forEach(input => input.addEventListener('input', calculateTotal));
         inputsPotongan.forEach(input => input.addEventListener('input', calculateTotal));
         
-        // Panggil saat awal load agar BPJS terpotong otomatis
         calculateTotal();
     });
 </script>

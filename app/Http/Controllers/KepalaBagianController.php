@@ -251,10 +251,11 @@ class KepalaBagianController extends Controller
     {
         $penilaian = Penilaian::findOrFail($id);
         $namakaryawan = $penilaian->karyawan->nama ?? 'Karyawan';
-        
+
+        \App\Models\Reward::where('id_penilaian', $id)->delete();
         $penilaian->delete();
 
-        return redirect()->route('kabag.penilaian')->with('success', "Penilaian kinerja untuk {$namakaryawan} berhasil dihapus.");
+        return redirect()->route('kabag.penilaian')->with('success', "Penilaian kinerja untuk {$namakaryawan} beserta data reward terkait berhasil dihapus.");
     }
 
     public function store(Request $request)

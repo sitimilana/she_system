@@ -139,15 +139,56 @@ class AkademikController extends Controller
         return view('akademik.riwayat_cuti', compact('dataCuti'));
     }
 
-    public function karyawan()
+    public function karyawan(Request $request)
     {
-        $dataKaryawan = \App\Models\User::with(['karyawan', 'role'])
-            ->whereHas('role', function ($query) {
-                $query->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
-            })->paginate(15);
+        $query = \App\Models\User::with(['karyawan', 'role'])
+            ->whereHas('role', function ($q) {
+                $q->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+            });
+
+        // Logika Filter Pencarian
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhereHas('karyawan', function ($qk) use ($search) {
+                      $qk->where('nama', 'like', "%{$search}%")
+                         ->orWhere('divisi', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $dataKaryawan = $query->paginate(15);
+        $dataKaryawan->appends($request->query());
 
         return view('akademik.manajemen_karyawan', compact('dataKaryawan'));
     }
+
+    public function cetakKaryawan(Request $request)
+    {
+        $query = \App\Models\User::with(['karyawan', 'role'])
+            ->whereHas('role', function ($q) {
+                $q->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+            });
+
+        // Tetap bawa filter pencarian saat dicetak
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_lengkap', 'like', "%{$search}%")
+                  ->orWhereHas('karyawan', function ($qk) use ($search) {
+                      $qk->where('nama', 'like', "%{$search}%")
+                         ->orWhere('divisi', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Ambil semua data (bukan paginate) untuk dicetak
+        $dataKaryawan = $query->get();
+
+        return view('akademik.cetak_karyawan', compact('dataKaryawan'));
+    }
+    
     public function cetakAbsensi(Request $request)
     {
         $query = \App\Models\Absensi::with('karyawan');
