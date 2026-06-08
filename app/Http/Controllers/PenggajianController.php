@@ -292,16 +292,14 @@ class PenggajianController extends Controller
         $alpha = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->whereIn('status', ['alfa', 'alpha'])->count();
         $izin = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'izin')->count();
         $cuti = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'cuti')->count();
-
+        $cutiKehamilan = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'cuti kehamilan')->count();
         // Uang Makan: 20rb x Hari Hadir
         $uangMakan = $hadir * 20000;
         
         // Logika Potongan Absen (Rp 70.000 per hari mbolos)
         // Alpha & Izin = potong. Cuti = hari 1 gratis, hari 2 dst dipotong. Sakit = Gratis.
         $hariPotong = $alpha + $izin; 
-        if ($cuti > 1) {
-            $hariPotong += ($cuti - 1);
-        }
+
         $potonganAbsen = $hariPotong * 70000;
 
         $sudahDibuat = Penggajian::where('id_karyawan', $id)
@@ -317,6 +315,7 @@ class PenggajianController extends Controller
             'potongan_absen'    => $potonganAbsen,
             'potongan_bpjs'     => self::TUNJ_BPJS_STANDAR,
             'bonus'             => $bonus,
+            'cuti_kehamilan'    => $cutiKehamilan,
             'sudah_dibuat'      => $sudahDibuat,
         ]);
     }

@@ -263,7 +263,6 @@ class KepalaBagianController extends Controller
         $request->validate([
             'nama_lengkap' => 'required|string|max:255',
             'username'     => 'required|unique:user,username',
-            'password'     => 'required|min:6',
             'role_id'      => 'required|exists:roles,role_id',
             'tanggal_masuk' => 'required|date',
             'sisa_cuti'    => 'required|integer|min:0',
@@ -273,11 +272,13 @@ class KepalaBagianController extends Controller
             'divisi'       => 'nullable|in:keuangan,admin umum,akademik,marketing,office boy',
         ]);
 
-        $user = User::create([
+        $defaultPassword = 'shekediri123';
+
+        $user = \App\Models\User::create([
             'nama_lengkap'       => $request->nama_lengkap,
             'username'           => $request->username,
-            'password'           => bcrypt($request->password),
-            'password_sementara' => $request->password,
+            'password'           => \Illuminate\Support\Facades\Hash::make($defaultPassword), // Enkripsi sandi default
+            'password_sementara' => $defaultPassword, // Opsional: Simpan di kolom sementara agar mudah dicek jika ada
             'role_id'            => $request->role_id,
             'status_akun'        => 'pending',
         ]);
@@ -294,8 +295,7 @@ class KepalaBagianController extends Controller
             'sisa_cuti'       => $request->sisa_cuti ?? 12,
         ]);
 
-        return redirect()->route('kabag.karyawan')
-         ->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan Pimpinan.');
+        return redirect()->route('kabag.karyawan')->with('success', 'Karyawan berhasil didaftarkan dan menunggu persetujuan Pimpinan. Password default karyawan: ' . $defaultPassword);
     }
 
     public function cuti()
@@ -440,5 +440,19 @@ class KepalaBagianController extends Controller
             'jumlahPending',
             'jumlahKeluar'
         ));
+    }
+    public function resetPassword($id)
+    {
+        // Cari user berdasarkan ID
+        $user = \App\Models\User::findOrFail($id);
+        
+        // Set password kembali ke default (misal: shekediri123)
+        $defaultPassword = 'shekediri123';
+        
+        $user->password = \Illuminate\Support\Facades\Hash::make($defaultPassword);
+        $user->password_sementara = $defaultPassword; // Agar bisa dilihat di tabel jika Anda menampilkan kolom ini
+        $user->save();
+
+        return redirect()->back()->with('success', 'Password karyawan berhasil direset menjadi: ' . $defaultPassword);
     }
 }

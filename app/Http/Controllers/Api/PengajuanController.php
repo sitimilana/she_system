@@ -241,6 +241,31 @@ class PengajuanController extends Controller
         $tglSelesai = Carbon::parse($request->tanggal_selesai)->startOfDay();
         $hariIni = now()->startOfDay();
 
+        if ($jenisCuti === 'cuti kehamilan') {
+            // 1. Wajib melampirkan berkas bukti (Surat Dokter/Bidan)
+            if (!$request->hasFile('berkas_bukti')) {
+                return response()->json([
+                    'message' => 'Pengajuan cuti kehamilan wajib melampirkan surat keterangan hamil dari dokter atau bidan.'
+                ], 422);
+            }
+
+            // 2. Maksimal diajukan H-10
+            $batasH10 = now()->startOfDay()->addDays(10);
+            if ($tglMulai->lessThan($batasH10)) {
+                return response()->json([
+                    'message' => 'Pengajuan cuti kehamilan harus dilakukan minimal H-10 sebelum tanggal mulai.'
+                ], 422);
+            }
+
+            // 3. Durasi maksimal 90 hari
+            $jumlahHari = $tglMulai->diffInDays($tglSelesai) + 1;
+            if ($jumlahHari > 90) {
+                return response()->json([
+                    'message' => 'Durasi cuti kehamilan maksimal adalah 90 hari (3 bulan).'
+                ], 422);
+            }
+        }
+
         $isCutiTahunan = $this->isAnnualLeave($jenisCuti);
 
         if ($isCutiTahunan) {
@@ -271,7 +296,7 @@ class PengajuanController extends Controller
                 ], 422);
             }
 
-        } elseif (in_array($jenisCuti, ['izin', 'sakit'])) {
+        } elseif (in_array($jenisCuti, ['izin', 'sakit', 'cuti kehamilan'])) {
 
             if ($tglMulai->lessThan($hariIni)) {
                 return response()->json([

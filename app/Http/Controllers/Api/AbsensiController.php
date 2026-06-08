@@ -50,18 +50,16 @@ class AbsensiController extends Controller
     public function generateAlphaHarian()
     {
         $now = Carbon::now('Asia/Jakarta');
-        $cutoff = $now->copy()->setTime(17, 0, 0);
+        $cutoff = $now->copy()->setTime(00, 0, 0);
         $startDate = Carbon::parse(Karyawan::where('status_karyawan', 'aktif')
             ->min(DB::raw('COALESCE(tanggal_masuk, created_at)')) ?? $now)
             ->startOfDay();
 
         $endDate = $now->copy()->startOfDay();
 
-        // Jika BELUM jam 17:00, proses kemarin (tunggu sampai jam 17:00 hari ini)
         if ($now->lt($cutoff)) {
             $endDate = $now->copy()->subDay()->startOfDay();
         }
-        // Jika SUDAH jam 17:00 atau lebih, proses hari ini
 
         if ($startDate->gt($endDate)) {
             return;
@@ -192,7 +190,6 @@ class AbsensiController extends Controller
 
             $id_karyawan = $karyawan->id_karyawan;
 
-            // Cek apakah sedang cuti pada hari ini
             $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
                 ->where('status', 'approved')
                 ->where('tanggal_mulai', '<=', $tanggalHariIni)
@@ -206,7 +203,6 @@ class AbsensiController extends Controller
                 ], 400);
             }
 
-            // Simpan foto
             $file = $request->file('foto');
             $namaFile = $id_karyawan . '_' . $request->jenis . '_' . time() . '.' . $file->extension();
             $pathFoto = $file->storeAs('absensi', $namaFile, 'public');
@@ -219,7 +215,7 @@ class AbsensiController extends Controller
                     ], 400);
                 }
 
-                if ($waktuSekarang >= '17:00:00') {
+                if ($waktuSekarang >= '16:00:00') {
                     return response()->json([
                         'success' => false,
                         'message' => 'Batas waktu absen masuk telah habis (17:00). Anda tercatat Alfa.'
@@ -237,7 +233,7 @@ class AbsensiController extends Controller
                     ], 400);
                 }
 
-                $statusKehadiran = ($waktuSekarang > '08:15:00') ? 'terlambat' : 'hadir';
+                $statusKehadiran = ($waktuSekarang >= '08:00:00') ? 'terlambat' : 'hadir';
 
                 $absensi = Absensi::create([
                     'id_karyawan'     => $id_karyawan,
@@ -257,10 +253,10 @@ class AbsensiController extends Controller
             }
 
             if ($request->jenis === 'pulang') {
-                if ($waktuSekarang < '15:00:00') {
+                if ($waktuSekarang < '16:00:00') {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Belum waktunya pulang. Absen pulang baru bisa dilakukan pukul 15:00.'
+                        'message' => 'Belum waktunya pulang. Absen pulang baru bisa dilakukan pukul 16:00.'
                     ], 400);
                 }
 
@@ -309,7 +305,6 @@ class AbsensiController extends Controller
         }
     }
 
-    // Riwayat hanya membaca data, tidak melakukan insert alfa otomatis
     public function riwayatAbsensi(Request $request)
     {
         $request->validate([

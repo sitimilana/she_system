@@ -25,65 +25,34 @@
         .card-custom { background-color: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         
         /* TABLE STYLES */
-        .table-custom th { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
-        .table-custom td { vertical-align: middle; border-bottom: 1px solid #e2e8f0; }
+        .table-custom th { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; font-size: 0.9rem; padding: 12px 10px; white-space: nowrap; }
+        .table-custom td { vertical-align: middle; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; padding: 12px 10px; }
+        
+        .alamat-text { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .action-buttons { display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap; }
 
         /* FORM AESTHETIC STYLES */
-        .form-control, .form-select {
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            border-color: #e2e8f0;
-            font-size: 0.95rem;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #8f9fc4;
-            box-shadow: 0 0 0 3px rgba(143, 159, 196, 0.15);
-        }
-        .form-label {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #475569;
-            margin-bottom: 0.4rem;
-        }
-        .modal-section {
-            background-color: #f8fafc;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #f1f5f9;
-            height: 100%;
-        }
+        .form-control, .form-select { padding: 0.6rem 1rem; border-radius: 0.5rem; border-color: #e2e8f0; font-size: 0.95rem; }
+        .form-control:focus, .form-select:focus { border-color: #8f9fc4; box-shadow: 0 0 0 3px rgba(143, 159, 196, 0.15); }
+        .form-label { font-weight: 600; font-size: 0.85rem; color: #475569; margin-bottom: 0.4rem; }
+        .modal-section { background-color: #f8fafc; border-radius: 12px; padding: 20px; border: 1px solid #f1f5f9; height: 100%; }
+        
+        /* RESPONSIVE MODAL FIX */
         @media (max-width: 768px) {
-            .modal-content {
-                max-height: 85vh;
-                overflow-y: auto !important;
-            }
-            .modal-dialog-scrollable .modal-content {
-                overflow-y: auto !important;
-            }
-        }
-        .modal-section-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 1.2rem;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 0.5rem;
+            .modal-dialog { margin: 10px; }
+            .modal-content { max-height: 90vh; }
+            .modal-footer { padding: 15px !important; }
+            .modal-footer .btn { width: 100%; margin: 0 !important; }
+            .modal-footer { flex-direction: column-reverse; gap: 10px; }
         }
 
-        /* DITAMBAHKAN: Style Pagination dinamis Laravel */
+        .modal-section-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+
         .pagination { margin-bottom: 0; gap: 4px; }
-        .pagination .page-link {
-            padding: 0.35rem 0.5rem !important;
-            font-size: 0.85rem !important;
-            line-height: 1.4 !important;
-            border: 1px solid #dee2e6 !important;
-            border-radius: 6px !important;
-            color: #475569;
-        }
+        .pagination .page-link { padding: 0.35rem 0.5rem !important; font-size: 0.85rem !important; line-height: 1.4 !important; border: 1px solid #dee2e6 !important; border-radius: 6px !important; color: #475569; }
         .pagination .page-link:hover { background-color: #f1f5f9 !important; border-color: #8f9fc4 !important; }
         .pagination .active .page-link { background-color: #8f9fc4 !important; border-color: #8f9fc4 !important; color: white !important;}
 
-        /* DITAMBAHKAN: Aturan CSS cetak cetak PDF agar rapi tanpa Sidebar & Fitur Web */
         @media print {
             .sidebar, #searchInput, .input-group-text, .btn, .pagination, .alert { display: none !important; }
             .content { margin-left: 0 !important; padding: 0 !important; }
@@ -91,10 +60,7 @@
             .card-custom { box-shadow: none !important; border: none !important; padding: 0 !important; }
         }
 
-        .sidebar-overlay {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5); z-index: 1040;
-        }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1040; }
 
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
@@ -163,7 +129,6 @@
         </div>
     @endif
 
-
     <div class="card card-custom p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div class="input-group" style="max-width: 400px;">
@@ -171,14 +136,11 @@
                 <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, divisi, atau status...">
             </div>
         
-            
             <div class="d-flex gap-2">
                 <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
-                
                 <a href="{{ route('kabag.karyawan.cetak', request()->query()) }}" target="_blank" class="btn btn-outline-secondary shadow-sm">
                     <i class="bi bi-printer me-2"></i>Cetak
                 </a>
-                
                 <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
             </div>
         </div>
@@ -187,33 +149,35 @@
             <table class="table table-hover table-custom m-0" id="tabelKaryawan">
                 <thead>
                     <tr>
-                        <th width="5%" class="text-center">No</th>
-                        <th width="15%">Nama</th>
-                        <th width="12%">Divisi</th>
-                        <th width="12%">Tanggal Masuk</th>
-                        <th width="12%">Kontak</th>
-                        <th width="18%">Alamat</th>
-                        <th width="10%" class="text-center">Sisa Cuti</th>
-                        <th width="12%" class="text-center">Status</th>
-                        <th width="8%" class="text-center">Aksi</th>
+                        <th width="3%" class="text-center">No</th>
+                        <th width="15%">Nama Lengkap</th>
+                        <th width="10%">Divisi</th>
+                        <th width="10%">Tgl Masuk</th>
+                        <th width="10%">Kontak</th>
+                        <th width="20%">Alamat</th>
+                        <th width="10%" class="text-center">Cuti</th>
+                        <th width="10%" class="text-center">Status</th>
+                        <th width="12%" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($dataKaryawan as $index => $user)
                     <tr>
                         <td class="text-center">{{ $dataKaryawan->firstItem() + $index }}</td>
-                        <td class="fw-bold">{{ $user->nama_lengkap }}</td>
+                        <td class="fw-bold" style="white-space: nowrap;">{{ $user->nama_lengkap }}</td>
                         <td class="text-capitalize">{{ $user->karyawan->divisi ?? '-' }}</td>
                         <td>
                             @if($user->karyawan && $user->karyawan->tanggal_masuk)
-                                <small class="text-muted">{{ date('d/m/Y', strtotime($user->karyawan->tanggal_masuk)) }}</small>
+                                <small class="text-muted">{{ date('d/m/y', strtotime($user->karyawan->tanggal_masuk)) }}</small>
                             @else
                                 <small class="text-danger fw-bold">Belum diisi</small>
                             @endif
                         </td>
                         <td>{{ $user->karyawan->no_hp ?? '-' }}</td>
-                        <td class="text-truncate" style="max-width: 150px;" title="{{ $user->karyawan->alamat ?? '-' }}">
-                            {{ $user->karyawan->alamat ?? '-' }}
+                        <td>
+                            <div class="alamat-text" title="{{ $user->karyawan->alamat ?? '-' }}">
+                                {{ $user->karyawan->alamat ?? '-' }}
+                            </div>
                         </td>
                         <td class="text-center">
                             @php $sisaCuti = $user->karyawan->sisa_cuti ?? 0; @endphp
@@ -227,107 +191,33 @@
                                     {{ $user->karyawan->status_karyawan }}
                                 </span>
                             @else
-                                <span class="badge bg-secondary px-3 py-2 rounded-pill">
-                                    Belum Dilengkapi
-                                </span>
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill">Belum Dilengkapi</span>
                             @endif
                         </td>
                         <td class="text-center">
-                            <div class="d-flex justify-content-center gap-1">
-                                <button class="btn btn-sm btn-warning text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $user->id_user }}" title="Edit Data">
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-warning text-white shadow-sm px-2" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $user->id_user }}" title="Edit Data">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
+                                <form action="{{ route('kabag.karyawan.reset_password', $user->id_user) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin mereset password akun ini ke bawaan (shekediri123)?');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-info text-white shadow-sm px-2" title="Reset Password">
+                                        <i class="bi bi-key-fill"></i>
+                                    </button>
+                                </form>
 
                                 @php $statusKar = strtolower($user->karyawan->status_karyawan ?? ''); @endphp
                                 @if(in_array($statusKar, ['tidak aktif', 'keluar', 'resign']))
                                     <form action="{{ route('kabag.karyawan.destroy', $user->id_user) }}" method="POST" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger shadow-sm" onclick="return confirm('Apakah Anda yakin ingin menghapus data karyawan ini secara permanen?')" title="Hapus Permanen">
+                                        <button type="submit" class="btn btn-sm btn-danger shadow-sm px-2" onclick="return confirm('Apakah Anda yakin ingin menghapus data karyawan ini secara permanen?')" title="Hapus Permanen">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
                                 @endif
                             </div>
                         </td>
-
-                        <div class="modal fade" id="modalEdit{{ $user->id_user }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                                    <div class="modal-header bg-light border-bottom px-4 py-3">
-                                        <h5 class="modal-title text-primary fw-bold">
-                                            <i class="bi bi-pencil-square me-2"></i>Edit Biodata Karyawan
-                                        </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <form action="{{ route('kabag.karyawan.update', $user->id_user) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="modal-body px-4 py-4">
-                                            <div class="row g-4">
-                                                <div class="col-md-6">
-                                                    <div class="modal-section">
-                                                        <div class="modal-section-title"><i class="bi bi-person-badge me-2"></i>Informasi Biodata</div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Nama Lengkap</label>
-                                                            <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Divisi</label>
-                                                            <select name="divisi" class="form-select" required>
-                                                                <option value="keuangan" {{ ($user->karyawan->divisi ?? '') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
-                                                                <option value="admin umum" {{ ($user->karyawan->divisi ?? '') == 'admin umum' ? 'selected' : '' }}>Admin Umum</option>
-                                                                <option value="akademik" {{ ($user->karyawan->divisi ?? '') == 'akademik' ? 'selected' : '' }}>Akademik</option>
-                                                                <option value="marketing" {{ ($user->karyawan->divisi ?? '') == 'marketing' ? 'selected' : '' }}>Marketing</option>
-                                                                <option value="office boy" {{ ($user->karyawan->divisi ?? '') == 'office boy' ? 'selected' : '' }}>Office Boy</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Alamat Lengkap</label>
-                                                            <textarea name="alamat" class="form-control" rows="3">{{ $user->karyawan->alamat ?? '' }}</textarea>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="modal-section">
-                                                        <div class="modal-section-title"><i class="bi bi-telephone me-2"></i>Kontak & Status</div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Nomor HP</label>
-                                                            <input type="text" name="no_hp" class="form-control" value="{{ $user->karyawan->no_hp ?? '' }}">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Email</label>
-                                                            <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Tanggal Masuk</label>
-                                                            <input type="date" name="tanggal_masuk" class="form-control" value="{{ $user->karyawan->tanggal_masuk ?? '' }}" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Sisa Cuti (Hari)</label>
-                                                            <input type="number" name="sisa_cuti" class="form-control" value="{{ $user->karyawan->sisa_cuti ?? 0 }}" min="0" required>
-                                                        </div>
-                                                        <div class="mb-3 mt-4 pt-3 border-top">
-                                                            <label class="form-label text-danger fw-bold"><i class="bi bi-shield-exclamation me-1"></i>Status Karyawan</label>
-                                                            <select name="status_karyawan" class="form-select border-danger bg-white" required>
-                                                                <option value="aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                                                <option value="tidak aktif" {{ strtolower($user->karyawan->status_karyawan ?? '') == 'tidak aktif' ? 'selected' : '' }}>Tidak Aktif / Keluar</option>
-                                                            </select>
-                                                            <div class="form-text mt-2"><i class="bi bi-info-circle me-1"></i>Ubah ke "Tidak Aktif" agar karyawan tidak bisa login dan dapat dihapus.</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer bg-light px-4 py-3 border-top">
-                                            <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm"><i class="bi bi-save me-2"></i>Simpan Perubahan</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        
                     </tr>
                     @empty
                     <tr>
@@ -340,199 +230,86 @@
                 </tbody>
             </table>
         </div>
-
         @if($dataKaryawan->hasPages())
-        <div class="d-flex flex-column align-items-center mt-4 gap-2 text-center">
-            <div class="text-muted small">
-                Menampilkan <strong>{{ $dataKaryawan->firstItem() }}</strong> s/d <strong>{{ $dataKaryawan->lastItem() }}</strong> dari <strong>{{ $dataKaryawan->total() }}</strong> data
-            </div>
-            <div class="d-flex justify-content-center">
-                {{ $dataKaryawan->links('pagination::bootstrap-5') }}
-            </div>
+        <div class="d-flex justify-content-center mt-4">
+            {{ $dataKaryawan->links('pagination::bootstrap-5') }}
         </div>
         @endif
-
     </div>
-    
 </div>
 
+<!-- Modal Tambah Baru -->
 <div class="modal fade" id="modalTambahBaru" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
             <div class="modal-header bg-light border-bottom px-4 py-3">
-                <h5 class="modal-title text-primary fw-bold">
-                    <i class="bi bi-person-plus-fill me-2"></i>Daftarkan Karyawan Baru
-                </h5>
+                <h5 class="modal-title text-primary fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Daftarkan Karyawan Baru</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
             <form action="{{ route('kabag.karyawan.store') }}" method="POST">
                 @csrf
-                <div class="modal-body px-4 py-4">
-                    <div class="row g-4">
-                        <div class="col-md-5">
-                            <div class="modal-section shadow-sm">
-                                <div class="modal-section-title"><i class="bi bi-shield-lock me-2"></i>Akses Login</div>
-                                <div class="mb-3">
-                                    <label class="form-label">Username <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-person text-muted"></i></span>
-                                        <input type="text" name="username" class="form-control border-start-0 ps-0" placeholder="Buat username" required>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
-                                        <input type="password" id="inputPasswordBaru" name="password" class="form-control border-start-0 border-end-0 ps-0" placeholder="Minimal 6 karakter" required>
-                                        <span class="input-group-text bg-white border-start-0" id="togglePasswordIcon" style="cursor: pointer;" title="Tampilkan Password">
-                                            <i class="bi bi-eye text-muted" id="eyeIcon"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Role Akses <span class="text-danger">*</span></label>
-                                    <select name="role_id" class="form-select" required>
-                                        <option value="" disabled selected>Pilih Hak Akses...</option>
-                                        @foreach($roles as $r)
-                                            @if(strtolower($r->nama_role) != 'pimpinan')
-                                                 <option value="{{ $r->role_id }}">{{ $r->nama_role }}</option>
-                                            @endif
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-7">
-                            <div class="modal-section shadow-sm">
-                                <div class="modal-section-title"><i class="bi bi-card-text me-2"></i>Biodata Karyawan</div>
-                                <div class="mb-3">
-                                    <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                    <input type="text" name="nama_lengkap" class="form-control" placeholder="Sesuai KTP" required>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Divisi <span class="text-danger">*</span></label>
-                                        <select name="divisi" class="form-select" required>
-                                            <option value="" disabled selected>Pilih...</option>
-                                            <option value="keuangan">Keuangan</option>
-                                            <option value="admin umum">Admin Umum</option>
-                                            <option value="akademik">Akademik</option>
-                                            <option value="marketing">Marketing</option>
-                                            <option value="office boy">Office Boy</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Tanggal Masuk <span class="text-danger">*</span></label>
-                                        <input type="date" name="tanggal_masuk" class="form-control" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Nomor HP</label>
-                                        <input type="text" name="no_hp" class="form-control" placeholder="08xxxx">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Sisa Cuti (Hari) <span class="text-danger">*</span></label>
-                                        <input type="number" name="sisa_cuti" class="form-control" value="12" min="0" required>
-                                        <div class="form-text">Default: 12 hari</div>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" name="email" class="form-control" placeholder="email@contoh.com">
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Alamat Lengkap</label>
-                                    <textarea name="alamat" class="form-control" rows="2" placeholder="Domisili saat ini"></textarea>
-                                </div>
-                            </div>
-                        </div>
+                <div class="modal-body p-4">
+                    <!-- Form Content Here -->
+                    <div class="row g-3">
+                         <div class="col-md-6">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required>
+                         </div>
+                         <div class="col-md-6">
+                            <label class="form-label">Role Akses</label>
+                            <select name="role_id" class="form-select" required>
+                                @foreach($roles as $r)
+                                    @if(strtolower($r->nama_role) != 'pimpinan')
+                                        <option value="{{ $r->role_id }}">{{ $r->nama_role }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                         </div>
+                         <div class="col-md-12">
+                            <label class="form-label">Nama Lengkap</label>
+                            <input type="text" name="nama_lengkap" class="form-control" required>
+                         </div>
+                         <div class="col-md-6">
+                            <label class="form-label">Divisi</label>
+                            <select name="divisi" class="form-select" required>
+                                <option value="keuangan">Keuangan</option>
+                                <option value="admin umum">Admin Umum</option>
+                                <option value="akademik">Akademik</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="office boy">Office Boy</option>
+                            </select>
+                         </div>
+                         <div class="col-md-6">
+                            <label class="form-label">Tanggal Masuk</label>
+                            <input type="date" name="tanggal_masuk" class="form-control" required>
+                         </div>
+                         <div class="col-md-6">
+                            <label class="form-label">Nomor HP</label>
+                            <input type="text" name="no_hp" class="form-control">
+                         </div>
+                         <div class="col-md-6">
+                            <label class="form-label">Sisa Cuti</label>
+                            <input type="number" name="sisa_cuti" class="form-control" value="12">
+                         </div>
+                         <div class="col-md-12">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control">
+                         </div>
+                         <div class="col-md-12">
+                            <label class="form-label">Alamat</label>
+                            <textarea name="alamat" class="form-control" rows="2"></textarea>
+                         </div>
                     </div>
                 </div>
-                
-                <div class="modal-footer bg-light px-4 py-3 border-top">
+                <div class="modal-footer p-3 bg-light border-top d-flex flex-row justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm">
-                        <i class="bi bi-send-check me-2"></i>Daftarkan Karyawan
-                    </button>
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill shadow-sm">Daftarkan Karyawan</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-@include('auth.logout')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-@if($errors->any())
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var myModal = new bootstrap.Modal(document.getElementById('modalTambahBaru'));
-        myModal.show();
-    });
-</script>
-@endif
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const sidebar = document.getElementById('sidebar');
-        const openBtn = document.getElementById('openSidebarBtn');
-        const closeBtn = document.getElementById('closeSidebarBtn');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        function openSidebar() {
-            sidebar.classList.add('show-mobile');
-            overlay.classList.add('show');
-        }
-
-        function closeSidebar() {
-            sidebar.classList.remove('show-mobile');
-            overlay.classList.remove('show');
-        }
-
-        if(openBtn) openBtn.addEventListener('click', openSidebar);
-        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
-        if(overlay) overlay.addEventListener('click', closeSidebar);
-    });
-
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelectorAll('#tabelKaryawan tbody tr');
-        
-        rows.forEach(row => {
-            if (row.querySelector('td[colspan]')) return; 
-            
-            let text = row.textContent.toLowerCase();
-            if (text.includes(filter)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    });
-
-    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
-    const inputPasswordBaru = document.getElementById('inputPasswordBaru');
-    const eyeIcon = document.getElementById('eyeIcon');
-
-    togglePasswordIcon.addEventListener('click', function () {
-        const type = inputPasswordBaru.getAttribute('type') === 'password' ? 'text' : 'password';
-        inputPasswordBaru.setAttribute('type', type);
-        
-        if (type === 'text') {
-            eyeIcon.classList.remove('bi-eye');
-            eyeIcon.classList.add('bi-eye-slash');
-        } else {
-            eyeIcon.classList.remove('bi-eye-slash');
-            eyeIcon.classList.add('bi-eye');
-        }
-    });
-</script>
-
 </body>
 </html>

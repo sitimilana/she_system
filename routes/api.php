@@ -45,5 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     //reward 
     Route::get('/rewards', [RewardController::class, 'getRewards']);
 
+    Route::post('/change-password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
+    Route::get('/profil', [AuthController::class, 'getProfil'])->middleware('auth:sanctum');
     
 });

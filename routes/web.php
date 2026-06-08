@@ -134,6 +134,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kabag/karyawan/cetak', [KepalaBagianController::class, 'cetakKaryawan'])
         ->name('kabag.karyawan.cetak');
 
+    # Reset Password Karyawan
+    Route::post('/kabag/karyawan/{id}/reset-password', [App\Http\Controllers\KepalaBagianController::class, 'resetPassword'])
+        ->name('kabag.karyawan.reset_password');
+
 });
 
 # AKADEMIK DASHBOARD
