@@ -73,15 +73,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('pimpinan.approveKaryawan');
 
 
-    // Hari Libur
-    Route::get('/pimpinan/hari-libur', [PimpinanController::class, 'hariLibur'])
-        ->name('pimpinan.hari_libur');
-
-    Route::post('/pimpinan/hari-libur', [PimpinanController::class, 'storeHariLibur'])
-        ->name('pimpinan.hari_libur.store');
-
-    Route::delete('/pimpinan/hari-libur/{id}', [PimpinanController::class, 'destroyHariLibur'])
-        ->name('pimpinan.hari_libur.destroy');
+    //Lihat Hari Libur
+    Route::get('/pimpinan/hari-libur', [PimpinanController::class, 'hariLibur'])->name('pimpinan.hari_libur');
 });
 
 # KEPALA BAGIAN DASHBOARD
@@ -165,6 +158,11 @@ Route::middleware(['auth', 'role:akademik'])->group(function () {
 
     Route::get('/akademik/karyawan/cetak', [App\Http\Controllers\AkademikController::class, 'cetakKaryawan'])
     ->name('akademik.cetak_karyawan');
+
+    // Hari Libur
+    Route::get('/akademik/hari-libur', [AkademikController::class, 'hariLibur'])->name('akademik.hari_libur');
+    Route::post('/akademik/hari-libur', [AkademikController::class, 'storeHariLibur'])->name('akademik.store_hari_libur');
+    Route::delete('/akademik/hari-libur/{id}', [AkademikController::class, 'destroyHariLibur'])->name('akademik.destroy_hari_libur');
     
 });
 

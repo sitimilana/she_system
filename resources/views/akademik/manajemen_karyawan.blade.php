@@ -192,6 +192,13 @@
                 <i class="bi bi-people"></i> Manajemen Karyawan
             </a>
         </li>
+
+        <li class="nav-item">
+            <a href="{{ route('akademik.hari_libur') }}" 
+            class="nav-link {{ Request::routeIs('akademik.hari_libur') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Kelola Hari Libur
+            </a>
+        </li>
         
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
@@ -247,70 +254,48 @@
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No</th>
-                        <th width="20%">Nama</th>
+                        <th width="10%">Foto</th> <th width="20%">Nama</th>
                         <th width="15%">Divisi</th>
-                        <th width="15%">Kontak</th>
-                        <th width="20%">Alamat</th>
+                        <th width="15%">Tanggal Masuk</th> <th width="15%">Kontak</th>
                         <th width="10%" class="text-center">Sisa Cuti</th>
-                        <th width="15%" class="text-center">Status Kerja</th>
+                        <th width="10%" class="text-center">Status</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($dataKaryawan as $index => $karyawan)
                     <tr>
-
+                        <td class="text-center">{{ $dataKaryawan->firstItem() + $index }}</td>
+                        
                         <td class="text-center">
-                            {{ $dataKaryawan->firstItem() + $index }}
+                            @if($karyawan->karyawan && $karyawan->karyawan->foto)
+                                <img src="{{ asset('storage/' . $karyawan->karyawan->foto) }}" 
+                                    class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                            @else
+                                <img src="{{ asset('assets/default-profile.png') }}" 
+                                    class="rounded-circle" width="40" height="40" style="object-fit: cover;">
+                            @endif
                         </td>
 
-                        <td class="fw-bold text-dark">
-                            {{ $karyawan->karyawan->nama ?? $karyawan->nama_lengkap }}
-                        </td>
-
-                        <td class="text-capitalize">
-                            {{ $karyawan->karyawan->divisi ?? '-' }}
-                        </td>
-
-                        <td>
-                            {{ $karyawan->karyawan->no_hp ?? '-' }}
-                        </td>
-
-                        <td class="text-truncate" style="max-width: 150px;"
-                            title="{{ $karyawan->karyawan->alamat ?? '-' }}">
-
-                            {{ $karyawan->karyawan->alamat ?? '-' }}
-                        </td>
-
+                        <td class="fw-bold text-dark">{{ $karyawan->karyawan->nama ?? $karyawan->nama_lengkap }}</td>
+                        <td class="text-capitalize">{{ $karyawan->karyawan->divisi ?? '-' }}</td>
+                        
+                        <td>{{ $karyawan->karyawan->tanggal_masuk ?? '-' }}</td>
+                        
+                        <td>{{ $karyawan->karyawan->no_hp ?? '-' }}</td>
+                        
                         <td class="text-center">
-                            @php
-                                $sisaCuti = $karyawan->karyawan->sisa_cuti ?? 0;
-                            @endphp
-
-                            <span class="badge {{ $sisaCuti > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill">
-                                {{ $sisaCuti }} Hari
-                            </span>
+                            @php $sisaCuti = $karyawan->karyawan->sisa_cuti ?? 0; @endphp
+                            <span class="badge {{ $sisaCuti > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill">{{ $sisaCuti }} Hari</span>
                         </td>
 
                         <td class="text-center">
-                            @php
-                                $status = $karyawan->karyawan->status_karyawan ?? 'Belum Lengkap';
-                            @endphp
-
-                            <span class="badge bg-{{ strtolower($status) == 'aktif' ? 'success' : 'warning text-dark' }} px-3 py-2 rounded-pill">
-                                {{ ucfirst($status) }}
-                            </span>
+                            @php $status = $karyawan->karyawan->status_karyawan ?? 'Belum Lengkap'; @endphp
+                            <span class="badge bg-{{ strtolower($status) == 'aktif' ? 'success' : 'warning' }} rounded-pill">{{ ucfirst($status) }}</span>
                         </td>
-
                     </tr>
                     @empty
-
-                    <tr>
-                        <td colspan="7" class="text-center py-4 text-muted">
-                            Tidak ada data karyawan.
-                        </td>
-                    </tr>
-
+                    <tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada data karyawan.</td></tr>
                     @endforelse
                 </tbody>
 

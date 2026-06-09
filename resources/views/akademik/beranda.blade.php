@@ -67,7 +67,12 @@
         <li class="nav-item"><a href="{{route('akademik.absensi') }}" class="nav-link"><i class="bi bi-journal-check"></i> Riwayat Absensi</a></li>
         <li class="nav-item"><a href="{{ route('akademik.cuti') }}" class="nav-link"><i class="bi bi-calendar-range"></i> Riwayat Cuti</a></li>
         <li class="nav-item"><a href="{{ route('akademik.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Manajemen Karyawan</a></li>
-        
+        <li class="nav-item">
+            <a href="{{ route('akademik.hari_libur') }}" 
+            class="nav-link {{ Request::routeIs('akademik.hari_libur') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Kelola Hari Libur
+            </a>
+        </li>
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout

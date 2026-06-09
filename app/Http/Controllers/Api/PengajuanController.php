@@ -119,9 +119,6 @@ class PengajuanController extends Controller
 
         $cutiBulanIni = Cuti::where('id_karyawan', $karyawan->id_karyawan)
             ->whereIn('status', [
-                'pending',
-                'pending_pimpinan',
-                'pending_kabag',
                 'approved',
                 'Disetujui'
             ])
@@ -392,6 +389,137 @@ class PengajuanController extends Controller
                 'status'          => $cuti->status,
             ],
         ], 201);
+    }
+    public function update(Request $request, $id)
+    {
+        $user = $request->user();
+
+        $karyawan = Karyawan::where('id_user', $user->id_user)->first();
+
+        if (!$karyawan) {
+            return response()->json([
+                'message' => 'Data karyawan tidak ditemukan'
+            ],404);
+        }
+
+
+        $cuti = Cuti::where('id_cuti',$id)
+            ->where('id_karyawan',$karyawan->id_karyawan)
+            ->first();
+
+
+        if (!$cuti) {
+            return response()->json([
+                'message'=>'Data cuti tidak ditemukan'
+            ],404);
+        }
+
+
+        // hanya pending yang boleh edit
+        if (!in_array($cuti->status,[
+            'pending',
+            'pending_pimpinan',
+            'pending_kabag'
+        ])) {
+
+            return response()->json([
+                'message'=>'Cuti yang sudah diproses tidak bisa diedit'
+            ],422);
+
+        }
+
+
+        $validator = \Validator::make($request->all(),[
+            'tanggal_mulai'=>'required|date',
+            'tanggal_selesai'=>'required|date|after_or_equal:tanggal_mulai',
+            'jenis_cuti'=>'required',
+            'alasan'=>'required'
+        ]);
+
+
+        if($validator->fails()){
+
+            return response()->json([
+                'message'=>$validator->errors()->first()
+            ],422);
+
+        }
+
+
+
+        $jenis = strtolower(trim($request->jenis_cuti));
+
+
+        $mulai = Carbon::parse($request->tanggal_mulai);
+        $selesai = Carbon::parse($request->tanggal_selesai);
+
+
+        // validasi cuti tahunan
+        if($this->isAnnualLeave($jenis)){
+
+
+            if($mulai->format('Y-m-d') 
+                != $selesai->format('Y-m-d')){
+
+                return response()->json([
+                    'message'=>'Cuti tahunan hanya 1 hari'
+                ],422);
+            }
+
+
+
+            if($this->hasAnnualLeaveInMonth(
+                $karyawan,
+                $mulai->format('Y-m'),
+                $cuti->id_cuti
+            )){
+
+                return response()->json([
+                    'message'=>'Bulan tersebut sudah memiliki cuti'
+                ],422);
+
+            }
+        }
+        $berkas = $cuti->berkas_bukti;
+        if($request->hasFile('berkas_bukti')){
+            if($berkas){
+                Storage::disk('public')
+                    ->delete($berkas);
+            }
+            $berkas = $request->file('berkas_bukti')
+                ->store('berkas_cuti','public');
+
+        }
+
+        $cuti->update([
+
+            'tanggal_mulai'=>$request->tanggal_mulai,
+
+            'tanggal_selesai'=>$request->tanggal_selesai,
+
+            'jenis_cuti'=>$request->jenis_cuti,
+
+            'alasan'=>$request->alasan,
+
+            'berkas_bukti'=>$berkas,
+
+            // kembali menunggu approval
+            'status'=>'pending_pimpinan'
+
+        ]);
+
+
+
+        return response()->json([
+
+            'success'=>true,
+
+            'message'=>'Pengajuan berhasil diperbarui',
+
+            'data'=>$cuti
+
+        ]);
+
     }
     public function destroy(Request $request, $id)
     {

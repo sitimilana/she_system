@@ -227,6 +227,13 @@
                 <i class="bi bi-people"></i> Manajemen Karyawan
             </a>
         </li>
+
+        <li class="nav-item">
+            <a href="{{ route('akademik.hari_libur') }}" 
+            class="nav-link {{ Request::routeIs('akademik.hari_libur') ? 'active' : '' }}">
+                <i class="bi bi-calendar-x"></i> Kelola Hari Libur
+            </a>
+        </li>
         
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50" data-bs-toggle="modal" data-bs-target="#logoutModal">

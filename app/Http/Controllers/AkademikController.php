@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AkademikController extends Controller
 {
@@ -143,23 +144,34 @@ class AkademikController extends Controller
     {
         $query = \App\Models\User::with(['karyawan', 'role'])
             ->whereHas('role', function ($q) {
-                $q->where('nama_role', 'Karyawan')->orWhere('nama_role', 'karyawan');
+                $q->where('nama_role', 'Karyawan')
+                ->orWhere('nama_role', 'karyawan');
             });
 
-        // Logika Filter Pencarian
+        // Filter pencarian
         if ($request->filled('search')) {
             $search = $request->search;
+
             $query->where(function ($q) use ($search) {
                 $q->where('nama_lengkap', 'like', "%{$search}%")
-                  ->orWhereHas('karyawan', function ($qk) use ($search) {
-                      $qk->where('nama', 'like', "%{$search}%")
-                         ->orWhere('divisi', 'like', "%{$search}%");
-                  });
+                ->orWhereHas('karyawan', function ($qk) use ($search) {
+                    $qk->where('nama', 'like', "%{$search}%")
+                        ->orWhere('divisi', 'like', "%{$search}%");
+                });
             });
         }
 
+
+        // Urutkan nama karyawan A-Z
+        $query->join('karyawan', 'user.id_user', '=', 'karyawan.id_user')
+            ->orderBy('karyawan.nama', 'asc')
+            ->select('user.*');
+
+
         $dataKaryawan = $query->paginate(15);
+
         $dataKaryawan->appends($request->query());
+
 
         return view('akademik.manajemen_karyawan', compact('dataKaryawan'));
     }
@@ -244,5 +256,33 @@ class AkademikController extends Controller
             'jumlahAlfa',
             'jumlahCuti'
         ));
+    }
+
+    public function hariLibur()
+    {
+        $hariLibur = DB::table('hari_libur')->orderBy('tanggal', 'desc')->get();
+        return view('akademik.create_hari_libur', compact('hariLibur'));
+    }
+
+    public function storeHariLibur(Request $request)
+    {
+        $request->validate([
+            'tanggal'    => 'required|date|unique:hari_libur,tanggal',
+            'keterangan' => 'required|string|max:255',
+        ], ['tanggal.unique' => 'Tanggal ini sudah didaftarkan sebagai hari libur.']);
+
+        DB::table('hari_libur')->insert([
+            'tanggal'    => $request->tanggal,
+            'keterangan' => $request->keterangan,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        return redirect()->route('akademik.create_hari_libur')->with('success', 'Hari libur berhasil ditambahkan.');
+    }
+
+    public function destroyHariLibur($id)
+    {
+        DB::table('hari_libur')->where('id_libur', $id)->delete();
+        return redirect()->route('akademik.create_hari_libur')->with('success', 'Hari libur berhasil dihapus.');
     }
 }

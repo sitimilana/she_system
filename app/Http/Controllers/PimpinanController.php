@@ -273,26 +273,4 @@ class PimpinanController extends Controller
         $hariLibur = DB::table('hari_libur')->orderBy('tanggal', 'desc')->get();
         return view('pimpinan.hari_libur', compact('hariLibur'));
     }
-
-    public function storeHariLibur(Request $request)
-    {
-        $request->validate([
-            'tanggal'    => 'required|date|unique:hari_libur,tanggal',
-            'keterangan' => 'required|string|max:255',
-        ], ['tanggal.unique' => 'Tanggal ini sudah didaftarkan sebagai hari libur.']);
-
-        DB::table('hari_libur')->insert([
-            'tanggal'    => $request->tanggal,
-            'keterangan' => $request->keterangan,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-        return redirect()->route('pimpinan.hari_libur')->with('success', 'Hari libur berhasil ditambahkan.');
-    }
-
-    public function destroyHariLibur($id)
-    {
-        DB::table('hari_libur')->where('id_libur', $id)->delete();
-        return redirect()->route('pimpinan.hari_libur')->with('success', 'Hari libur berhasil dihapus.');
-    }
 }

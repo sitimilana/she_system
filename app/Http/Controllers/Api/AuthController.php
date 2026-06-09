@@ -109,8 +109,41 @@ class AuthController extends Controller
                 'no_hp'         => $karyawan->no_hp,
                 'alamat'        => $karyawan->alamat,
                 'tanggal_masuk' => $karyawan->tanggal_masuk,
-                'foto'          => $karyawan->foto // pastikan ada kolom ini di DB
+                'foto'          => ($karyawan && $karyawan->foto) ? asset('storage/' . $karyawan->foto) : null
             ]
         ]);
+    }
+    public function updateFoto(Request $request)
+    {
+        $user = $request->user();
+        $karyawan = \App\Models\Karyawan::where('id_user', $user->id_user)->first();
+
+        if (!$karyawan) {
+            return response()->json(['success' => false, 'message' => 'Data karyawan tidak ditemukan.'], 404);
+        }
+
+        $request->validate([
+            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048' // Maksimal 2MB
+        ]);
+
+        if ($request->hasFile('foto')) {
+            // Hapus foto lama jika sebelumnya sudah ada
+            if ($karyawan->foto) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($karyawan->foto);
+            }
+
+            // Simpan foto baru ke folder storage/app/public/profil_foto
+            $path = $request->file('foto')->store('profil_foto', 'public');
+            $karyawan->foto = $path;
+            $karyawan->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto profil berhasil diperbarui!',
+                'foto_url' => asset('storage/' . $path)
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Tidak ada file gambar yang diunggah.'], 400);
     }
 }

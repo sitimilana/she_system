@@ -29,13 +29,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cuti/sisa', [PengajuanController::class, 'sisaCuti']);
     Route::get('/cuti', [PengajuanController::class, 'index']);
     Route::post('/cuti', [PengajuanController::class, 'store']);
-    Route::put('/cuti/{id}', [PengajuanController::class, 'update']);
-    Route::delete('/cuti/{id}', [PengajuanController::class, 'destroy']);
+    Route::post('/cuti/{id}', [PengajuanController::class, 'update']);
     Route::delete('/cuti/{id}', [App\Http\Controllers\Api\PengajuanController::class, 'destroy']);
     
     // Penilaian
-   Route::get('/penilaian', [ApiPenilaianController::class, 'index']);
-   Route::get('/penilaian/dashboard', [ApiPenilaianController::class, 'dashboard']);
+    Route::get('/penilaian', [ApiPenilaianController::class, 'index']);
+    Route::get('/penilaian/dashboard', [ApiPenilaianController::class, 'dashboard']);
     Route::get('/penilaian/detail', [ApiPenilaianController::class, 'getPenilaian']);
     
     // Gaji (Di ApiService dipanggil 'gaji')
@@ -47,5 +46,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/change-password', [\App\Http\Controllers\Api\AuthController::class, 'changePassword']);
     Route::get('/profil', [AuthController::class, 'getProfil'])->middleware('auth:sanctum');
-    
+    Route::post('/update-foto', [AuthController::class, 'updateFoto']);
 });
