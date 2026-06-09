@@ -126,9 +126,31 @@
         <img src="{{ asset('storage/images/logoshe.png') }}" alt="Logo">
     </div>
     <ul class="nav flex-column mt-5">
-        <li class="nav-item"><a href="{{ route('kabag.dashboard') }}" class="nav-link active"><i class="bi bi-house-door"></i> Home</a></li>
-        <li class="nav-item"><a href="{{ route('kabag.karyawan') }}" class="nav-link"><i class="bi bi-people"></i> Kelola Karyawan</a></li>
-        <li class="nav-item"><a href="{{ route('kabag.penilaian') }}" class="nav-link"><i class="bi bi-star"></i> Penilaian Kinerja</a></li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.dashboard') }}" class="nav-link {{ request()->routeIs('kabag.dashboard') ? 'active' : '' }}">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.karyawan') }}" class="nav-link {{ request()->routeIs('kabag.karyawan') ? 'active' : '' }}">
+                <i class="bi bi-people"></i> Kelola Karyawan
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.penilaian') }}" class="nav-link {{ request()->routeIs('kabag.penilaian') ? 'active' : '' }}">
+                <i class="bi bi-star"></i> Penilaian Kinerja
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.riwayat_absensi') }}" class="nav-link {{ request()->routeIs('kabag.riwayat_absensi') ? 'active' : '' }}">
+                <i class="bi bi-calendar-check"></i> Riwayat Absensi
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ route('kabag.riwayat_cuti') }}" class="nav-link {{ request()->routeIs('kabag.riwayat_cuti') ? 'active' : '' }}">
+                <i class="bi bi-calendar-event"></i> Riwayat Cuti
+            </a>
+        </li>
         <li class="nav-item mt-4">
             <a href="#" class="nav-link text-white-50 px-3" data-bs-toggle="modal" data-bs-target="#logoutModal">
                 <i class="bi bi-box-arrow-right"></i> Logout

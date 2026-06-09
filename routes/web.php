@@ -131,6 +131,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kabag/karyawan/{id}/reset-password', [App\Http\Controllers\KepalaBagianController::class, 'resetPassword'])
         ->name('kabag.karyawan.reset_password');
 
+    // Riwayat Absensi & Cuti (Kepala Bagian)
+    Route::get('/kabag/riwayat-absensi', [App\Http\Controllers\KepalaBagianController::class, 'riwayatAbsensi'])->name('kabag.riwayat_absensi');
+    
+    Route::get('/kabag/riwayat-cuti', [App\Http\Controllers\KepalaBagianController::class, 'riwayatCuti'])->name('kabag.riwayat_cuti');
+
 });
 
 # AKADEMIK DASHBOARD

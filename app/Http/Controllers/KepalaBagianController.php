@@ -455,4 +455,68 @@ class KepalaBagianController extends Controller
 
         return redirect()->back()->with('success', 'Password karyawan berhasil direset menjadi: ' . $defaultPassword);
     }
+
+    public function riwayatAbsensi(Request $request)
+    {
+        $query = \App\Models\Absensi::with('karyawan')->orderBy('tanggal', 'desc');
+
+        // Filter berdasarkan pencarian nama
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter berdasarkan status (Hadir, Terlambat, Alfa, Izin)
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter berdasarkan bulan
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal', $request->bulan);
+        }
+
+        // Filter berdasarkan tahun
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal', $request->tahun);
+        }
+
+        $dataAbsensi = $query->paginate(15)->withQueryString();
+        
+        return view('kepala_bagian.riwayat_absensi', compact('dataAbsensi'));
+    }
+
+    public function riwayatCuti(Request $request)
+    {
+        $query = \App\Models\Cuti::with('karyawan')->orderBy('tanggal_pengajuan', 'desc');
+
+        // Filter pencarian nama
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('karyawan', function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter berdasarkan kategori/jenis_cuti (Cuti, Izin, Sakit, Cuti Kehamilan)
+        if ($request->filled('kategori')) {
+            $query->where('jenis_cuti', $request->kategori);
+        }
+
+        // Filter berdasarkan bulan (pada tanggal pengajuan)
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal_pengajuan', $request->bulan);
+        }
+
+        // Filter berdasarkan tahun (pada tanggal pengajuan)
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal_pengajuan', $request->tahun);
+        }
+
+        $dataCuti = $query->paginate(15)->withQueryString();
+        
+        return view('kepala_bagian.riwayat_cuti', compact('dataCuti'));
+    }
 }
