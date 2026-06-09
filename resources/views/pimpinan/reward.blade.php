@@ -18,8 +18,8 @@
             left: 0; 
             top: 0; 
             box-shadow: 2px 0 10px rgba(0,0,0,0.05); 
-            z-index: 1045; /* DITAMBAHKAN: Diperbesar agar di atas elemen lain saat di mobile */
-            transition: transform 0.3s ease-in-out; /* DITAMBAHKAN: Animasi mulus */
+            z-index: 1045; 
+            transition: transform 0.3s ease-in-out; 
         }
         .sidebar .logo { width: 140px; display: block; margin: 0 auto; margin-top: 20px;}
         .sidebar .logo img { width: 100px; }
@@ -27,7 +27,7 @@
         .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.2); border-radius: 8px; font-weight: 600;}
         .sidebar .nav-link i { margin-right: 12px; font-size: 1.1rem; }
         
-        /* CONTENT (DITAMBAHKAN transisi) */
+        /* CONTENT */
         .content { margin-left: 250px; padding: 40px; transition: margin-left 0.3s ease; }
         .card-custom { background-color: #ffffff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         
@@ -48,7 +48,7 @@
         /* Pagination */
         .pagination { margin-bottom: 0; }
 
-        /* --- TAMBAHAN UNTUK MOBILE RESPONSIVE --- */
+        /* --- MOBILE RESPONSIVE --- */
         .sidebar-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); z-index: 1040;
@@ -60,12 +60,10 @@
             .content { margin-left: 0 !important; padding: 15px !important; }
             .sidebar-overlay.show { display: block; }
 
-            /* Menyesuaikan lebar form filter agar tumpuk di HP */
             .filter-form .col-auto { width: 100%; margin-bottom: 10px; }
             .filter-form .form-select, .filter-form .btn { width: 100%; }
             .filter-form .d-flex { flex-direction: column; gap: 10px; }
         }
-        /* --------------------------------------- */
     </style>
 </head>
 
@@ -138,8 +136,6 @@
         </div>
     </div>
 
-
-    
     @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-4" role="alert">
         <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
@@ -214,13 +210,13 @@
         @endforelse
     </div>
 
-    <div class="card card-custom p-4">
-        <h5 class="fw-bold mb-3"><i class="bi bi-list-ol me-2 text-primary"></i>Daftar Peringkat Karyawan</h5>
+    <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-award-fill me-2 text-primary"></i>Daftar Penerima Reward</h5>
         <div class="table-responsive">
-            <table class="table table-hover table-custom m-0">
+            <table class="table table-hover table-custom m-0 text-nowrap">
                 <thead>
                     <tr>
-                        <th width="5%" class="text-center">Peringkat</th>
+                        <th width="5%" class="text-center">No</th>
                         <th width="25%">Nama Karyawan</th>
                         <th width="20%">Divisi / Jabatan</th>
                         <th width="20%" class="text-center">Periode Penilaian</th>
@@ -246,7 +242,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">Belum ada data karyawan yang dinilai.</td>
+                        <td colspan="6" class="text-center py-4 text-muted">Belum ada data penerima reward.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -264,9 +260,67 @@
         </div>
         @endif
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3">
+            <i class="bi bi-star-half me-2 text-primary"></i>Daftar Penilaian Kinerja (Periode {{ $bulanList[$bulan] }} {{ $tahun }})
+        </h5>
+        
+        <div class="table-responsive">
+            <table class="table table-hover table-custom m-0 text-nowrap">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No</th>
+                        <th width="30%">Nama Karyawan</th>
+                        <th width="20%">Divisi</th>
+                        <th width="20%" class="text-center">Kategori</th>
+                        <th width="15%" class="text-center">Total Skor Akhir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($daftarPenilaian as $index => $penilaian)
+                    <tr>
+                        <td class="text-center fw-bold">{{ $daftarPenilaian->firstItem() + $index }}</td>
+                        <td class="fw-bold">{{ $penilaian->karyawan->nama ?? '-' }}</td>
+                        <td>{{ $penilaian->karyawan->divisi ?? '-' }}</td>
+                        <td class="text-center">
+                            @if($penilaian->total_skor >= 90)
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill">Sangat Baik</span>
+                            @elseif($penilaian->total_skor >= 80)
+                                <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill">Baik</span>
+                            @elseif($penilaian->total_skor >= 60)
+                                <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill">Cukup</span>
+                            @else
+                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill">Kurang</span>
+                            @endif
+                        </td>
+                        <td class="text-center fw-bold text-primary fs-6">{{ $penilaian->total_skor }}</td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-2 d-block mb-2 text-light"></i>
+                            Belum ada data penilaian kinerja untuk periode ini.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        @if($daftarPenilaian->hasPages())
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-3 border-top pt-3 gap-2">
+            <div class="text-muted small">
+                Menampilkan <strong>{{ $daftarPenilaian->firstItem() }}</strong> s/d <strong>{{ $daftarPenilaian->lastItem() }}</strong> dari <strong>{{ $daftarPenilaian->total() }}</strong> data
+            </div>
+            <div>
+                {{ $daftarPenilaian->links('pagination::bootstrap-5') }}
+            </div>
+        </div>
+        @endif
+    </div>
+
+</div> <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {

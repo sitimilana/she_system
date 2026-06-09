@@ -18,6 +18,7 @@ class RewardController extends Controller
         $tahun = $request->input('tahun', now()->year);
         $search = $request->input('search');
 
+        // Base query penilaian yang sudah terfilter berdasarkan bulan, tahun, dan search
         $query = Penilaian::with('karyawan.user.role')
             ->where('bulan', $bulan)
             ->where('tahun', $tahun);
@@ -28,19 +29,29 @@ class RewardController extends Controller
             });
         }
 
+        // 1. Ambil top 1 kandidat
         $topKandidat = (clone $query)
             ->orderBy('total_skor', 'desc')
             ->take(1)
             ->get();
 
-        // Ambil daftar reward yang sudah diberikan, urutkan per bulan penilaian (terbaru dulu)
+        // 2. [BARU] Ambil daftar penilaian untuk tabel Penilaian Kinerja
+        // Menggunakan parameter 'penilaian_page' agar tidak bentrok dengan pagination reward
+        $daftarPenilaian = (clone $query)
+            ->orderBy('total_skor', 'desc')
+            ->paginate(10, ['*'], 'penilaian_page')
+            ->appends(request()->except('penilaian_page'));
+
+        // 3. Ambil daftar reward
+        // Menggunakan parameter 'reward_page'
         $daftarReward = Reward::with(['karyawan', 'penilaian'])
             ->join('penilaian', 'reward.id_penilaian', '=', 'penilaian.id_penilaian')
             ->select('reward.*')
             ->orderBy('penilaian.tahun', 'desc')
             ->orderBy('penilaian.bulan', 'desc')
             ->orderBy('reward.tanggal_reward', 'desc')
-            ->paginate(15);
+            ->paginate(15, ['*'], 'reward_page')
+            ->appends(request()->except('reward_page'));
 
         $bulanList = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
@@ -53,6 +64,7 @@ class RewardController extends Controller
         return view('pimpinan.reward', compact(
             'topKandidat',
             'daftarReward',
+            'daftarPenilaian', // <-- Tambahkan variabel ini ke view
             'bulan',
             'tahun',
             'bulanList',
