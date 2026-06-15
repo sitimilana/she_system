@@ -152,20 +152,20 @@
     @endif
 
     <div class="card card-custom p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <form method="GET" action="{{ route('kabag.karyawan') }}" class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div class="input-group" style="max-width: 400px;">
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, divisi, atau status...">
+                <input type="text" name="search" id="searchInput" class="form-control border-start-0 ps-0" placeholder="Cari nama, divisi, atau status..." value="{{ request('search') }}">
             </div>
         
             <div class="d-flex gap-2">
-                <button class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
+                <button type="submit" class="btn btn-light border shadow-sm"><i class="bi bi-funnel"></i> Filter</button>
                 <a href="{{ route('kabag.karyawan.cetak', request()->query()) }}" target="_blank" class="btn btn-outline-secondary shadow-sm">
                     <i class="bi bi-printer me-2"></i>Cetak
                 </a>
-                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
+                <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalTambahBaru"><i class="bi bi-plus-lg me-1"></i> Tambah Baru</button>
             </div>
-        </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-hover table-custom m-0" id="tabelKaryawan">
@@ -241,6 +241,72 @@
                             </div>
                         </td>
                     </tr>
+
+                    <div class="modal fade" id="modalEdit{{ $user->id_user }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                <div class="modal-header bg-light border-bottom px-4 py-3">
+                                    <h5 class="modal-title text-warning fw-bold"><i class="bi bi-pencil-square me-2"></i>Ubah Data Karyawan</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="{{ route('kabag.karyawan.update', $user->id_user) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-body p-4">
+                                        <div class="row g-3">
+                                            <div class="col-md-12">
+                                                <label class="form-label">Nama Lengkap</label>
+                                                <input type="text" name="nama_lengkap" class="form-control" value="{{ $user->nama_lengkap }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Divisi</label>
+                                                <select name="divisi" class="form-select" required>
+                                                    <option value="keuangan" {{ ($user->karyawan->divisi ?? '') == 'keuangan' ? 'selected' : '' }}>Keuangan</option>
+                                                    <option value="admin umum" {{ ($user->karyawan->divisi ?? '') == 'admin umum' ? 'selected' : '' }}>Admin Umum</option>
+                                                    <option value="akademik" {{ ($user->karyawan->divisi ?? '') == 'akademik' ? 'selected' : '' }}>Akademik</option>
+                                                    <option value="marketing" {{ ($user->karyawan->divisi ?? '') == 'marketing' ? 'selected' : '' }}>Marketing</option>
+                                                    <option value="office boy" {{ ($user->karyawan->divisi ?? '') == 'office boy' ? 'selected' : '' }}>Office Boy</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Tanggal Masuk</label>
+                                                <input type="date" name="tanggal_masuk" class="form-control" value="{{ $user->karyawan->tanggal_masuk ?? '' }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Nomor HP</label>
+                                                <input type="text" name="no_hp" class="form-control" value="{{ $user->karyawan->no_hp ?? '' }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Sisa Cuti</label>
+                                                <input type="number" name="sisa_cuti" class="form-control" value="{{ $user->karyawan->sisa_cuti ?? 12 }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Email</label>
+                                                <input type="email" name="email" class="form-control" value="{{ $user->karyawan->email ?? '' }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Status Karyawan</label>
+                                                <select name="status_karyawan" class="form-select" required>
+                                                    <option value="aktif" {{ ($user->karyawan->status_karyawan ?? '') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                                    <option value="pending" {{ ($user->karyawan->status_karyawan ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                    <option value="tidak aktif" {{ in_array(strtolower($user->karyawan->status_karyawan ?? ''), ['tidak aktif', 'keluar', 'resign']) ? 'selected' : '' }}>Tidak Aktif / Keluar</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="form-label">Alamat</label>
+                                                <textarea name="alamat" class="form-control" rows="2">{{ $user->karyawan->alamat ?? '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer p-3 bg-light border-top d-flex flex-row justify-content-end gap-2">
+                                        <button type="button" class="btn btn-secondary px-4 rounded-pill" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-warning text-white px-4 rounded-pill shadow-sm">Simpan Perubahan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                     @empty
                     <tr>
                         <td colspan="9" class="text-center py-5 text-muted">
@@ -260,7 +326,6 @@
     </div>
 </div>
 
-<!-- Modal Tambah Baru -->
 <div class="modal fade" id="modalTambahBaru" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -271,7 +336,6 @@
             <form action="{{ route('kabag.karyawan.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
-                    <!-- Form Content Here -->
                     <div class="row g-3">
                          <div class="col-md-6">
                             <label class="form-label">Username</label>
@@ -333,5 +397,51 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const sidebar = document.getElementById('sidebar');
+        const openBtn = document.getElementById('openSidebarBtn');
+        const closeBtn = document.getElementById('closeSidebarBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openSidebar() {
+            sidebar.classList.add('show-mobile');
+            overlay.classList.add('show');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show-mobile');
+            overlay.classList.remove('show');
+        }
+
+        if(openBtn) openBtn.addEventListener('click', openSidebar);
+        if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+        if(overlay) overlay.addEventListener('click', closeSidebar);
+
+        // PERBAIKAN EXTRA: Logika Otomatis Submit Pencarian Saat Mengetik (Debounce)
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let timer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    searchInput.closest('form').submit();
+                }, 700);
+            });
+
+            // Menjaga kursor tetap fokus di akhir teks setelah reload halaman
+            if(searchInput.value) {
+                searchInput.focus();
+                let val = searchInput.value;
+                searchInput.value = '';
+                searchInput.value = val;
+            }
+        }
+    });
+</script>
+
+@include('auth.logout')
+
 </body>
-</html>
+</html> 

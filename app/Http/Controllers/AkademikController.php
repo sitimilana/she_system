@@ -161,10 +161,8 @@ class AkademikController extends Controller
             });
         }
 
-
-        // Urutkan nama karyawan A-Z
         $query->join('karyawan', 'user.id_user', '=', 'karyawan.id_user')
-            ->orderBy('karyawan.nama', 'asc')
+            ->orderBy('karyawan.nama', 'desc')
             ->select('user.*');
 
 

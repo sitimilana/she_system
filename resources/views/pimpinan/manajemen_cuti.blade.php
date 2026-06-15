@@ -269,7 +269,7 @@
                         <td class="text-center">{{ ($dataCuti->currentPage() - 1) * $dataCuti->perPage() + $index + 1 }}</td>
                         <td>
                             <div class="fw-bold text-dark">{{ $cuti->karyawan->nama ?? '-' }}</div>
-                            <div class="small text-muted">{{ $cuti->karyawan->jabatan ?? '-' }}</div>
+                            <div class="small text-muted">{{ $cuti->karyawan->divisi ?? '-' }}</div>
                             @if($cuti->is_bentrok)
                                 <div class="badge bg-danger mt-1 text-wrap text-start" style="font-size:0.7rem; max-width: 15rem;">
                                     <i class="bi bi-exclamation-triangle-fill"></i> Bentrok Divisi:<br>
@@ -375,7 +375,7 @@
                         <td class="text-center">{{ ($riwayatCuti->currentPage() - 1) * $riwayatCuti->perPage() + $index + 1 }}</td>
                         <td>
                             <div class="fw-bold text-dark">{{ $cuti->karyawan->nama ?? '-' }}</div>
-                            <div class="small text-muted">{{ $cuti->karyawan->jabatan ?? '-' }}</div>
+                            <div class="small text-muted">{{ $cuti->karyawan->divisi ?? '-' }}</div>
                         </td>
                         <td class="text-center"><span class="jenis-cuti-badge">{{ $cuti->jenis_cuti }}</span></td>
                         <td>

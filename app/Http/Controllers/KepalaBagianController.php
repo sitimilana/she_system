@@ -68,7 +68,7 @@ class KepalaBagianController extends Controller
             });
         }
 
-        $dataKaryawan = $query->paginate(15)->withQueryString();
+        $dataKaryawan = $query->latest()->paginate(15)->withQueryString();
         $roles = \App\Models\Role::all();
 
         return view('kepala_bagian.kelola_karyawan', compact('dataKaryawan', 'roles'));
@@ -98,7 +98,9 @@ class KepalaBagianController extends Controller
             }
         }
 
-        $riwayatPenilaian = $query->orderBy('tahun', 'desc')
+        // Tambahkan orderBy('created_at', 'desc') agar yang baru diinput selalu di atas
+        $riwayatPenilaian = $query->orderBy('created_at', 'desc')
+            ->orderBy('tahun', 'desc')
             ->orderBy('bulan', 'desc')
             ->paginate(15)
             ->withQueryString();

@@ -19,6 +19,10 @@
         .content { margin-left: 250px; padding: 40px; transition: margin-left 0.3s ease; }
         .card-custom { border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
+        /* Filter Styles */
+        .form-control, .form-select { border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.9rem; padding: 10px 15px;}
+        .form-control:focus, .form-select:focus { border-color: #8f9fc4; box-shadow: 0 0 0 0.25rem rgba(143, 159, 196, 0.25); }
+
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             .sidebar.show-mobile { transform: translateX(0); }
@@ -57,6 +61,42 @@
     <h2 class="mb-4 fw-bold d-none d-md-block">Daftar Hari Libur Nasional & Internal</h2>
 
     <div class="card card-custom p-4 shadow-sm">
+        
+        <div class="mb-4 bg-light p-3 rounded-3 border">
+            <form action="{{ route('pimpinan.hari_libur') }}" method="GET">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted mb-1">Cari Keterangan</label>
+                        <input type="text" name="search" class="form-control" placeholder="Contoh: Idul Fitri..." value="{{ request('search') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Bulan</label>
+                        <select name="bulan" class="form-select">
+                            <option value="">Semua Bulan</option>
+                            @for($m=1; $m<=12; $m++)
+                                <option value="{{ sprintf('%02d', $m) }}" {{ request('bulan') == sprintf('%02d', $m) ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->locale('id')->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Tahun</label>
+                        <select name="tahun" class="form-select">
+                            <option value="">Semua Tahun</option>
+                            @php $currentYear = date('Y'); @endphp
+                            @for($y = $currentYear + 1; $y >= 2023; $y--)
+                                <option value="{{ $y }}" {{ request('tahun') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary w-100 py-2"><i class="bi bi-funnel-fill me-1"></i> Filter</button>
+                        <a href="{{ route('pimpinan.hari_libur') }}" class="btn btn-light border py-2" title="Reset Data"><i class="bi bi-arrow-clockwise"></i></a>
+                    </div>
+                </div>
+            </form>
+        </div>
         <h5 class="fw-bold mb-3"><i class="bi bi-list-ul text-primary me-2"></i> Data Hari Libur</h5>
         <div class="table-responsive">
             <table class="table table-hover align-middle m-0">
@@ -70,24 +110,31 @@
                 <tbody>
                     @forelse($hariLibur as $index => $libur)
                         <tr>
-                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td class="text-center">{{ $hariLibur->firstItem() + $index }}</td>
                             <td><strong>{{ \Carbon\Carbon::parse($libur->tanggal)->translatedFormat('d F Y') }}</strong></td>
                             <td>{{ $libur->keterangan }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-4">Belum ada data hari libur.</td>
+                            <td colspan="3" class="text-center text-muted py-4">Belum ada data hari libur yang sesuai.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
+        @if($hariLibur->hasPages())
+        <div class="d-flex justify-content-center mt-4">
+            {{ $hariLibur->links('pagination::bootstrap-5') }}
+        </div>
+        @endif
+        
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Logika Sidebar tetap sama
+    // Logika Sidebar
     document.addEventListener("DOMContentLoaded", function() {
         const sidebar = document.getElementById('sidebar');
         const openBtn = document.getElementById('openSidebarBtn');

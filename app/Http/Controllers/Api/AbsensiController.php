@@ -93,7 +93,7 @@ class AbsensiController extends Controller
 
                 // Cek cuti dengan status yang lebih lengkap
                 $sedangCuti = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-                    ->whereIn('status', ['approved', 'disetujui_hrd', 'disetujui_kabag', 'Disetujui'])
+                    ->whereIn('status', ['approved', 'Disetujui'])
                     ->whereDate('tanggal_mulai', '<=', $tanggal->toDateString())
                     ->whereDate('tanggal_selesai', '>=', $tanggal->toDateString())
                     ->first();
@@ -191,7 +191,7 @@ class AbsensiController extends Controller
             $id_karyawan = $karyawan->id_karyawan;
 
             $sedangCuti = Cuti::where('id_karyawan', $id_karyawan)
-                ->where('status', 'approved')
+                ->where('status', 'approved') 
                 ->where('tanggal_mulai', '<=', $tanggalHariIni)
                 ->where('tanggal_selesai', '>=', $tanggalHariIni)
                 ->first();
@@ -199,7 +199,7 @@ class AbsensiController extends Controller
             if ($sedangCuti) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Anda sedang dalam masa pengajuan (' . $sedangCuti->jenis_cuti . '). Tidak perlu melakukan presensi.'
+                    'message' => 'Anda sedang dalam masa cuti (' . $sedangCuti->jenis_cuti . '). Tidak perlu melakukan presensi.'
                 ], 400);
             }
 

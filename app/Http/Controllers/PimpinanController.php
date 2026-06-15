@@ -268,9 +268,28 @@ class PimpinanController extends Controller
         $user->delete();
         return redirect()->route('pimpinan.karyawan_pending')->with('error', 'Pengajuan karyawan ditolak.');
     }
-    public function hariLibur()
+    public function hariLibur(Request $request)
     {
-        $hariLibur = DB::table('hari_libur')->orderBy('tanggal', 'desc')->get();
+        $query = DB::table('hari_libur')->orderBy('tanggal', 'desc');
+
+        // Filter Pencarian Keterangan / Nama Hari Libur
+        if ($request->filled('search')) {
+            $query->where('keterangan', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter berdasarkan Bulan
+        if ($request->filled('bulan')) {
+            $query->whereMonth('tanggal', $request->bulan);
+        }
+
+        // Filter berdasarkan Tahun
+        if ($request->filled('tahun')) {
+            $query->whereYear('tanggal', $request->tahun);
+        }
+
+        // Menggunakan paginate agar rapi jika data banyak
+        $hariLibur = $query->paginate(15)->withQueryString();
+
         return view('pimpinan.hari_libur', compact('hariLibur'));
     }
 }

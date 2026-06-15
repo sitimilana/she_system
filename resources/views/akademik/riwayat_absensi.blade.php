@@ -304,26 +304,26 @@
                     </label>
 
                     <select name="status" class="form-select shadow-sm">
-                        <option value="">-- Semua Status --</option>
+                        <option value="">Semua Status</option>
 
                         <option value="hadir" {{ request('status') == 'hadir' ? 'selected' : '' }}>
-                            🟢 Hadir
+                            Hadir
                         </option>
 
                         <option value="terlambat" {{ request('status') == 'terlambat' ? 'selected' : '' }}>
-                            🟠 Terlambat
+                            Terlambat
                         </option>
 
                         <option value="izin" {{ request('status') == 'izin' ? 'selected' : '' }}>
-                            🔵 Izin
+                            Izin
                         </option>
 
                         <option value="sakit" {{ request('status') == 'sakit' ? 'selected' : '' }}>
-                            🟣 Sakit
+                            Sakit
                         </option>
 
                         <option value="alfa" {{ request('status') == 'alfa' ? 'selected' : '' }}>
-                            🔴 Alfa
+                            Alfa
                         </option>
                     </select>
                 </div>

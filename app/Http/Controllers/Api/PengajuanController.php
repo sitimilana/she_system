@@ -21,7 +21,7 @@ class PengajuanController extends Controller
     private function getAnnualLeaveRemaining(Karyawan $karyawan): int
     {
         $usedDays = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereIn('status', ['approved', 'Disetujui'])
+            ->whereIn('status', ['approved'])
             ->where(function ($query) {
                 $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
                     ->orWhereRaw('LOWER(jenis_cuti) = ?', ['cuti tahunan']);
@@ -47,8 +47,7 @@ class PengajuanController extends Controller
                 'pending',
                 'pending_pimpinan',
                 'pending_kabag',
-                'approved',
-                'Disetujui'
+                'approved'
             ])
             ->where(function ($query) {
                 $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
@@ -108,7 +107,7 @@ class PengajuanController extends Controller
         // TAMBAHAN: Hitung cuti approved
         // =========================================================
         $cutiApproved = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereIn('status', ['approved', 'Disetujui'])
+            ->whereIn('status', ['approved'])
             ->count();
 
         // =========================================================
@@ -118,10 +117,7 @@ class PengajuanController extends Controller
         $tahunSekarang = now()->year;
 
         $cutiBulanIni = Cuti::where('id_karyawan', $karyawan->id_karyawan)
-            ->whereIn('status', [
-                'approved',
-                'Disetujui'
-            ])
+            ->whereIn('status', ['approved'])
             ->where(function ($query) {
                 $query->whereRaw('LOWER(jenis_cuti) = ?', ['cuti'])
                     ->orWhereRaw('LOWER(jenis_cuti) = ?', ['cuti tahunan']);
