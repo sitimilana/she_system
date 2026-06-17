@@ -139,9 +139,17 @@ class PimpinanController extends Controller
 
     public function cuti(Request $request)
     {
-        $query = Cuti::with('karyawan')->where('status', 'pending_pimpinan');
-        $queryRiwayat = Cuti::with('karyawan')->whereIn('status', ['approved', 'rejected']);
+        // 1. BELUM TERVALIDASI: Pasti urut dari ID terbaru (data yang paling terakhir masuk database)
+        $query = Cuti::with('karyawan')
+            ->where('status', 'pending_pimpinan')
+            ->orderBy('updated_at', 'desc'); 
 
+        // 2. TERVALIDASI (RIWAYAT): Urutkan berdasarkan kapan data tersebut disetujui/ditolak (waktu update terakhir)
+        $queryRiwayat = Cuti::with('karyawan')
+            ->whereIn('status', ['approved', 'rejected', 'Disetujui']) // Saya tambahkan 'Disetujui' untuk jaga-jaga
+            ->orderBy('updated_at', 'desc');
+
+        // Filter Pencarian
         if ($request->filled('search')) {
             $search = $request->search;
             $karyawanFilter = function ($q) use ($search) {
@@ -151,6 +159,7 @@ class PimpinanController extends Controller
             $queryRiwayat->whereHas('karyawan', $karyawanFilter);
         }
 
+        // Filter Jenis Cuti
         if ($request->filled('jenis_cuti')) {
             $query->where('jenis_cuti', $request->jenis_cuti);
             $queryRiwayat->where('jenis_cuti', $request->jenis_cuti);

@@ -13,16 +13,14 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // 1. Validasi request dari Android
+
         $request->validate([
             'username' => 'required',
             'password' => 'required'
         ]);
 
-        // 2. Cari user di database
         $user = User::where('username', $request->username)->first();
 
-        // 3. Pengecekan Murni Laravel (Apakah user ada & apakah Hash Password cocok?)
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false, 
@@ -30,40 +28,33 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // 4. Jika cocok, cek status akun
         if ($user->status_akun === 'pending') {
             return response()->json(['success' => false, 'message' => 'Akun menunggu persetujuan Pimpinan'], 403);
         }
         if ($user->status_akun !== 'aktif') {
             return response()->json(['success' => false, 'message' => 'Akun dinonaktifkan!'], 403);
         }
-
-        // 5. Buat Token
         $token = $user->createToken('MobileAppToken')->plainTextToken;
-
-        // 6. Ambil relasi data Karyawan berdasarkan ID User yang login
+        $isFirstLogin = Hash::check('shekediri123', $user->password);
         $karyawan = Karyawan::where('id_user', $user->id_user)->first();
-
-        // 7. Kembalikan Response ke Android (Sudah Fix Menyertakan Tanggal Masuk)
         return response()->json([
             'success' => true,
             'message' => 'Login Berhasil',
             'token'   => $token,
             'data'    => [
-                'id_user'       => $user->id_user,
-                'username'      => $user->username,
-                // Ambil nama dari tabel karyawan jika ada, jika tidak fallback ke nama/username di tabel users
-                'nama_lengkap'  => $karyawan ? $karyawan->nama : $user->username,
-                // Kirim divisi jika ada, jika tidak kirim string kosong
-                'divisi'        => $karyawan ? $karyawan->divisi : '',
-                // ✅ BERHASIL DITAMBAHKAN: Digunakan untuk batasan filter tahun di RiwayatPengajuanActivity Android
-                'tanggal_masuk' => ($karyawan && $karyawan->tanggal_masuk) ? $karyawan->tanggal_masuk : $user->created_at->toDateString()
+                'id_user'        => $user->id_user,
+                'username'       => $user->username,
+                'nama_lengkap'   => $karyawan ? $karyawan->nama : $user->username,
+                'divisi'         => $karyawan ? $karyawan->divisi : '',
+                'tanggal_masuk'  => ($karyawan && $karyawan->tanggal_masuk) ? $karyawan->tanggal_masuk : $user->created_at->toDateString(),
+                'is_first_login' => $isFirstLogin // Penanda wajib ganti password
             ]
         ]);
     }
+    
     public function changePassword(Request $request)
     {
-        $user = $request->user(); // Mendapatkan user yang sedang login via Sanctum
+        $user = $request->user();
 
         $validator = Validator::make($request->all(), [
             'password_lama'       => 'required',
@@ -78,7 +69,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Cek apakah password lama benar
         if (!Hash::check($request->password_lama, $user->password)) {
             return response()->json([
                 'success' => false,
@@ -86,7 +76,6 @@ class AuthController extends Controller
             ], 400);
         }
 
-        // Update password
         $user->password = Hash::make($request->password_baru);
         $user->save();
 
@@ -95,6 +84,7 @@ class AuthController extends Controller
             'message' => 'Password berhasil diubah!'
         ], 200);
     }
+    
     public function getProfil(Request $request)
     {
         $user = $request->user();
@@ -113,6 +103,7 @@ class AuthController extends Controller
             ]
         ]);
     }
+    
     public function updateFoto(Request $request)
     {
         $user = $request->user();
@@ -123,16 +114,14 @@ class AuthController extends Controller
         }
 
         $request->validate([
-            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048' // Maksimal 2MB
+            'foto' => 'required|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         if ($request->hasFile('foto')) {
-            // Hapus foto lama jika sebelumnya sudah ada
             if ($karyawan->foto) {
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($karyawan->foto);
             }
 
-            // Simpan foto baru ke folder storage/app/public/profil_foto
             $path = $request->file('foto')->store('profil_foto', 'public');
             $karyawan->foto = $path;
             $karyawan->save();

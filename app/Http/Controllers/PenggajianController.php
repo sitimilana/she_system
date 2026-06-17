@@ -52,7 +52,6 @@ class PenggajianController extends Controller
             });
         }
 
-        // PERUBAHAN DI SINI: Mengganti get() menjadi paginate(10)
         $dataGaji = $query->paginate(10)->appends(request()->query());
 
         $bulanList = [
@@ -100,10 +99,11 @@ class PenggajianController extends Controller
                 ->withErrors(['Slip gaji untuk karyawan ini pada periode tersebut sudah dibuat. Silakan edit data yang sudah ada di menu Manajemen Gaji jika ingin melakukan perubahan.'])
                 ->withInput();
         }
+        
         $karyawan = Karyawan::with('user.role')->find($request->id_karyawan);
         $gajiPokok = $this->getGajiPokok($karyawan);
 
-        // PENERIMAAN (Semua Menggunakan Input Form)
+        // PENERIMAAN
         $totalPenerimaan = $gajiPokok
             + (float) ($request->uang_makan ?? 0)
             + (float) ($request->tunjangan_jabatan ?? 0)
@@ -112,7 +112,7 @@ class PenggajianController extends Controller
             + (float) ($request->bonus ?? 0)
             + (float) ($request->lain_lain ?? 0);
 
-        // POTONGAN (Termasuk Konstanta BPJS)
+        // POTONGAN
         $totalPotongan = (float) ($request->potongan_absen ?? 0)
             + (float) ($request->cash_bon ?? 0)
             + (float) ($request->cash_bon_2 ?? 0) 
@@ -130,7 +130,7 @@ class PenggajianController extends Controller
             'tunjangan_jabatan' => $request->tunjangan_jabatan ?? 0,
             'insentif_kinerja'  => $request->insentif_kinerja ?? 0, 
             'tunjangan_program' => $request->tunjangan_program ?? 0,
-            'tunjangan_bpjs'    => 0, // 0 Karena Murni Potongan
+            'tunjangan_bpjs'    => 0,
             'bonus'             => $request->bonus ?? 0,
             'lain_lain'         => $request->lain_lain ?? 0,
             'total_penerimaan'  => $totalPenerimaan,
@@ -238,6 +238,7 @@ class PenggajianController extends Controller
         return redirect()->route('pimpinan.gaji', ['bulan' => $gaji->bulan, 'tahun' => $gaji->tahun])
             ->with('success', 'Slip gaji berhasil dihapus.');
     }
+    
     private function parsePeriode(string $periode): array
     {
         if (!preg_match('/^\d{4}-\d{2}$/', $periode)) {
@@ -252,47 +253,54 @@ class PenggajianController extends Controller
         $karyawan = Karyawan::with('user.role')->find($id);
         $bulan = $request->query('bulan', now()->month);
         $tahun = $request->query('tahun', now()->year);
+
+        $bulanLalu = $bulan == 1 ? 12 : $bulan - 1;
+        $tahunLalu = $bulan == 1 ? $tahun - 1 : $tahun;
         
         $gajiPokok = $this->getGajiPokok($karyawan);
-
-        // 1. Tunjangan Kinerja (Dari Nilai Kinerja)
-        $penilaian = Penilaian::where('id_karyawan', $id)->where('bulan', $bulan)->where('tahun', $tahun)->first();
+        
+        $penilaian = Penilaian::where('id_karyawan', $id)->where('bulan', $bulanLalu)->where('tahun', $tahunLalu)->first();
         $insentifKinerja = 0;
-        if ($penilaian) {
+        $bonus = 0;
+        $belumDinilai = false;
+        if (!$penilaian) {
+            // Sinyal penanda untuk memicu alert kuning di Blade
+            $belumDinilai = true; 
+        } else {
+            // 1. Hitung Tunjangan Kinerja jika ada nilai
             if ($penilaian->total_skor >= 90) {
                 $insentifKinerja = 150000;
             } elseif ($penilaian->total_skor >= 80) {
                 $insentifKinerja = 100000;
             }
-        }
 
-        // 2. Bonus Rank 1 (Tertinggi bulan ini = Rp 100.000)
-        $bonus = 0;
-        $topScore = Penilaian::where('bulan', $bulan)->where('tahun', $tahun)->max('total_skor');
-        if ($topScore !== null && $penilaian && $penilaian->total_skor == $topScore) {
-            // Pencarian tie-breaker (Jika skor sama, cari yang hadirnya terbanyak)
-            $topKaryawans = Penilaian::where('bulan', $bulan)->where('tahun', $tahun)->where('total_skor', $topScore)->pluck('id_karyawan')->toArray();
-            $maxHadir = -1;
-            $bestKaryawanId = null;
-            
-            foreach ($topKaryawans as $kid) {
-                $hadirCount = Absensi::where('id_karyawan', $kid)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'hadir')->count();
-                if ($hadirCount > $maxHadir) {
-                    $maxHadir = $hadirCount;
-                    $bestKaryawanId = $kid;
+            // 2. Hitung Bonus Rank 1 jika ada nilai
+            $topScore = Penilaian::where('bulan', $bulanLalu)->where('tahun', $tahunLalu)->max('total_skor');
+            if ($topScore !== null && $penilaian->total_skor == $topScore) {
+                $topKaryawans = Penilaian::where('bulan', $bulanLalu)->where('tahun', $tahunLalu)->where('total_skor', $topScore)->pluck('id_karyawan')->toArray();
+                $maxHadir = -1;
+                $bestKaryawanId = null;
+                
+                foreach ($topKaryawans as $kid) {
+                    $hadirCount = Absensi::where('id_karyawan', $kid)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->where('status', 'hadir')->count();
+                    if ($hadirCount > $maxHadir) {
+                        $maxHadir = $hadirCount;
+                        $bestKaryawanId = $kid;
+                    }
+                }
+                if ($bestKaryawanId == $id) {
+                    $bonus = 100000; 
                 }
             }
-            if ($bestKaryawanId == $id) {
-                $bonus = 100000; // Bonus Karyawan Terbaik Rp 100.000
-            }
         }
-
-        // 3. Perhitungan Absensi
-        $hadir = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'hadir')->count();
-        $alpha = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->whereIn('status', ['alfa', 'alpha'])->count();
-        $izin = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'izin')->count();
-        $cuti = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'cuti')->count();
-        $cutiKehamilan = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulan)->whereYear('tanggal', $tahun)->where('status', 'cuti kehamilan')->count();
+        // 3. Perhitungan Absensi (Menggunakan data 1 bulan sebelumnya)
+        // Menggunakan whereIn agar status 'hadir' dan 'terlambat' sama-sama dihitung dapat Uang Makan
+        $hadir = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->whereIn('status', ['hadir', 'terlambat'])->count();
+        $alpha = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->whereIn('status', ['alfa', 'alpha'])->count();
+        $izin = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->where('status', 'izin')->count();
+        $cuti = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->where('status', 'cuti')->count();
+        $cutiKehamilan = Absensi::where('id_karyawan', $id)->whereMonth('tanggal', $bulanLalu)->whereYear('tanggal', $tahunLalu)->where('status', 'cuti kehamilan')->count();
+        
         // Uang Makan: 20rb x Hari Hadir
         $uangMakan = $hadir * 20000;
         
@@ -308,6 +316,7 @@ class PenggajianController extends Controller
                         ->exists();
 
         return response()->json([
+            'belum_dinilai'     => $belumDinilai,
             'gaji_pokok'        => $gajiPokok,
             'tunjangan_jabatan' => self::TUNJ_JABATAN_STANDAR,
             'insentif_kinerja'  => $insentifKinerja,
@@ -319,5 +328,4 @@ class PenggajianController extends Controller
             'sudah_dibuat'      => $sudahDibuat,
         ]);
     }
-    
 }

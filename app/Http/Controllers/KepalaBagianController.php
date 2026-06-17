@@ -83,6 +83,8 @@ class KepalaBagianController extends Controller
             ->get();
 
         $query = Penilaian::with('karyawan');
+        $targetBulan = now()->month;
+        $targetTahun = now()->year;
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -95,8 +97,20 @@ class KepalaBagianController extends Controller
             if (count($periode) == 2) {
                 $query->where('tahun', $periode[0])
                       ->where('bulan', (int)$periode[1]);
+                
+                $query->where('tahun', $targetTahun)
+                      ->where('bulan', $targetBulan);
             }
         }
+
+        $belumDinilai = Karyawan::where('status_karyawan', 'aktif')
+            ->whereDoesntHave('penilaian', function($q) use ($targetBulan, $targetTahun) {
+                $q->where('bulan', $targetBulan)
+                  ->where('tahun', $targetTahun);
+            })
+            ->select('id_karyawan', 'nama', 'divisi') // Mengambil divisi juga untuk ditampilkan di Modal View
+            ->orderBy('nama')
+            ->get();
 
         // Tambahkan orderBy('created_at', 'desc') agar yang baru diinput selalu di atas
         $riwayatPenilaian = $query->orderBy('created_at', 'desc')
@@ -105,7 +119,7 @@ class KepalaBagianController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('kepala_bagian.penilaian_kinerja', compact('karyawan', 'riwayatPenilaian'));
+        return view('kepala_bagian.penilaian_kinerja', compact('karyawan', 'riwayatPenilaian', 'belumDinilai', 'targetBulan', 'targetTahun'));
     }
 
     public function storePenilaian(Request $request)
@@ -122,7 +136,16 @@ class KepalaBagianController extends Controller
         ]);
 
         [$tahun, $bulan] = explode('-', $validated['periode']);
+        $cekDuplikat = Penilaian::where('id_karyawan', $validated['id_karyawan'])
+            ->where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->exists();
 
+        if ($cekDuplikat) {
+            return redirect()->back()
+                ->withErrors(['Penilaian Gagal: Karyawan tersebut sudah dinilai pada periode ini. Silakan gunakan fitur Edit pada tabel riwayat.'])
+                ->withInput();
+        }
         $bobot = [
             'disiplin' => 0.20,
             'produktivitas' => 0.30,

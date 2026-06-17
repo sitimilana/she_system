@@ -187,7 +187,14 @@
     @endif
 
     <div class="card card-custom p-4">
-        <form action="{{ route('pimpinan.gaji.store') }}" method="POST">
+        <div id="alertBelumDinilai" class="alert alert-warning border-warning border-opacity-50 shadow-sm rounded-4 d-none d-flex align-items-center" role="alert" style="background-color: #fffbeb;">
+            <i class="bi bi-exclamation-triangle-fill fs-3 text-warning me-3"></i>
+            <div>
+                <strong>PENGGAJIAN BERISIKO: Karyawan Belum Dinilai!</strong><br>
+                <span class="small text-dark">Karyawan ini belum mendapatkan Penilaian Kinerja dari Kepala Bagian untuk periode bulan lalu. Komponen <strong>Tunjangan Kinerja</strong> dan <strong>Bonus Prestasi</strong> otomatis dikunci ke angka <strong>Rp 0</strong>.</span>
+            </div>
+        </div>
+        <form action="{{ route('pimpinan.gaji.store') }}" method="POST" id="formGaji">
             @csrf
             
             <div class="alert alert-primary bg-primary bg-opacity-10 border-0 mb-4 d-flex align-items-center">
@@ -281,7 +288,7 @@
                     <h5 class="text-danger fw-bold border-bottom pb-2 mb-3"><i class="bi bi-dash-circle me-2"></i>Komponen Potongan</h5>
                     
                     <div class="mb-3">
-                        <label class="form-label">Potongan Absensi (Dari Izin/Alpha/Cuti)</label>
+                        <label class="form-label">Potongan Absensi (Dari Izin/Alpha)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white">Rp</span>
                             <input type="number" name="potongan_absen"
@@ -334,7 +341,7 @@
             
             <div class="d-flex justify-content-end gap-2">
                 <input type="hidden" name="status_slip" value="draft">
-                <button type="submit" class="btn btn-primary px-5 fw-bold w-100 w-md-auto"><i class="bi bi-save me-2"></i>Simpan Slip Gaji</button>
+                <button type="submit" id="btnSimpanSlip" class="btn btn-primary px-5 fw-bold w-100 w-md-auto"><i class="bi bi-save me-2"></i>Simpan Slip Gaji</button>
             </div>
         </form>
     </div>
@@ -374,6 +381,9 @@
         const inPotAbsen = document.getElementById('potongan_absen');
         const inBpjs = document.getElementById('potongan_bpjs');
         const inJabatan = document.getElementById('tunjangan_jabatan');
+        
+        const alertBelumDinilai = document.getElementById('alertBelumDinilai');
+        let statusBelumDinilai = false; // Variabel global untuk menyimpan status evaluasi
 
         function fetchFinansial() {
             const idKaryawan = selectKaryawan.value;
@@ -389,21 +399,29 @@
                         return res.json();
                     })
                     .then(data => {
-                        const btnSubmit = document.querySelector('button[type="submit"]');
+                        const btnSubmit = document.getElementById('btnSimpanSlip');
+                        
                         if (data.sudah_dibuat) {
                             alert('⚠️ PERINGATAN: Karyawan ini sudah memiliki slip gaji untuk periode tersebut. Anda tidak dapat membuat slip ganda.');
-                            
-                            // Matikan tombol simpan dan ubah warnanya
                             btnSubmit.disabled = true;
                             btnSubmit.innerHTML = '<i class="bi bi-x-circle me-2"></i>Slip Sudah Ada';
                             btnSubmit.classList.remove('btn-primary');
                             btnSubmit.classList.add('btn-secondary');
+                            alertBelumDinilai.classList.add('d-none'); // Sembunyikan alert jika slip sudah ada
+                            statusBelumDinilai = false;
                         } else {
-                            // Nyalakan kembali tombol simpan
                             btnSubmit.disabled = false;
                             btnSubmit.innerHTML = '<i class="bi bi-save me-2"></i>Simpan Slip Gaji';
                             btnSubmit.classList.remove('btn-secondary');
                             btnSubmit.classList.add('btn-primary');
+                            
+                            // Logika pemunculan Alert Kuning
+                            statusBelumDinilai = data.belum_dinilai;
+                            if (data.belum_dinilai) {
+                                alertBelumDinilai.classList.remove('d-none');
+                            } else {
+                                alertBelumDinilai.classList.add('d-none');
+                            }
                         }
                         
                         inGajiPokok.value = data.gaji_pokok || 0;
@@ -445,6 +463,23 @@
         inputsPotongan.forEach(input => input.addEventListener('input', calculateTotal));
         
         calculateTotal();
+
+        // TAMBAHAN: Mencegat submit form untuk memberikan konfirmasi ganda
+        const formGaji = document.getElementById('formGaji');
+        formGaji.addEventListener('submit', function(event) {
+            if (statusBelumDinilai) {
+                // Hentikan form sementara
+                event.preventDefault(); 
+                
+                // Munculkan konfirmasi
+                const isConfirmed = confirm("PENTING: Anda akan menyimpan slip gaji untuk karyawan yang belum dinilai kinerjanya. Komponen kinerja diatur Rp 0.\n\nApakah Anda yakin ingin memproses slip ini tanpa nilai kinerja?");
+                
+                // Jika setuju, lanjutkan submit
+                if (isConfirmed) {
+                    formGaji.submit();
+                }
+            }
+        });
     });
 </script>
 

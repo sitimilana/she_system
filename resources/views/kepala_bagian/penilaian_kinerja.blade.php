@@ -55,13 +55,11 @@
         }
 
         @media (max-width: 768px) {
-            /* YANG DIUBAH: Menambahkan width ketat agar sidebar tidak melebar tumpah di HP */
             .sidebar { transform: translateX(-100%); width: 250px !important; max-width: 85vw; }
             .sidebar.show-mobile { transform: translateX(0); }
             .content { margin-left: 0 !important; padding: 15px !important; }
             .sidebar-overlay.show { display: block; }
             
-            /* Penyesuaian form filter di HP */
             .filter-form-group { flex-direction: column; align-items: stretch !important; }
             .filter-form-group .search-wrapper, .filter-form-group .date-wrapper, .filter-form-group .btn-wrapper { width: 100% !important; }
             .filter-form-group .btn-wrapper d-flex { width: 100%; }
@@ -163,6 +161,17 @@
         </div>
     @endif
 
+    @if(isset($belumDinilai) && $belumDinilai->count() > 0)
+    <div class="alert alert-warning border-warning border-opacity-50 shadow-sm rounded-4 d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4" role="alert" style="background-color: #fffbeb;">
+        <div>
+            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-exclamation-triangle-fill fs-5 text-warning me-2"></i>Perhatian: Evaluasi Belum Selesai</h6>
+            <span class="text-dark small">Terdapat <strong>{{ $belumDinilai->count() }} Karyawan</strong> aktif yang belum diberikan penilaian untuk periode {{ \Carbon\Carbon::create()->month($targetBulan)->locale('id')->translatedFormat('F') }} {{ $targetTahun }}.</span>
+        </div>
+        <button class="btn btn-warning btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBelumDinilai">
+            <i class="bi bi-eye me-1"></i>Lihat Daftar Nama
+        </button>
+    </div>
+    @endif
     <div class="row">
         <div class="col-lg-12">
             <div class="card card-custom p-4 h-100">
@@ -371,7 +380,36 @@
 
 @include('auth.logout')
 
-<!-- Modal Detail Penilaian -->
+@if(isset($belumDinilai))
+<div class="modal fade" id="modalBelumDinilai" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header bg-warning border-bottom-0 rounded-top-4">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-person-exclamation me-2 text-dark"></i>Daftar Belum Dinilai</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="list-group list-group-flush">
+                    @forelse($belumDinilai as $k)
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                            <div>
+                                <div class="fw-bold">{{ $k->nama }}</div>
+                                <div class="small text-muted text-capitalize">{{ $k->divisi }}</div>
+                            </div>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill">Pending</span>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-center text-muted py-4">Semua karyawan telah dinilai.</li>
+                    @endforelse
+                </ul>
+            </div>
+            <div class="modal-footer bg-light px-4 py-3 border-top-0 rounded-bottom-4">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 <div class="modal fade" id="modalDetailPenilaian" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
@@ -393,7 +431,6 @@
     </div>
 </div>
 
-<!-- Modal Edit Penilaian -->
 <div class="modal fade" id="modalEditPenilaian" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow rounded-4">
@@ -495,7 +532,6 @@
     </div>
 </div>
 
-<!-- Form Delete Penilaian -->
 <form id="formDeletePenilaian" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
@@ -542,8 +578,6 @@
         const baseUrl = window.location.origin;
         const url = `${baseUrl}/kepala-bagian/penilaian/${id}`;
 
-        console.log('Fetching URL:', url);
-
         fetch(url, {
             headers: {
                 'Accept': 'application/json',
@@ -551,15 +585,12 @@
             }
         })
             .then(response => {
-                console.log('Response status:', response.status);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Response data:', data);
-                
                 if (data.success) {
                     const p = data.penilaian;
                     const html = `
@@ -641,7 +672,6 @@
                 }
             })
             .catch(error => {
-                console.error('Fetch error:', error);
                 detailContent.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message || 'Terjadi kesalahan saat memuat data'}</div>`;
             });
     }
