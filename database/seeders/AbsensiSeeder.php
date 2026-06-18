@@ -2,95 +2,77 @@
 
 namespace Database\Seeders;
 
-use App\Models\Absensi;
-use App\Models\Karyawan;
-use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AbsensiSeeder extends Seeder
 {
-    public function run(): void
+    public function run()
     {
-        $karyawans = Karyawan::where('status_karyawan', 'aktif')->get();
+        $now = Carbon::now();
+        
+        // Hapus data lama untuk ID 67 dari 1 Mei - 18 Juni
+        DB::table('absensi')
+            ->where('id_karyawan', 67)
+            ->whereBetween('tanggal', ['2026-05-01', '2026-06-18'])
+            ->delete();
 
-        if ($karyawans->isEmpty()) {
-            return;
-        }
+        $data = [
+            // --- BULAN MEI 2026 ---
+            // Minggu 1
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-01', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            
+            // Minggu 2
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-04', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-05', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-06', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-07', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-08', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            
+            // Minggu 3 (Diubah menjadi 'alfa')
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-11', 'status' => 'alfa', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-12', 'status' => 'alfa', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-13', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-14', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-15', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
+            
+            // Minggu 4
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-18', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-19', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-20', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-21', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-22', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            
+            // Minggu 5
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-25', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-26', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-27', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-28', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-05-29', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
 
-        Storage::disk('public')->makeDirectory('absensi');
+            // --- BULAN JUNI 2026 ---
+            // Minggu 1
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-01', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-02', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-03', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-04', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-05', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
 
-        $today = Carbon::today();
-        $year = (int) $today->format('Y');
-        $startDate = Carbon::create($year, 1, 1);
-        $karyawanIds = $karyawans->pluck('id_karyawan')->values();
-        $totalKaryawan = $karyawanIds->count();
+            // Minggu 2
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-08', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-09', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-10', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-11', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-12', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
 
-        if ($totalKaryawan === 0) {
-            return;
-        }
+            // Minggu 3
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-15', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-16', 'status' => 'terlambat', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-17', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+            ['id_karyawan' => 67, 'tanggal' => '2026-06-18', 'status' => 'hadir', 'created_at' => $now, 'updated_at' => $now],
+        ];
 
-        $date = $startDate->copy();
-        while ($date->lessThanOrEqualTo($today)) {
-            $seedBase = (int) $date->format('z');
-            $izinIndexes = [
-                $seedBase % $totalKaryawan,
-                ($seedBase + 7) % $totalKaryawan,
-            ];
-            $terlambatIndex = ($seedBase + 3) % $totalKaryawan;
-            $alphaIndex = ($date->day % 20 === 0) ? (($seedBase + 11) % $totalKaryawan) : null;
-
-            foreach ($karyawanIds as $index => $idKaryawan) {
-                $status = 'hadir';
-                if ($alphaIndex !== null && $index === $alphaIndex) {
-                    $status = 'alfa';
-                } elseif (in_array($index, $izinIndexes, true)) {
-                    $status = 'izin';
-                } elseif ($index === $terlambatIndex) {
-                    $status = 'terlambat';
-                }
-
-                $jamMasuk = null;
-                $jamPulang = null;
-                if ($status === 'hadir') {
-                    $jamMasuk = ($index % 4 === 0) ? '08:05:00' : '08:00:00';
-                    $jamPulang = '16:00:00';
-                } elseif ($status === 'terlambat') {
-                    $jamMasuk = '08:40:00';
-                    $jamPulang = '16:05:00';
-                }
-
-                $fotoMasuk = null;
-                $fotoPulang = null;
-                if (in_array($status, ['hadir', 'terlambat'], true)) {
-                    $dateStamp = $date->format('Ymd');
-                    $fotoMasuk = "absensi/{$idKaryawan}_{$dateStamp}_masuk.jpg";
-                    $fotoPulang = "absensi/{$idKaryawan}_{$dateStamp}_pulang.jpg";
-
-                    Storage::disk('public')->put($fotoMasuk, 'seed foto masuk');
-                    Storage::disk('public')->put($fotoPulang, 'seed foto pulang');
-                }
-
-                Absensi::updateOrCreate(
-                    [
-                        'id_karyawan' => $idKaryawan,
-                        'tanggal' => $date->toDateString(),
-                    ],
-                    [
-                        'jam_masuk' => $jamMasuk,
-                        'jam_pulang' => $jamPulang,
-                        'latitude_masuk' => '-7.8169',
-                        'longitude_masuk' => '112.0116',
-                        'latitude_pulang' => '-7.8171',
-                        'longitude_pulang' => '112.0118',
-                        'foto_masuk' => $fotoMasuk,
-                        'foto_pulang' => $fotoPulang,
-                        'status' => $status,
-                    ]
-                );
-            }
-
-            $date->addDay();
-        }
+        DB::table('absensi')->insert($data);
     }
 }
